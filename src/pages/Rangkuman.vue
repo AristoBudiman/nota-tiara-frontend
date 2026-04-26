@@ -32,7 +32,7 @@ const formatRp = (val) => new Intl.NumberFormat('id-ID').format(val || 0)
 const fetchSummaryAPI = async (startDate, endDate) => {
   try {
     const token = localStorage.getItem('admin_token')
-    const res = await fetch(`http://localhost:3000/api/rangkuman?start=${startDate}&end=${endDate}`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/rangkuman?start=${startDate}&end=${endDate}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (!res.ok) throw new Error("Gagal mengambil data rangkuman")

@@ -27,7 +27,7 @@ watch(selectedSiklus, (val) => {
 const fetchToko = async () => {
   try {
     const token = localStorage.getItem('admin_token')
-    const res = await fetch('http://localhost:3000/api/tokos', {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tokos`, {
       method: 'GET',
       headers: { 
         'Content-Type': 'application/json',
@@ -47,8 +47,8 @@ const handleSubmit = async () => {
   
   // PERBAIKAN DI SINI: Tambahkan /api/ pada kedua kondisi URL
   const url = isEdit.value 
-    ? `http://localhost:3000/api/tokos/${form.value.ID}` 
-    : 'http://localhost:3000/api/tokos'
+    ? `${import.meta.env.VITE_API_URL}/api/tokos/${form.value.ID}` 
+    : `${import.meta.env.VITE_API_URL}/api/tokos`
 
   // Wajib ambil token untuk operasi POST/PUT
   const token = localStorage.getItem('admin_token')
@@ -74,7 +74,7 @@ const handleSubmit = async () => {
 
 // const handleSubmit = async () => {
 //   const method = isEdit.value ? 'PUT' : 'POST'
-//   const url = isEdit.value ? `http://localhost:3000/tokos/${form.value.ID}` : 'http://localhost:3000/tokos'
+//   const url = isEdit.value ? `${import.meta.env.VITE_API_URL}/tokos/${form.value.ID}` : '${import.meta.env.VITE_API_URL}/tokos'
 
 //   try {
 //     await fetch(url, {
@@ -105,7 +105,7 @@ const hapusToko = async (id) => {
   if (confirm('Hapus toko ini? Data nota terkait mungkin akan terpengaruh.')) {
     try {
       const token = localStorage.getItem('admin_token')
-      const res = await fetch(`http://localhost:3000/api/tokos/${id}`, { 
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tokos/${id}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

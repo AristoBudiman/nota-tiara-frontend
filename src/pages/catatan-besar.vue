@@ -152,7 +152,7 @@ const penjelasanTanggal = computed(() => {
 const fetchData = async () => {
   try {
     const token = localStorage.getItem('admin_token')
-    const res = await fetch('http://localhost:3000/api/notas', {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notas`, {
       method: 'GET',
       headers: { 
         'Content-Type': 'application/json',

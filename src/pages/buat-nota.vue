@@ -72,13 +72,13 @@ const fetchData = async () => {
     }
 
     // 3. Tembak API menggunakan opsi header di atas (pastikan URL pakai /api/)
-    const resToko = await fetch('http://localhost:3000/api/tokos', requestOptions)
+    const resToko = await fetch(`${import.meta.env.VITE_API_URL}/api/tokos`, requestOptions)
     // Cek jika token tidak valid / kedaluwarsa
     if (!resToko.ok) throw new Error("Akses ditolak atau sesi habis")
     daftarToko.value = await resToko.json()
 
     // 4. Lakukan hal yang sama untuk data barang
-    const resBarang = await fetch('http://localhost:3000/api/barangs', requestOptions)
+    const resBarang = await fetch(`${import.meta.env.VITE_API_URL}/api/barangs`, requestOptions)
     if (!resBarang.ok) throw new Error("Akses ditolak atau sesi habis")
     const barangs = await resBarang.json()
     
@@ -104,7 +104,7 @@ onMounted(async () => {
     isEdit.value = true
     try {
       const token = localStorage.getItem('admin_token')
-      const res = await fetch(`http://localhost:3000/api/notas/${route.query.edit}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notas/${route.query.edit}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const notaLama = await res.json()
@@ -184,8 +184,8 @@ const simpanData = async () => {
   };
 
   const url = isEdit.value 
-    ? `http://localhost:3000/api/notas/${route.query.edit}` 
-    : 'http://localhost:3000/api/notas';
+    ? `${import.meta.env.VITE_API_URL}/api/notas/${route.query.edit}` 
+    : `${import.meta.env.VITE_API_URL}`;
   
   const method = isEdit.value ? 'PUT' : 'POST';
   const token = localStorage.getItem('admin_token') // <-- AMBIL TOKEN

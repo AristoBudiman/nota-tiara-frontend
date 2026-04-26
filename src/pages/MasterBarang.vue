@@ -12,7 +12,7 @@ const form = ref({
 const fetchBarang = async () => {
   try {
     const token = localStorage.getItem('admin_token')
-    const res = await fetch('http://localhost:3000/api/barangs', {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/barangs`, {
       method: 'GET',
       headers: { 
         'Content-Type': 'application/json',
@@ -32,8 +32,8 @@ const handleSubmit = async () => {
   
   // PERBAIKAN DI SINI: Tambahkan /api/ pada kedua kondisi URL
   const url = isEdit.value 
-    ? `http://localhost:3000/api/barangs/${form.value.ID}` 
-    : 'http://localhost:3000/api/barangs'
+    ? `${import.meta.env.VITE_API_URL}/api/barangs/${form.value.ID}` 
+    : `${import.meta.env.VITE_API_URL}/api/barangs`
 
   // Wajib ambil token untuk operasi POST/PUT
   const token = localStorage.getItem('admin_token')
@@ -66,7 +66,7 @@ const hapusBarang = async (id) => {
   if (confirm('Yakin ingin menghapus produk ini?')) {
     try {
       const token = localStorage.getItem('admin_token')
-      const res = await fetch(`http://localhost:3000/api/barangs/${id}`, { 
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/barangs/${id}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -116,7 +116,7 @@ const simpanUrutan = async () => {
 
   try {
     const token = localStorage.getItem('admin_token')
-    const res = await fetch('http://localhost:3000/api/barangs/reorder', {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/barangs/reorder`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
