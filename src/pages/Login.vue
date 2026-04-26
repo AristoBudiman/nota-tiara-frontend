@@ -5,15 +5,22 @@
       <form @submit.prevent="handleLogin" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700">Username</label>
-          <input v-model="username" type="text" required class="w-full border p-2 rounded mt-1">
+          <input v-model="username" type="text" required class="w-full border p-2 rounded mt-1" :disabled="isLoading">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700">Password</label>
-          <input v-model="password" type="password" required class="w-full border p-2 rounded mt-1">
+          <input v-model="password" type="password" required class="w-full border p-2 rounded mt-1" :disabled="isLoading">
         </div>
-        <p v-if="errorMsg" class="text-red-500 text-sm">{{ errorMsg }}</p>
-        <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded font-bold hover:bg-blue-700">
-          Login
+        
+        <div v-if="isLoading" class="text-sm font-bold text-blue-600 bg-blue-50 p-3 rounded border border-blue-200">
+          ⏳ Membangunkan server database...<br>
+          <span class="text-xs text-gray-600 font-normal">Mohon tunggu sekitar 50 detik. Ini hanya terjadi pada login pertama.</span>
+        </div>
+
+        <p v-if="errorMsg" class="text-red-500 text-sm font-bold">{{ errorMsg }}</p>
+        
+        <button type="submit" :disabled="isLoading" class="w-full text-white p-2 rounded font-bold transition" :class="isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'">
+          {{ isLoading ? 'Menghubungkan...' : 'Login' }}
         </button>
       </form>
     </div>
@@ -28,8 +35,12 @@ const router = useRouter()
 const username = ref('')
 const password = ref('')
 const errorMsg = ref('')
+const isLoading = ref(false) // <-- Variabel baru untuk mengunci tombol
 
 const handleLogin = async () => {
+  isLoading.value = true // Kunci layar dan tampilkan pesan pemanasan
+  errorMsg.value = ''
+
   try {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
       method: 'POST',
@@ -40,11 +51,12 @@ const handleLogin = async () => {
     
     if (!res.ok) throw new Error(data.error)
     
-    // Simpan token ke Local Storage browser
     localStorage.setItem('admin_token', data.token)
-    router.push('/catatan-besar') // Lempar ke halaman utama
+    router.push('/catatan-besar')
   } catch (err) {
-    errorMsg.value = err.message
+    errorMsg.value = "Gagal terhubung. Pastikan server aktif atau periksa internet Anda."
+  } finally {
+    isLoading.value = false // Buka kembali kunci layar jika selesai/gagal
   }
 }
 </script>
