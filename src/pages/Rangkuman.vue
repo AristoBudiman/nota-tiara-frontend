@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 
-const summaryBulanIni = ref({ kirim: 0, retur: 0, pendapatan: 0, persentase: 0, perToko: [] })
+const summaryBulanIni = ref({ kirim: 0, retur: 0, pendapatan: 0, persentase: 0, perToko: [], perBarang: [] })
 const customSummary = ref(null)
 
 const toYMD = (date) => {
@@ -154,7 +154,37 @@ onMounted(() => {
             </table>
           </div>
         </div>
-
+        <div v-if="customSummary && customSummary.perBarang && customSummary.perBarang.length > 0" class="border-t pt-6 mt-8">
+          <h3 class="text-md font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span>📦</span> Rincian Penjualan Tiap Produk
+          </h3>
+          <div class="overflow-x-auto border border-gray-200 rounded-lg">
+            <table class="w-full text-sm text-left">
+              <thead class="bg-gray-100 text-gray-700">
+                <tr>
+                  <th class="p-3 border-b border-r font-bold">Nama Produk</th>
+                  <th class="p-3 border-b border-r text-center font-bold w-24 text-blue-700">Qty Kirim</th>
+                  <th class="p-3 border-b border-r text-center font-bold w-24 text-red-600">Qty Retur</th>
+                  <th class="p-3 border-b border-r text-center font-bold w-24 text-orange-600">% Retur</th>
+                  <th class="p-3 border-b text-center font-bold w-24 text-green-700">Qty Laku</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(brg, idx) in customSummary.perBarang" :key="idx" class="hover:bg-blue-50 border-b last:border-b-0 transition">
+                  <td class="p-3 border-r font-bold text-gray-800">{{ brg.nama }}</td>
+                  <td class="p-3 border-r text-center font-medium">{{ brg.qty_kirim }}</td>
+                  <td class="p-3 border-r text-center text-red-600 font-medium">{{ brg.qty_retur }}</td>
+                  <td class="p-3 border-r text-center font-bold" :class="brg.persentase > 20 ? 'text-red-600' : 'text-orange-600'">
+                    {{ brg.persentase.toFixed(1) }}%
+                  </td>
+                  <td class="p-3 text-center font-black text-green-700 bg-green-50">
+                    {{ brg.qty_laku }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>

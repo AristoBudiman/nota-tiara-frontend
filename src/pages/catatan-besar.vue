@@ -28,6 +28,12 @@
         >
           🔄 Refresh
         </button>
+        <button 
+          @click="exportToExcel" 
+          class="bg-green-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-green-700 transition border-2 border-green-600 flex items-center gap-2 h-10.5"
+        >
+          📊 Export Excel
+        </button>
       </div>
     </div>
 
@@ -36,7 +42,7 @@
     </div>
 
     <div v-else class="bg-white rounded border overflow-x-auto shadow-sm">
-      <table class="w-full text-sm border-collapse">
+      <table id="table-catatan-besar" class="w-full text-sm border-collapse">
         <thead class="bg-gray-800 text-white">
           <tr>
             <th class="p-3 border border-gray-700 text-left sticky left-0 bg-gray-800 z-10" rowspan="2">
@@ -451,6 +457,90 @@ const getTotals = (tokoID) => {
 
   return { kirim: totalNominalKirim, retur: totalNominalRetur }
 }
+
+const exportToExcel = () => {
+  const originalTable = document.getElementById('table-catatan-besar')
+  if (!originalTable) return alert('Tabel belum siap!')
+
+  const table = originalTable.cloneNode(true)
+
+  // 1. Suntikkan atribut kuno untuk Excel
+  table.setAttribute('border', '1')
+  table.style.borderCollapse = 'collapse'
+  table.style.fontFamily = 'Calibri, sans-serif'
+  // KITA HAPUS table.style.width = '100%' AGAR TIDAK MELAR!
+
+  // 2. Warnai header tabel secara paksa
+  const ths = table.querySelectorAll('th')
+  ths.forEach(th => {
+    th.style.backgroundColor = '#e2e8f0'
+    th.style.fontWeight = 'bold'
+    th.style.textAlign = 'center'
+    th.style.padding = '4px 8px' // Padding dirapatkan
+    th.style.whiteSpace = 'nowrap' // Mencegah teks turun berantakan
+  })
+
+  // 3. Rapikan jarak cell data
+  const tds = table.querySelectorAll('td')
+  tds.forEach(td => {
+    td.style.padding = '4px 8px'
+  })
+
+  const html = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta charset="utf-8">
+      </x:WorksheetOptions>
+         </x:ExcelWorksheet>
+        </x:ExcelWorksheets>
+       </x:ExcelWorkbook>
+      </xml>
+      <![endif]-->
+    </head>
+    <body>
+      <h2>Catatan Besar Tiara Nota</h2>
+      <p><b>Tanggal Acuan:</b> ${selectedTanggal.value} | <b>Fase:</b> ${isFaseRetur.value ? 'RETUR' : 'KIRIM'}</p>
+      ${table.outerHTML}
+    </body>
+    </html>
+  `
+
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `Catatan_Besar_${selectedTanggal.value}.xls`
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+const exportToCSV = () => {
+  const table = document.getElementById('table-catatan-besar');
+  if (!table) return alert('Tabel belum siap!');
+
+  let csvContent = "";
+  const rows = table.querySelectorAll("tr");
+
+  rows.forEach(row => {
+    const cols = row.querySelectorAll("th, td");
+    const rowData = Array.from(cols).map(col => {
+      // Bersihkan teks dari baris baru atau koma agar tidak merusak format CSV
+      let text = col.innerText.replace(/\n/g, " ").replace(/,/g, ".");
+      return `"${text}"`; // Bungkus dengan kutipan agar aman
+    }).join(",");
+    csvContent += rowData + "\r\n";
+  });
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Catatan_Besar_${selectedTanggal.value}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
 onMounted(fetchData)
 </script>

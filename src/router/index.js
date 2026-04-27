@@ -31,16 +31,34 @@ const router = createRouter({
   routes
 })
 
-// Navigation Guard (Penjaga Keamanan Token)
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('admin_token')
+  const role = localStorage.getItem('admin_role')
+
+  // 1. Jika belum login dan mencoba akses halaman selain '/login', lempar ke login
   if (to.path !== '/login' && !token) {
-    next('/login')
-  } else if (to.path === '/login' && token) {
-    next('/catatan-besar')
-  } else {
-    next()
+    return next('/login')
   }
+
+  // 2. Jika mengakses alamat utama (localhost:5173/), arahkan sesuai jabatannya
+  if (to.path === '/') {
+    if (role === 'sales') {
+      return next('/daftar-nota') // Sales langsung dilempar ke Dashboard Kunjungan
+    } else {
+      return next('/catatan-besar') // Superadmin dilempar ke Catatan Besar
+    }
+  }
+
+  // 3. GEMBOK KEAMANAN: Jika Sales nekat mengetik URL sensitif secara manual
+  const superadminOnlyRoutes = ['/catatan-besar', '/rangkuman', '/master-toko', '/master-barang']
+  
+  if (role === 'sales' && superadminOnlyRoutes.includes(to.path)) {
+    alert("Akses Ditolak! Anda tidak memiliki izin untuk melihat halaman ini.")
+    return next('/daftar-nota') // Lempar kembali ke kandangnya
+  }
+
+  // 4. Jika semua aman, silakan lewat
+  next()
 })
 
 export default router

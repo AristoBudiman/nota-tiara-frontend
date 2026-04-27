@@ -8,6 +8,7 @@ const router = useRouter()
 const daftarToko = ref([])
 const items = ref([]) 
 const isEdit = ref(false)
+const role = ref(localStorage.getItem('admin_role') || '')
 
 const getTanggalWIB = () => {
   const date = new Date()
@@ -22,7 +23,26 @@ const getTanggalWIB = () => {
 const form = ref({
   no_nota: '',
   toko_id: null,
-  tanggal_kirim: getTanggalWIB()
+  tanggal_kirim: getTanggalWIB(),
+  assigned_to: 0,
+  status: 'KIRIM'
+})
+
+// Dropdown Pintar: Gabungan Status & Penugasan
+const penugasanDanStatus = computed({
+  get() {
+    if (form.value.status === 'SELESAI') return 'SELESAI'
+    return form.value.assigned_to
+  },
+  set(val) {
+    if (val === 'SELESAI') {
+      form.value.status = 'SELESAI'
+      form.value.assigned_to = 0
+    } else {
+      form.value.status = 'KIRIM'
+      form.value.assigned_to = Number(val)
+    }
+  }
 })
 
 // --- LOGIKA FORM ---
@@ -99,6 +119,12 @@ const fetchData = async () => {
 onMounted(async () => {
   // 1. Ambil semua data master (ini akan mengambil harga terbaru)
   await fetchData()
+  await fetchSales()
+
+  if (route.query.toko_id && !route.query.edit) {
+    form.value.toko_id = Number(route.query.toko_id)
+    generateNoNota()
+  }
   
   if (route.query.edit) {
     isEdit.value = true
@@ -112,7 +138,9 @@ onMounted(async () => {
       form.value = {
         no_nota: notaLama.NoNota,
         toko_id: notaLama.TokoID,
-        tanggal_kirim: notaLama.TanggalKirim.split('T')[0]
+        tanggal_kirim: notaLama.TanggalKirim.split('T')[0],
+        assigned_to: notaLama.assigned_to,
+        status: notaLama.Status || 'KIRIM'
       }
 
       // 2. LOGIKA KRUSIAL: Filter & Kunci Data
@@ -124,7 +152,7 @@ onMounted(async () => {
       
       items.value = items.value
         // Toko harian akan mem-bypass filter ini sehingga SEMUA barang tampil
-        .filter(item => isTokoHarian || detailIds.includes(item.barang_id))
+        // .filter(item => isTokoHarian || detailIds.includes(item.barang_id))
         // .filter(item => detailIds.includes(item.barang_id)) Sembunyikan barang baru yang tidak ada di nota ini
         .map(item => {
           const d = notaLama.Details.find(det => det.BarangID === item.barang_id)
@@ -172,6 +200,8 @@ const simpanData = async () => {
     no_nota: String(form.value.no_nota),
     toko_id: Number(form.value.toko_id),
     tanggal_kirim: form.value.tanggal_kirim,
+    assigned_to: Number(form.value.assigned_to || 0),
+    status: form.value.status, // <--- Kirim status ke Go
     details: items.value
       .filter(i => i.banyak_kirim > 0 || i.banyak_retur > 0)
       .map(i => ({
@@ -185,7 +215,7 @@ const simpanData = async () => {
 
   const url = isEdit.value 
     ? `${import.meta.env.VITE_API_URL}/api/notas/${route.query.edit}` 
-    : `${import.meta.env.VITE_API_URL}`;
+    : `${import.meta.env.VITE_API_URL}/api/notas`;
   
   const method = isEdit.value ? 'PUT' : 'POST';
   const token = localStorage.getItem('admin_token') // <-- AMBIL TOKEN
@@ -213,6 +243,19 @@ const simpanData = async () => {
     }
   } catch (e) {
     alert("Server Backend (Go) tidak merespons!");
+  }
+}
+
+const daftarSales = ref([])
+
+const fetchSales = async () => {
+  const token = localStorage.getItem('admin_token')
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admins`, { // Asumsi ada API daftar admin
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+  if (res.ok) {
+    const admins = await res.json()
+    daftarSales.value = admins.filter(a => a.Role === 'sales')
   }
 }
 
@@ -250,6 +293,19 @@ const cetakPDF = () => {
             placeholder="Otomatis..."
             readonly
           />
+          <template v-if="role === 'superadmin'">
+            <span class="font-semibold text-left text-orange-600 no-print">Status / Tugas:</span>
+            <select 
+              v-model="penugasanDanStatus" 
+              class="border rounded px-1 border-orange-400 bg-orange-50 no-print font-bold"
+            >
+              <option :value="0">-- Belum Ditugaskan --</option>
+              <option v-for="s in daftarSales" :key="s.ID" :value="s.ID">
+                Tugaskan: {{ s.Username }}
+              </option>
+              <option value="SELESAI" class="bg-green-100 text-green-800">✅ SELESAI</option>
+            </select>
+          </template>
         </div>
       </div>
     </div>
@@ -328,10 +384,42 @@ const cetakPDF = () => {
 
 <style scoped>
 @media print {
+  @page { 
+    size: B5 portrait; 
+    margin: 0; /* Tetap 0 agar URL browser di header/footer mati */
+  }
+
+  body { 
+    margin: 0;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* BERI BANTALAN DI SINI AGAR TIDAK MEPET KERTAS */
+  .nota-container { 
+    box-shadow: none !important; 
+    border: none !important; 
+    margin: 0 auto !important; 
+    padding: 15mm !important; /* <--- Jarak aman 1.5 cm dari tepi kertas */
+    width: 100% !important; 
+    max-width: none !important; 
+  }
+
+  input, select { 
+    border: none !important; 
+    background: transparent !important; 
+    outline: none !important;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
   .no-print { display: none !important; }
   .hidden-print { display: flex !important; }
-  .nota-container { box-shadow: none !important; border: none !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
-  input, select { border: none !important; appearance: none; -webkit-appearance: none; background: transparent !important; }
 }
-input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+input::-webkit-outer-spin-button, 
+input::-webkit-inner-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
 </style>
