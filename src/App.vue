@@ -36,6 +36,43 @@ const handleLogout = () => {
   <div class="min-h-screen bg-gray-50">
     <nav v-if="token && route.path !== '/login'" class="bg-blue-900 text-white shadow-lg no-print">
       <div class="max-w-6xl mx-auto px-4">
+        <div class="flex flex-col md:flex-row justify-between md:items-center py-3 md:py-0 md:h-16">
+          
+          <div class="flex items-center gap-2 mb-3 md:mb-0">
+            <span class="text-xl font-black tracking-tighter">TIARA NOTA</span>
+            <span class="text-[10px] bg-blue-700 px-2 py-0.5 rounded uppercase font-bold text-blue-200">
+              {{ role }}
+            </span>
+            <div class="md:hidden ml-auto text-xs italic opacity-70">Mode {{ role }}</div>
+          </div>
+
+          <div class="flex overflow-x-auto md:overflow-visible items-center gap-2 md:gap-1 pb-1 md:pb-0 snap-x">
+            
+            <template v-if="role === 'superadmin'">
+              <router-link to="/catatan-besar" class="whitespace-nowrap px-3 py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">Catatan Besar</router-link>
+              <router-link to="/rangkuman" class="whitespace-nowrap px-3 py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">Rangkuman</router-link>
+              
+              <div class="hidden md:block h-6 w-px bg-blue-800 mx-2"></div> 
+              <router-link to="/master-toko" class="whitespace-nowrap px-3 py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">Master Toko</router-link>
+              <router-link to="/master-barang" class="whitespace-nowrap px-3 py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">Master Barang</router-link>
+              <router-link to="/sampah" class="whitespace-nowrap px-3 py-2 rounded-md text-sm text-red-200 hover:bg-red-700 hover:text-white transition-colors">🗑️ Sampah</router-link>
+            </template>
+
+            <router-link to="/daftar-nota" class="whitespace-nowrap px-3 py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">
+              {{ role === 'sales' ? 'Dashboard Kunjungan' : 'Riwayat Nota' }}
+            </router-link>
+            <router-link to="/buat-nota" class="whitespace-nowrap px-3 py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">Buat Nota</router-link>
+
+            <button @click="handleLogout" class="whitespace-nowrap ml-2 md:ml-4 bg-red-600 hover:bg-red-700 px-4 py-1.5 rounded-lg text-sm font-bold transition">
+              Logout
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </nav>
+    <!-- <nav v-if="token && route.path !== '/login'" class="bg-blue-900 text-white shadow-lg no-print">
+      <div class="max-w-6xl mx-auto px-4">
         <div class="flex justify-between items-center h-16">
           
           <div class="flex items-center gap-2">
@@ -53,6 +90,7 @@ const handleLogout = () => {
               
               <div class="h-6 w-px bg-blue-800 mx-2"></div> <router-link to="/master-toko" class="px-3 py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">Master Toko</router-link>
               <router-link to="/master-barang" class="px-3 py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">Master Barang</router-link>
+              <router-link to="/sampah" class="px-3 py-2 rounded-md text-sm text-red-200 hover:bg-red-700 hover:text-white transition-colors">🗑️ Sampah</router-link>
             </template>
 
             <router-link to="/daftar-nota" class="px-3 py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">
@@ -70,7 +108,7 @@ const handleLogout = () => {
           </div>
         </div>
       </div>
-    </nav>
+    </nav> -->
 
     <main class="py-4">
       <router-view />
@@ -79,12 +117,11 @@ const handleLogout = () => {
 </template>
 
 <style scoped>
-/* CSS standar sesuai permintaanmu, tanpa @apply */
 .router-link-active {
   font-weight: bold;
   text-decoration: underline;
   text-underline-offset: 4px;
-  color: white; /* Memastikan teks menjadi terang putih saat aktif */
+  color: white;
 }
 
 @media print {

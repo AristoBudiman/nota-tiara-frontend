@@ -63,18 +63,17 @@ const buatNotaBaru = () => {
   router.push(`/buat-nota?toko_id=${selectedTokoID.value}`)
 }
 
-// ... import dan variabel yang sudah ada ...
-const filterSiklus = ref('semua') // BARU: Filter Siklus
+const filterSiklus = ref('semua')
 const filterTokoSuperadmin = ref('semua')
 const filterWaktu = ref('14')
 
-// 1. Ambil daftar toko unik berdasarkan SIKLUS TERAKHIRNYA saja
+// Ambil daftar toko unik berdasarkan SIKLUS TERAKHIRNYA saja
 const filteredUniqueTokos = computed(() => {
   const map = new Map()
 
   listNota.value.forEach(n => {
     // Karena listNota sudah diurutkan dari terbaru (DESC) oleh Golang,
-    // data pertama yang kita temukan adalah status TERAKHIR dari toko tersebut.
+    // data pertama yang ditemukan adalah status TERAKHIR dari toko tersebut.
     if (!map.has(n.TokoID)) {
       map.set(n.TokoID, {
         id: n.TokoID,
@@ -96,21 +95,20 @@ const filteredUniqueTokos = computed(() => {
   return listToko.sort((a, b) => a.nama.localeCompare(b.nama))
 })
 
-// 3. Update Filter Riwayat Nota (Aman dari input kosong)
+// Filter Riwayat Nota
 const filteredListNota = computed(() => {
   const now = new Date().getTime()
   return listNota.value.filter(n => {
-    // A. Filter Siklus
+    // Filter Siklus
     if (filterSiklus.value !== 'semua' && n.SiklusSnapshot !== filterSiklus.value) return false
 
-    // B. Filter Toko (SUDAH DIPERBAIKI)
+    // Filter Toko 
     const valToko = filterTokoSuperadmin.value
-    // Jika filter tidak 'semua' DAN tidak kosong string, baru lakukan penyaringan
     if (valToko !== 'semua' && valToko !== '' && valToko !== null) {
       if (n.TokoID !== Number(valToko)) return false
     }
 
-    // C. Filter Waktu
+    // Filter Waktu
     if (filterWaktu.value !== 'semua') {
       const notaTime = new Date(n.TanggalKirim).getTime()
       const daysDiff = (now - notaTime) / (1000 * 3600 * 24)
@@ -119,6 +117,11 @@ const filteredListNota = computed(() => {
     }
     return true
   })
+})
+
+// Filter khusus untuk Dashboard Sales: Sembunyikan yang sudah SELESAI
+const filteredNotaAktifSales = computed(() => {
+  return notaAktif.value.filter(n => n.Status !== 'SELESAI')
 })
 
 onMounted(() => {
@@ -269,17 +272,6 @@ const formatTanggal = (tgl) => {
         </div>
       </div>
 
-      <!-- <div v-if="notaTugas.length > 0" class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-orange-500">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><span>🔔</span> Tugas Khusus Superadmin</h2>
-        <div v-for="nota in notaTugas" :key="'t-'+nota.ID" class="bg-orange-50 p-3 border border-orange-200 rounded mb-2 flex justify-between items-center">
-          <div>
-            <p class="font-bold font-mono">{{ nota.NoNota }}</p>
-            <p class="text-xs text-gray-600">{{ nota.NamaTokoSnapshot }}</p>
-          </div>
-          <router-link :to="'/buat-nota?edit=' + nota.ID" class="bg-orange-600 text-white px-4 py-2 rounded font-bold text-sm">Selesaikan</router-link>
-        </div>
-      </div> -->
-
       <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500">
         <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><span>⏱️</span> Nota Yang Baru Saja Anda Buat (8 Jam)</h2>
         
@@ -287,7 +279,7 @@ const formatTanggal = (tgl) => {
           Anda belum membuat nota kiriman hari ini.
         </div>
 
-        <div v-for="nota in notaAktif" :key="'a-'+nota.ID" class="border p-3 rounded mb-2 flex justify-between items-center hover:bg-gray-50">
+        <div v-for="nota in filteredNotaAktifSales" :key="'a-'+nota.ID" class="border p-3 rounded mb-2 flex justify-between items-center hover:bg-gray-50">
           <div>
             <p class="font-bold font-mono">{{ nota.NoNota }}</p>
             <p class="text-xs text-gray-600">{{ nota.NamaTokoSnapshot }} ({{ formatTanggal(nota.TanggalKirim) }})</p>
@@ -295,17 +287,6 @@ const formatTanggal = (tgl) => {
           <router-link :to="'/buat-nota?edit=' + nota.ID" class="text-blue-600 font-bold text-sm hover:underline">Perbaiki Typo</router-link>
         </div>
       </div>
-
-      <!-- <div v-if="notaAktif.length > 0" class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><span>⏱️</span> Nota Yang Baru Saja Anda Buat (8 Jam)</h2>
-        <div v-for="nota in notaAktif" :key="'a-'+nota.ID" class="border p-3 rounded mb-2 flex justify-between items-center hover:bg-gray-50">
-          <div>
-            <p class="font-bold font-mono">{{ nota.NoNota }}</p>
-            <p class="text-xs text-gray-600">{{ nota.NamaTokoSnapshot }} ({{ formatTanggal(nota.TanggalKirim) }})</p>
-          </div>
-          <router-link :to="'/buat-nota?edit=' + nota.ID" class="text-blue-600 font-bold text-sm hover:underline">Perbaiki Typo</router-link>
-        </div>
-      </div> -->
 
     </div>
   </div>

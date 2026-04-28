@@ -30,7 +30,6 @@ const fetchBarang = async () => {
 const handleSubmit = async () => {
   const method = isEdit.value ? 'PUT' : 'POST'
   
-  // PERBAIKAN DI SINI: Tambahkan /api/ pada kedua kondisi URL
   const url = isEdit.value 
     ? `${import.meta.env.VITE_API_URL}/api/barangs/${form.value.ID}` 
     : `${import.meta.env.VITE_API_URL}/api/barangs`
@@ -43,7 +42,7 @@ const handleSubmit = async () => {
       method: method,
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // <-- SISIPKAN TOKEN DI SINI
+        'Authorization': `Bearer ${token}` // SISIPKAN TOKEN DI SINI
       },
       body: JSON.stringify(form.value)
     })
@@ -87,7 +86,7 @@ const resetForm = () => {
   form.value = { ID: null, NamaBarang: '', HargaDefault: 0 }
 }
 
-// --- FITUR ATUR URUTAN (PLAYLIST) ---
+// FITUR ATUR URUTAN 
 
 const geserAtas = (index) => {
   if (index > 0) {

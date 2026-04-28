@@ -20,7 +20,7 @@ const filter = ref({
 
 const namaBulanInI = computed(() => {
   return new Date().toLocaleDateString('id-ID', { 
-    timeZone: 'Asia/Jakarta', // <--- TAMBAHKAN KUNCI INI
+    timeZone: 'Asia/Jakarta',
     month: 'long', 
     year: 'numeric' 
   })
@@ -28,7 +28,6 @@ const namaBulanInI = computed(() => {
 
 const formatRp = (val) => new Intl.NumberFormat('id-ID').format(val || 0)
 
-// FUNGSI BARU: Langsung menembak endpoint agregasi di Go
 const fetchSummaryAPI = async (startDate, endDate) => {
   try {
     const token = localStorage.getItem('admin_token')
@@ -50,10 +49,47 @@ const loadDataBulanIni = async () => {
   if (data) summaryBulanIni.value = data
 }
 
+// const fetchCustomSummary = async () => {
+//   if (!filter.value.start || !filter.value.end) return alert("Pilih tanggal!")
+//   const data = await fetchSummaryAPI(filter.value.start, filter.value.end)
+//   if (data) customSummary.value = data
+// }
+
+const barangPerToko = ref([]) // Variabel penampung baru
+
 const fetchCustomSummary = async () => {
   if (!filter.value.start || !filter.value.end) return alert("Pilih tanggal!")
+  
+  // 1. Tarik Data Rangkuman Utama
   const data = await fetchSummaryAPI(filter.value.start, filter.value.end)
   if (data) customSummary.value = data
+
+  // 2. Tarik Data Spesifik: Barang per Toko
+  const token = localStorage.getItem('admin_token')
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/api/rangkuman-per-toko?start=${filter.value.start}&end=${filter.value.end}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+  if (res.ok) barangPerToko.value = await res.json()
+}
+
+const selectedTokoDetail = ref('')
+const barangPerTokoSelected = ref([])
+const isLoadingDetail = ref(false)
+
+// Fungsi khusus untuk menarik detail barang di satu toko tertentu
+const fetchDetailBarangPerToko = async () => {
+  if (!selectedTokoDetail.value) return alert("Pilih toko terlebih dahulu!")
+  
+  isLoadingDetail.value = true
+  const token = localStorage.getItem('admin_token')
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/api/rangkuman-per-toko?start=${filter.value.start}&end=${filter.value.end}&toko_id=${selectedTokoDetail.value}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+  
+  if (res.ok) {
+    barangPerTokoSelected.value = await res.json()
+  }
+  isLoadingDetail.value = false
 }
 
 onMounted(() => {
@@ -185,162 +221,60 @@ onMounted(() => {
             </table>
           </div>
         </div>
+        <div class="border-t pt-8 mt-10">
+          <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span>🔍</span> Analisis Detail Produk per Toko
+          </h3>
+          
+          <div class="flex gap-3 mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+            <div class="flex-1">
+              <label class="block text-xs font-bold text-blue-700 mb-1">Pilih Toko untuk Dilihat Detailnya:</label>
+              <select v-model="selectedTokoDetail" class="w-full p-2 border rounded font-bold outline-none">
+                <option value="" disabled>-- Pilih Toko --</option>
+                <option v-for="t in customSummary?.perToko" :key="t.id" :value="t.id">
+                  {{ t.nama }}
+                </option>
+              </select>
+            </div>
+            <button 
+              @click="fetchDetailBarangPerToko" 
+              :disabled="!customSummary || isLoadingDetail"
+              class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition self-end disabled:bg-gray-400"
+            >
+              {{ isLoadingDetail ? 'Loading...' : 'Lihat Rincian' }}
+            </button>
+          </div>
+
+          <div v-if="barangPerTokoSelected.length > 0" class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+            <table class="w-full text-sm text-left">
+              <thead class="bg-blue-600 text-white">
+                <tr>
+                  <th class="p-3 border-b font-bold">Nama Produk di Toko Terpilih</th>
+                  <th class="p-3 border-b text-center font-bold w-24">Kirim</th>
+                  <th class="p-3 border-b text-center font-bold w-24 text-red-200">Retur</th>
+                  <th class="p-3 border-b text-center font-bold w-24 text-orange-200">% Retur</th> <th class="p-3 border-b text-center font-bold w-28 text-green-200">Laku</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, idx) in barangPerTokoSelected" :key="idx" class="hover:bg-gray-50 border-b last:border-b-0 transition">
+                  <td class="p-3 font-bold text-gray-800">{{ item.nama_barang }}</td>
+                  <td class="p-3 text-center font-medium">{{ item.total_kirim }}</td>
+                  <td class="p-3 text-center text-red-600 font-medium">{{ item.total_retur }}</td>
+                  
+                  <td class="p-3 text-center font-bold" 
+                      :class="(item.total_retur / item.total_kirim * 100) > 20 ? 'text-red-600' : 'text-orange-600'">
+                    {{ item.total_kirim > 0 ? (item.total_retur / item.total_kirim * 100).toFixed(1) : 0 }}%
+                  </td>
+
+                  <td class="p-3 text-center font-black text-green-700 bg-green-50">
+                    {{ item.total_laku }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
-
-<!-- <script setup>
-import { ref, onMounted, computed } from 'vue'
-
-const allNotas = ref([])
-const daftarToko = ref([])
-
-const summaryBulanIni = ref({ kirim: 0, retur: 0, pendapatan: 0, persentase: 0, perToko: [] })
-const customSummary = ref(null)
-
-const toYMD = (date) => {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
-const filter = ref({
-  start: '',
-  end: toYMD(new Date())
-})
-
-const namaBulanInI = computed(() => {
-  return new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
-})
-
-const formatRp = (val) => new Intl.NumberFormat('id-ID').format(val || 0)
-
-const fetchMasterToko = async () => {
-  try {
-    const token = localStorage.getItem('admin_token')
-    const res = await fetch('http://localhost:3000/api/tokos', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    daftarToko.value = await res.json()
-  } catch (e) { console.error(e) }
-}
-
-const fetchSemuaNota = async () => {
-  try {
-    const token = localStorage.getItem('admin_token')
-    const res = await fetch('http://localhost:3000/api/notas', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    const data = await res.json()
-    allNotas.value = Array.isArray(data) ? data : (data.data ? data.data : [])
-  } catch (e) { console.error(e) }
-}
-
-const hitungCatatanBesar = (startDateStr, endDateStr) => {
-  let totalKirim = 0
-  let totalRetur = 0
-  let rekapToko = {}
-
-  daftarToko.value.forEach(toko => {
-    rekapToko[toko.ID] = { id: toko.ID, nama: toko.NamaToko, kirim: 0, retur: 0, pendapatan: 0, persentase: 0 }
-  })
-
-  const start = new Date(startDateStr)
-  const end = new Date(endDateStr)
-
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const dayOfWeek = d.getDay()
-    if (dayOfWeek === 0) continue
-
-    const isFaseRetur = (dayOfWeek === 1 || dayOfWeek === 2 || dayOfWeek === 3)
-    let siklus = ''
-    if (dayOfWeek === 1 || dayOfWeek === 4) siklus = 'SiklusKamisSenin'
-    else if (dayOfWeek === 2 || dayOfWeek === 5) siklus = 'SiklusJumatSelasa'
-    else if (dayOfWeek === 3 || dayOfWeek === 6) siklus = 'SiklusSabtuRabu'
-
-    const targetTanggal = new Date(d)
-    if (isFaseRetur) targetTanggal.setDate(targetTanggal.getDate() - 4)
-    const targetTime = new Date(toYMD(targetTanggal)).getTime()
-
-    // Rangkuman.vue -> hitungCatatanBesar
-    allNotas.value.forEach(nota => {
-      // 🔓 GUNAKAN DATA LIVE
-      const isTokoHarian = (nota.SiklusSnapshot === 'HARIAN')
-      const notaTimeStr = nota.TanggalKirim.substring(0, 10)
-      const loopTimeStr = toYMD(d)
-
-      if (isTokoHarian) {
-        if (notaTimeStr === loopTimeStr) {
-          const tID = nota.TokoID
-          if (!rekapToko[tID]) {
-            rekapToko[tID] = { id: tID, nama: nota.NamaTokoSnapshot || 'Toko Harian', kirim: 0, retur: 0, pendapatan: 0, persentase: 0 }
-          }
-          rekapToko[tID].kirim += nota.JumlahKirim || 0
-          rekapToko[tID].retur += nota.JumlahRetur || 0
-          totalKirim += nota.JumlahKirim || 0
-          totalRetur += nota.JumlahRetur || 0
-        }
-      } else {
-        // LOGIKA REGULER (Tetap pakai sistem Siklus + Mundur 4 Hari)
-        let isMatchSiklus = false
-        if (nota.SiklusSnapshot) isMatchSiklus = (nota.SiklusSnapshot === siklus)
-        else if (nota.Toko) isMatchSiklus = (nota.Toko[siklus] === true)
-
-        if (isMatchSiklus) {
-          // ✅ LANGSUNG CEK NOTA TIME (targetTime sudah dihitung di baris 131)
-          const notaTime = new Date(notaTimeStr).getTime()
-          const diffDays = Math.abs(notaTime - targetTime) / (1000 * 3600 * 24)
-
-          if (diffDays <= 3) {
-            const tID = nota.TokoID
-            if (!rekapToko[tID]) {
-              rekapToko[tID] = { id: tID, nama: nota.NamaTokoSnapshot || 'Toko Reguler', kirim: 0, retur: 0, pendapatan: 0, persentase: 0 }
-            }
-
-            if (isFaseRetur) {
-              totalRetur += nota.JumlahRetur || 0
-              rekapToko[tID].retur += nota.JumlahRetur || 0
-            } else {
-              totalKirim += nota.JumlahKirim || 0
-              rekapToko[tID].kirim += nota.JumlahKirim || 0
-            }
-          }
-        }
-      }
-    })
-  }
-
-  // Hitung persentase tiap toko
-  Object.values(rekapToko).forEach(t => {
-    t.pendapatan = t.kirim - t.retur
-    t.persentase = t.kirim > 0 ? (t.retur / t.kirim) * 100 : 0
-  })
-
-  return {
-    kirim: totalKirim,
-    retur: totalRetur,
-    pendapatan: totalKirim - totalRetur,
-    persentase: totalKirim > 0 ? (totalRetur / totalKirim) * 100 : 0,
-    perToko: Object.values(rekapToko).sort((a, b) => a.nama.localeCompare(b.nama))
-  }
-}
-
-const loadDataBulanIni = () => {
-  const now = new Date()
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-  summaryBulanIni.value = hitungCatatanBesar(toYMD(firstDay), toYMD(now))
-}
-
-const fetchCustomSummary = () => {
-  if (!filter.value.start || !filter.value.end) return alert("Pilih tanggal!")
-  customSummary.value = hitungCatatanBesar(filter.value.start, filter.value.end)
-}
-
-onMounted(async () => {
-  await fetchMasterToko()
-  await fetchSemuaNota()
-  loadDataBulanIni()
-})
-</script> -->

@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import logoTiara from '../assets/logo_tiara.png'
 
 const route = useRoute()
 const router = useRouter()
@@ -9,6 +10,7 @@ const daftarToko = ref([])
 const items = ref([]) 
 const isEdit = ref(false)
 const role = ref(localStorage.getItem('admin_role') || '')
+const isPrintPabrik = ref(true)
 
 const getTanggalWIB = () => {
   const date = new Date()
@@ -28,6 +30,18 @@ const form = ref({
   status: 'KIRIM'
 })
 
+const profil = ref({ Alamat: '', NoTelp: '', NoHP: '' })
+
+const fetchProfil = async () => {
+  const token = localStorage.getItem('admin_token')
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/api/profil`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+  if (res.ok) {
+    profil.value = await res.json()
+  }
+}
+
 // Dropdown Pintar: Gabungan Status & Penugasan
 const penugasanDanStatus = computed({
   get() {
@@ -45,22 +59,30 @@ const penugasanDanStatus = computed({
   }
 })
 
-// --- LOGIKA FORM ---
+// LOGIKA FORM
 
-const generateNoNota = () => {
+const generateNoNota = async () => {
   if (isEdit.value) return 
 
-  const tglInput = form.value.tanggal_kirim || getTanggalWIB()
-  const tgl = tglInput.replace(/-/g, '');
-  
-  const random = Math.floor(100 + Math.random() * 900);
-  const detik = new Date().getSeconds();
-  
-  const idToko = form.value.toko_id || '0';
-  
-  // Memberi nilai ke form.value.no_nota
-  form.value.no_nota = `NT/${tgl}/${idToko}-${random}${detik}`;
-  console.log("Nomor Nota Baru Ter-generate:", form.value.no_nota);
+  // Jika belum pilih mitra, kosongkan nomornya
+  if (!form.value.toko_id) {
+    form.value.no_nota = ''
+    return
+  }
+
+  try {
+    const token = localStorage.getItem('admin_token')
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notas/next-number?toko_id=${form.value.toko_id}&tanggal=${form.value.tanggal_kirim}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    
+    if (res.ok) {
+      const data = await res.json()
+      form.value.no_nota = data.no_nota // Otomatis terisi dari Backend!
+    }
+  } catch (e) {
+    console.error("Gagal generate no nota otomatis", e)
+  }
 }
 
 const resetForm = () => {
@@ -75,29 +97,28 @@ const resetForm = () => {
   })
 }
 
-// --- DATA FETCHING ---
+// DATA FETCHING DATA
 
 const fetchData = async () => {
   try {
     // 1. Ambil token dari penyimpanan browser
     const token = localStorage.getItem('admin_token')
 
-    // 2. Buat konfigurasi header pembawa karcis (token)
+    // 2. Buat konfigurasi header pembawa token
     const requestOptions = {
       method: 'GET',
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // <--- Token disisipkan di sini
+        'Authorization': `Bearer ${token}` // Token disisipkan di sini
       }
     }
 
-    // 3. Tembak API menggunakan opsi header di atas (pastikan URL pakai /api/)
+    // 3. Tembak API Toko dan Barang menggunakan opsi header di atas (pastikan URL pakai /api/)
     const resToko = await fetch(`${import.meta.env.VITE_API_URL}/api/tokos`, requestOptions)
     // Cek jika token tidak valid / kedaluwarsa
     if (!resToko.ok) throw new Error("Akses ditolak atau sesi habis")
     daftarToko.value = await resToko.json()
 
-    // 4. Lakukan hal yang sama untuk data barang
     const resBarang = await fetch(`${import.meta.env.VITE_API_URL}/api/barangs`, requestOptions)
     if (!resBarang.ok) throw new Error("Akses ditolak atau sesi habis")
     const barangs = await resBarang.json()
@@ -112,12 +133,11 @@ const fetchData = async () => {
     }))
   } catch (e) {
     console.error("Gagal load data master:", e.message)
-    // Opsional: Kalau error karena token, otomatis lempar ke halaman login
-    // router.push('/login')
   }
 }
 onMounted(async () => {
   // 1. Ambil semua data master (ini akan mengambil harga terbaru)
+  await fetchProfil()
   await fetchData()
   await fetchSales()
 
@@ -144,16 +164,14 @@ onMounted(async () => {
       }
 
       // 2. LOGIKA KRUSIAL: Filter & Kunci Data
-      // Kita hanya ingin menampilkan barang yang ADA di nota lama ini.
-      // Dan kita harus PAKSA harganya pakai harga snapshot.
+      // Hanya ingin menampilkan barang yang ada di nota lama ini.
+      // PAKSA harganya pakai harga snapshot.
       const detailIds = notaLama.Details.map(d => d.BarangID)
 
       const isTokoHarian = (notaLama.SiklusSnapshot === 'HARIAN')
       
       items.value = items.value
         // Toko harian akan mem-bypass filter ini sehingga SEMUA barang tampil
-        // .filter(item => isTokoHarian || detailIds.includes(item.barang_id))
-        // .filter(item => detailIds.includes(item.barang_id)) Sembunyikan barang baru yang tidak ada di nota ini
         .map(item => {
           const d = notaLama.Details.find(det => det.BarangID === item.barang_id)
           return {
@@ -161,10 +179,8 @@ onMounted(async () => {
             detail_id: d ? d.ID : null,
             banyak_kirim: d ? d.BanyakKirim : 0,
             banyak_retur: d ? d.BanyakRetur : 0,
-            // PAKSA: Gunakan harga snapshot dari database, bukan harga master saat ini
-            harga_barang: d ? d.HargaJual : item.harga_barang, 
-            // PAKSA: Gunakan nama snapshot agar sejarah tidak berubah jika nama diedit
-            nama_barang: d ? d.NamaBarangSnapshot : item.nama_barang
+            harga_barang: d ? d.HargaJual : item.harga_barang, // PAKSA: Gunakan harga snapshot dari database, bukan harga master saat ini
+            nama_barang: d ? d.NamaBarangSnapshot : item.nama_barang // PAKSA: Gunakan nama snapshot agar sejarah tidak berubah jika nama diedit
           }
         })
 
@@ -177,14 +193,12 @@ onMounted(async () => {
   }
 })
 
-// --- COMPUTED PROPERTIES ---
-
+// COMPUTED PROPERTIES
 const totalKirim = computed(() => items.value.reduce((acc, i) => acc + (i.banyak_kirim * i.harga_barang), 0))
 const totalRetur = computed(() => items.value.reduce((acc, i) => acc + (i.banyak_retur * i.harga_barang), 0))
 const totalBayar = computed(() => totalKirim.value - totalRetur.value)
 
-// --- ACTIONS ---
-
+// ACTIONS
 const simpanData = async () => {
   if (!form.value.toko_id) {
     alert("Pilih Mitra terlebih dahulu!");
@@ -201,7 +215,7 @@ const simpanData = async () => {
     toko_id: Number(form.value.toko_id),
     tanggal_kirim: form.value.tanggal_kirim,
     assigned_to: Number(form.value.assigned_to || 0),
-    status: form.value.status, // <--- Kirim status ke Go
+    status: form.value.status,
     details: items.value
       .filter(i => i.banyak_kirim > 0 || i.banyak_retur > 0)
       .map(i => ({
@@ -218,14 +232,14 @@ const simpanData = async () => {
     : `${import.meta.env.VITE_API_URL}/api/notas`;
   
   const method = isEdit.value ? 'PUT' : 'POST';
-  const token = localStorage.getItem('admin_token') // <-- AMBIL TOKEN
+  const token = localStorage.getItem('admin_token') // AMBIL TOKEN
 
   try {
     const res = await fetch(url, {
       method: method,
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // <-- SISIPKAN TOKEN
+        'Authorization': `Bearer ${token}` // SISIPKAN TOKEN
       },
       body: JSON.stringify(payload)
     });
@@ -245,6 +259,16 @@ const simpanData = async () => {
     alert("Server Backend (Go) tidak merespons!");
   }
 }
+
+watch(totalRetur, (nilaiReturBaru) => {
+  if (nilaiReturBaru > 0) {
+    // Jika ada retur, otomatis hilangkan centang (biar angka retur tercetak)
+    isPrintPabrik.value = false 
+  } else {
+    // Jika retur kosong, otomatis centang (biar kolom retur tercetak kosong untuk ditulis tangan)
+    isPrintPabrik.value = true  
+  }
+})
 
 const daftarSales = ref([])
 
@@ -267,21 +291,33 @@ const cetakPDF = () => {
 <template>
   <div class="nota-container p-8 max-w-5xl mx-auto bg-white shadow-lg my-4 border border-gray-200 rounded">
     
-    <div class="flex justify-between items-start mb-8 border-b-2 pb-4">
-      <div class="profile-perusahaan">
-        <h1 class="text-3xl font-black text-blue-900">TIARA NOTA</h1>
-        <p class="font-bold text-gray-700">Distributor Sembako & Alat Jahit</p>
-        <p class="text-xs text-gray-500 italic">Jl. Slamet Riyadi No. 10, Surakarta | 0812-3456-7890</p>
+    <div class="flex justify-between items-start mb-6 print:mb-2 border-b-2 pb-4 print:pb-2">
+      
+      <div class="flex flex-col items-start gap-1 flex-1">
+        <div class="shrink-0">
+          <img :src="logoTiara" alt="Logo" class="w-48 max-h-24 object-contain print:hidden" />
+          <img :src="logoTiara" alt="Logo" class="w-48 max-h-24 object-contain hidden print:block" style="filter: grayscale(100%);" />
+        </div>
+        <div class="profile-perusahaan mt-1">
+          <p class="text-[12px] md:text-sm text-gray-800 font-bold leading-tight">
+            {{ profil.Alamat }}
+          </p>
+          <p class="text-[11px] text-gray-600 font-medium mt-1 print:mt-0">
+            <span v-if="profil.NoTelp">Telp: {{ profil.NoTelp }}</span>
+            <span v-if="profil.NoTelp && profil.NoHP" class="mx-1">|</span>
+            <span v-if="profil.NoHP">HP/WA: {{ profil.NoHP }}</span>
+          </p>
+        </div>
       </div>
 
-      <div class="info-nota text-right">
-        <h2 class="text-xl font-bold mb-2 bg-blue-900 text-white px-2 inline-block">NOTA PENGIRIMAN</h2>
-        <div class="grid grid-cols-2 gap-2 text-sm mt-2">
+      <div class="info-nota text-right shrink-0">
+        <h2 class="text-xl font-bold mb-2 print:mb-1 bg-blue-900 text-white px-2 inline-block">NOTA PENGIRIMAN</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-1 text-sm print:text-xs mt-1">
           <span class="font-semibold text-left">Tanggal:</span>
-          <input type="date" v-model="form.tanggal_kirim" @change="generateNoNota" class="border rounded px-1" />
+          <input type="date" v-model="form.tanggal_kirim" @change="generateNoNota" class="border rounded px-1 print:border-none print:p-0" />
           
           <span class="font-semibold text-left">Mitra:</span>
-          <select v-model="form.toko_id" @change="generateNoNota" class="border rounded px-1" :disabled="isEdit">
+          <select v-model="form.toko_id" @change="generateNoNota" class="border rounded px-1 print:border-none print:p-0 print:appearance-none" :disabled="isEdit">
             <option :value="null" disabled>Pilih Mitra</option>
             <option v-for="t in daftarToko" :key="t.ID" :value="t.ID">{{ t.NamaToko }}</option>
           </select>
@@ -289,15 +325,15 @@ const cetakPDF = () => {
           <span class="font-semibold text-left">No. Nota:</span>
           <input 
             v-model="form.no_nota" 
-            class="border rounded px-1 font-mono text-[10px] bg-gray-50 w-full" 
+            class="border rounded px-1 font-mono text-[10px] bg-gray-50 print:bg-transparent w-full print:border-none print:p-0" 
             placeholder="Otomatis..."
             readonly
           />
           <template v-if="role === 'superadmin'">
-            <span class="font-semibold text-left text-orange-600 no-print">Status / Tugas:</span>
+            <span class="font-semibold text-left text-orange-600 print:hidden">Status / Tugas:</span>
             <select 
               v-model="penugasanDanStatus" 
-              class="border rounded px-1 border-orange-400 bg-orange-50 no-print font-bold"
+              class="border rounded px-1 border-orange-400 bg-orange-50 print:hidden font-bold"
             >
               <option :value="0">-- Belum Ditugaskan --</option>
               <option v-for="s in daftarSales" :key="s.ID" :value="s.ID">
@@ -310,75 +346,105 @@ const cetakPDF = () => {
       </div>
     </div>
 
-    <table class="w-full border-collapse border border-gray-400 text-sm">
-      <thead class="bg-gray-100">
-        <tr class="uppercase text-[11px]">
-          <th class="border border-gray-400 p-2 text-left">Nama Barang</th>
-          <th class="border border-gray-400 p-2 w-24">Harga</th>
-          <th class="border border-gray-400 p-2 w-16">Kirim</th>
-          <th class="border border-gray-400 p-2 w-28">Subtotal K</th>
-          <th class="border border-gray-400 p-2 w-16 bg-red-50 text-red-700">Retur</th>
-          <th class="border border-gray-400 p-2 w-28 bg-red-50 text-red-700">Subtotal R</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="item in items" :key="item.barang_id" class="hover:bg-gray-50" :class="{'print:hidden': item.banyak_kirim === 0 && item.banyak_retur === 0}">
-          <td class="border border-gray-400 p-2 font-medium">{{ item.nama_barang }}</td>
-          <td class="border border-gray-400 p-2 text-right">Rp{{ item.harga_barang.toLocaleString() }}</td>
-          <td class="border border-gray-400 p-2">
-            <input type="number" v-model.number="item.banyak_kirim" :readonly="isEdit" class="w-full text-center outline-none focus:bg-blue-100" />
-          </td>
-          <td class="border border-gray-400 p-2 text-right font-bold text-blue-800">
-            {{ (item.banyak_kirim * item.harga_barang).toLocaleString() }}
-          </td>
-          <td class="border border-gray-400 p-2 bg-red-50">
-            <input type="number" v-model.number="item.banyak_retur" class="w-full text-center outline-none bg-transparent focus:bg-red-100 text-red-700 font-bold" />
-          </td>
-          <td class="border border-gray-400 p-2 text-right font-bold bg-red-50 text-red-700">
-            {{ (item.banyak_retur * item.harga_barang).toLocaleString() }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="overflow-x-auto w-full mb-6">
+      <table class="w-full border-collapse border border-gray-400 text-sm">
+        <thead class="bg-gray-100">
+          <tr class="uppercase text-[11px]">
+            <th class="border border-gray-400 p-2 text-left">Nama Barang</th>
+            <th class="border border-gray-400 p-2 w-24">Harga</th>
+            <th class="border border-gray-400 p-2 w-16">Kirim</th>
+            <th class="border border-gray-400 p-2 w-28">Kirim (Rp)</th>
+            <th class="border border-gray-400 p-2 w-16 bg-red-50 text-red-700">Retur</th>
+            <th class="border border-gray-400 p-2 w-28 bg-red-50 text-red-700">Retur (Rp)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in items" :key="item.barang_id" class="hover:bg-gray-50 border-b border-gray-300 print-row" :class="{'print:hidden': item.banyak_kirim === 0 && item.banyak_retur === 0}">
+            <td class="border border-gray-400 p-2 font-medium">{{ item.nama_barang }}</td>
+            <td class="border border-gray-400 p-2 text-right">Rp{{ item.harga_barang.toLocaleString() }}</td>
+            <td class="border border-gray-400 p-2">
+              <input type="number" v-model.number="item.banyak_kirim" :readonly="isEdit" class="w-full text-center outline-none focus:bg-blue-100" />
+            </td>
+            <td class="border border-gray-400 p-2 text-right font-bold text-blue-800">
+              {{ (item.banyak_kirim * item.harga_barang).toLocaleString() }}
+            </td>
+            <td class="border border-gray-400 p-2 bg-red-50">
+              <input type="number" v-model.number="item.banyak_retur" class="w-full text-center outline-none bg-transparent focus:bg-red-100 text-red-700 font-bold" :class="{'print-transparent': isPrintPabrik}" />
+            </td>
+            <td class="border border-gray-400 p-2 text-right font-bold bg-red-50 text-red-700">
+              <span :class="{'print-transparent': isPrintPabrik}">
+                {{ (item.banyak_retur * item.harga_barang).toLocaleString() }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-    <div class="mt-6 flex justify-between items-end">
-      <div class="signature-area hidden-print flex gap-8 text-xs">
+    <div class="mt-4 print:mt-2 flex justify-between items-end">
+      
+      <div class="signature-area flex gap-12 text-xs">
         <div class="text-center w-32">
           <p>Tanda Terima,</p>
-          <div class="h-12"></div>
-          <p class="border-t border-black">( .................... )</p>
+          <div class="h-16"></div>
+          <p>( .................... )</p>
         </div>
         <div class="text-center w-32">
           <p>Hormat Kami,</p>
-          <div class="h-12"></div>
-          <p class="border-t border-black">( Aristo Budiman )</p>
+          <div class="h-16"></div>
+          <p>( .................... )</p>
         </div>
       </div>
 
-      <div class="w-72 bg-gray-50 p-3 rounded border border-gray-300 shadow-sm">
-        <div class="flex justify-between text-xs mb-1">
+      <div class="w-48 bg-gray-50 print:bg-transparent p-2 rounded border border-gray-400 shadow-sm print:shadow-none">
+        <div class="flex justify-between text-[10px] mb-1 text-gray-700 print:text-black">
           <span>Total Kirim:</span>
-          <span>Rp{{ totalKirim.toLocaleString() }}</span>
+          <span class="font-bold">Rp{{ totalKirim.toLocaleString() }}</span>
         </div>
-        <div class="flex justify-between text-xs mb-2 text-red-600 border-b pb-1">
+        <div class="flex justify-between text-[10px] mb-1.5 text-red-700 print:text-black border-b border-gray-300 pb-1">
           <span>Total Retur:</span>
-          <span>(Rp{{ totalRetur.toLocaleString() }})</span>
+          <span class="font-bold" :class="{'print-transparent': isPrintPabrik}">(Rp{{ totalRetur.toLocaleString() }})</span>
         </div>
-        <div class="flex justify-between font-black text-lg text-blue-900 mt-1">
+        <div class="flex justify-between font-black text-sm text-blue-900 print:text-black mt-1.5">
           <span>TOTAL:</span>
-          <span>Rp{{ totalBayar.toLocaleString() }}</span>
+          <span :class="{'print-transparent': isPrintPabrik}">Rp{{ totalBayar.toLocaleString() }}</span>
         </div>
+      </div>
+      
+    </div>
+
+    <div class="mt-8 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 print:hidden">
+      
+      <label class="flex items-center gap-2 cursor-pointer bg-blue-50 text-blue-800 px-4 py-3 md:py-2 rounded border border-blue-200 font-bold text-sm shadow-sm hover:bg-blue-100 transition">
+        <input type="checkbox" v-model="isPrintPabrik" class="w-5 h-5 accent-blue-600 cursor-pointer" />
+        🖨️ Mode Print Pabrik (Kosongkan Angka Retur)
+      </label>
+
+      <div class="flex flex-col md:flex-row gap-3">
+        <button @click="simpanData" class="justify-center bg-green-600 hover:bg-green-700 text-white px-6 py-3 md:py-2 rounded shadow font-bold transition flex items-center gap-2">
+          <span>💾</span> {{ isEdit ? 'UPDATE RETUR' : 'SIMPAN NOTA' }}
+        </button>
+        <button @click="cetakPDF" class="justify-center bg-gray-800 hover:bg-black text-white px-6 py-3 md:py-2 rounded shadow font-bold transition flex items-center gap-2">
+          <span>🖨️</span> EXPORT PDF
+        </button>
       </div>
     </div>
 
-    <div class="mt-8 flex justify-end gap-3 no-print">
-      <button @click="simpanData" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow font-bold transition flex items-center gap-2">
-        <span>💾</span> {{ isEdit ? 'UPDATE RETUR' : 'SIMPAN NOTA' }}
-      </button>
-      <button @click="cetakPDF" class="bg-gray-800 hover:bg-black text-white px-6 py-2 rounded shadow font-bold transition flex items-center gap-2">
-        <span>🖨️</span> EXPORT PDF
-      </button>
-    </div>
+    <!-- <div class="mt-8 flex flex-col md:flex-row justify-between items-center no-print">
+      <label class="flex items-center gap-2 cursor-pointer bg-blue-50 text-blue-800 px-4 py-2 rounded border border-blue-200 font-bold text-sm shadow-sm hover:bg-blue-100 transition">
+        <input type="checkbox" v-model="isPrintPabrik" class="w-5 h-5 accent-blue-600 cursor-pointer" />
+        🖨️ Mode Print Pabrik (Kosongkan Angka Retur)
+      </label>
+
+      <div class="flex gap-3">
+        <button @click="simpanData" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow font-bold transition flex items-center gap-2">
+          <span>💾</span> {{ isEdit ? 'UPDATE RETUR' : 'SIMPAN NOTA' }}
+        </button>
+        <button @click="cetakPDF" class="bg-gray-800 hover:bg-black text-white px-6 py-2 rounded shadow font-bold transition flex items-center gap-2">
+          <span>🖨️</span> EXPORT PDF
+        </button>
+      </div>
+    </div> -->
   </div>
 </template>
 
@@ -386,7 +452,7 @@ const cetakPDF = () => {
 @media print {
   @page { 
     size: B5 portrait; 
-    margin: 0; /* Tetap 0 agar URL browser di header/footer mati */
+    margin: 0; 
   }
 
   body { 
@@ -395,12 +461,15 @@ const cetakPDF = () => {
     print-color-adjust: exact !important;
   }
 
-  /* BERI BANTALAN DI SINI AGAR TIDAK MEPET KERTAS */
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+
   .nota-container { 
     box-shadow: none !important; 
     border: none !important; 
     margin: 0 auto !important; 
-    padding: 15mm !important; /* <--- Jarak aman 1.5 cm dari tepi kertas */
+    padding: 10mm !important;
     width: 100% !important; 
     max-width: none !important; 
   }
@@ -413,13 +482,27 @@ const cetakPDF = () => {
     -webkit-appearance: none;
   }
 
-  .no-print { display: none !important; }
-  .hidden-print { display: flex !important; }
+
+  .print-transparent {
+    color: transparent !important;
+  }
+
+  .print-row td {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    line-height: 1 !important;
+    font-size: 11px !important; 
+  }
 }
 
 input::-webkit-outer-spin-button, 
 input::-webkit-inner-spin-button { 
   -webkit-appearance: none; 
   margin: 0; 
+}
+
+/* --- TAMBAHAN BARU: Warna selang-seling (zebra) agar mata tidak lelah di layar --- */
+tbody tr:nth-child(even) {
+  background-color: #f9fafb;
 }
 </style>

@@ -16,7 +16,6 @@ const form = ref({
   IsHarian: false
 })
 
-// Sinkronkan Radio Button dengan data Form
 watch(selectedSiklus, (val) => {
   form.value.SiklusKamisSenin = (val === 'KamisSenin')
   form.value.SiklusJumatSelasa = (val === 'JumatSelasa')
@@ -45,7 +44,6 @@ const fetchToko = async () => {
 const handleSubmit = async () => {
   const method = isEdit.value ? 'PUT' : 'POST'
   
-  // PERBAIKAN DI SINI: Tambahkan /api/ pada kedua kondisi URL
   const url = isEdit.value 
     ? `${import.meta.env.VITE_API_URL}/api/tokos/${form.value.ID}` 
     : `${import.meta.env.VITE_API_URL}/api/tokos`
@@ -58,7 +56,7 @@ const handleSubmit = async () => {
       method: method,
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // <-- SISIPKAN TOKEN DI SINI
+        'Authorization': `Bearer ${token}` // SISIPKAN TOKEN DI SINI
       },
       body: JSON.stringify(form.value)
     })
@@ -71,23 +69,6 @@ const handleSubmit = async () => {
     console.error("Gagal simpan toko:", err.message)
   }
 }
-
-// const handleSubmit = async () => {
-//   const method = isEdit.value ? 'PUT' : 'POST'
-//   const url = isEdit.value ? `${import.meta.env.VITE_API_URL}/tokos/${form.value.ID}` : '${import.meta.env.VITE_API_URL}/tokos'
-
-//   try {
-//     await fetch(url, {
-//       method: method,
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify(form.value)
-//     })
-//     resetForm()
-//     fetchToko()
-//   } catch (err) {
-//     console.error("Gagal simpan toko:", err)
-//   }
-// }
 
 const editToko = (toko) => {
   isEdit.value = true

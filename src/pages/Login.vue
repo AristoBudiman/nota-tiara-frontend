@@ -1,3 +1,43 @@
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const username = ref('')
+const password = ref('')
+const errorMsg = ref('')
+const isLoading = ref(false) // Variabel baru untuk mengunci tombol
+
+const handleLogin = async () => {
+  isLoading.value = true // Kunci layar dan tampilkan pesan pemanasan server
+  errorMsg.value = ''
+
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username.value, password: password.value })
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error)
+    
+    localStorage.setItem('admin_token', data.token)
+    localStorage.setItem('admin_role', data.role)
+    
+    // Arahkan sesuai jabatan
+    if (data.role === 'sales') {
+      router.push('/daftar-nota')
+    } else {
+      router.push('/catatan-besar')
+    }
+  } catch (err) {
+    errorMsg.value = "Gagal terhubung. Pastikan server aktif atau periksa internet Anda."
+  } finally {
+    isLoading.value = false // Buka kembali kunci layar jika selesai/gagal
+  }
+}
+</script>
+
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-100">
     <div class="bg-white p-8 rounded-lg shadow-md w-96">
@@ -26,43 +66,3 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-const username = ref('')
-const password = ref('')
-const errorMsg = ref('')
-const isLoading = ref(false) // <-- Variabel baru untuk mengunci tombol
-
-const handleLogin = async () => {
-  isLoading.value = true // Kunci layar dan tampilkan pesan pemanasan
-  errorMsg.value = ''
-
-  try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username.value, password: password.value })
-    })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error)
-    
-    localStorage.setItem('admin_token', data.token)
-    localStorage.setItem('admin_role', data.role) // <--- SIMPAN ROLE
-    
-    // Arahkan sesuai jabatan
-    if (data.role === 'sales') {
-      router.push('/daftar-nota') // Sales pusatnya di sini
-    } else {
-      router.push('/catatan-besar')
-    }
-  } catch (err) {
-    errorMsg.value = "Gagal terhubung. Pastikan server aktif atau periksa internet Anda."
-  } finally {
-    isLoading.value = false // Buka kembali kunci layar jika selesai/gagal
-  }
-}
-</script>
