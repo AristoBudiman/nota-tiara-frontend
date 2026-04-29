@@ -383,7 +383,7 @@ const cetakPDF = () => {
 
     <div class="mt-4 print:mt-2 flex justify-between items-end">
       
-      <div class="signature-area flex gap-12 text-xs">
+      <div class="signature-area hidden print:flex gap-12 text-xs">
         <div class="text-center w-32">
           <p>Tanda Terima,</p>
           <div class="h-16"></div>
