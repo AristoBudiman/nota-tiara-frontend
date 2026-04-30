@@ -27,7 +27,8 @@ const form = ref({
   toko_id: null,
   tanggal_kirim: getTanggalWIB(),
   assigned_to: 0,
-  status: 'KIRIM'
+  status: 'KIRIM',
+  is_lunas: false
 })
 
 const profil = ref({ Alamat: '', NoTelp: '', NoHP: '' })
@@ -160,7 +161,8 @@ onMounted(async () => {
         toko_id: notaLama.TokoID,
         tanggal_kirim: notaLama.TanggalKirim.split('T')[0],
         assigned_to: notaLama.assigned_to,
-        status: notaLama.Status || 'KIRIM'
+        status: notaLama.Status || 'KIRIM',
+        is_lunas: notaLama.is_lunas || false
       }
 
       // 2. LOGIKA KRUSIAL: Filter & Kunci Data
@@ -216,6 +218,7 @@ const simpanData = async () => {
     tanggal_kirim: form.value.tanggal_kirim,
     assigned_to: Number(form.value.assigned_to || 0),
     status: form.value.status,
+    is_lunas: form.value.is_lunas,
     details: items.value
       .filter(i => i.banyak_kirim > 0 || i.banyak_retur > 0)
       .map(i => ({
@@ -310,37 +313,40 @@ const cetakPDF = () => {
         </div>
       </div>
 
-      <div class="info-nota text-right shrink-0">
-        <h2 class="text-xl font-bold mb-2 print:mb-1 bg-blue-900 text-white px-2 inline-block">NOTA PENGIRIMAN</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-1 text-sm print:text-xs mt-1">
+      <!-- Atur lebar kolom info nota -->
+      <div class="info-nota shrink-0 w-full md:w-80 print:w-70">
+        <div class="text-right">
+          <h2 class="text-xl font-bold mb-2 print:mb-1 bg-blue-900 text-white px-2 inline-block">NOTA PENGIRIMAN</h2>
+        </div>
+        
+        <!-- Terapkan sistem grid yang sama rapinya dengan halaman pesanan -->
+        <div class="grid grid-cols-[90px_1fr] print:grid-cols-[75px_1fr] gap-x-2 gap-y-1 text-sm print:text-xs mt-1 items-center">
+          
           <span class="font-semibold text-left">Tanggal:</span>
-          <input type="date" v-model="form.tanggal_kirim" @change="generateNoNota" class="border rounded px-1 print:border-none print:p-0" />
+          <input type="date" v-model="form.tanggal_kirim" @change="generateNoNota" class="border rounded px-2 py-0.5 print:border-none print:p-0 font-bold w-full" />
           
           <span class="font-semibold text-left">Mitra:</span>
-          <select v-model="form.toko_id" @change="generateNoNota" class="border rounded px-1 print:border-none print:p-0 print:appearance-none" :disabled="isEdit">
+          <select v-model="form.toko_id" @change="generateNoNota" class="border rounded px-2 py-0.5 print:border-none print:p-0 print:appearance-none font-bold w-full bg-white outline-none" :disabled="isEdit">
             <option :value="null" disabled>Pilih Mitra</option>
             <option v-for="t in daftarToko" :key="t.ID" :value="t.ID">{{ t.NamaToko }}</option>
           </select>
           
           <span class="font-semibold text-left">No. Nota:</span>
-          <input 
-            v-model="form.no_nota" 
-            class="border rounded px-1 font-mono text-[10px] bg-gray-50 print:bg-transparent w-full print:border-none print:p-0" 
-            placeholder="Otomatis..."
-            readonly
-          />
+          <input v-model="form.no_nota" class="border rounded px-2 py-0.5 font-mono text-[10px] bg-gray-50 print:bg-transparent w-full print:border-none print:p-0 font-bold" placeholder="Otomatis..." readonly />
+          
           <template v-if="role === 'superadmin'">
-            <span class="font-semibold text-left text-orange-600 print:hidden">Status / Tugas:</span>
-            <select 
-              v-model="penugasanDanStatus" 
-              class="border rounded px-1 border-orange-400 bg-orange-50 print:hidden font-bold"
-            >
-              <option :value="0">-- Belum Ditugaskan --</option>
-              <option v-for="s in daftarSales" :key="s.ID" :value="s.ID">
-                Tugaskan: {{ s.Username }}
-              </option>
-              <option value="SELESAI" class="bg-green-100 text-green-800">✅ SELESAI</option>
+            <span class="font-semibold text-left text-orange-600 print:hidden mt-1">Tugaskan:</span>
+            <select v-model="penugasanDanStatus" class="border rounded px-2 py-0.5 mt-1 border-orange-400 bg-orange-50 print:hidden font-bold w-full outline-none">
+              <option :value="0">-- Belum Ditugaskan--</option>
+              <option v-for="s in daftarSales" :key="s.ID" :value="s.ID">Ke: {{ s.Username }}</option>
+              <option value="SELESAI" class="bg-green-100 text-green-800">✅ FISIK SELESAI</option>
             </select>
+
+            <span class="font-semibold text-left text-green-600 print:hidden mt-1">Pembayaran:</span>
+            <label class="flex items-center justify-center gap-2 font-bold text-green-700 bg-green-50 px-2 py-0.5 mt-1 rounded border border-green-300 w-full print:hidden cursor-pointer hover:bg-green-100 transition shadow-sm">
+              <input type="checkbox" v-model="form.is_lunas" class="w-4 h-4 accent-green-600 cursor-pointer" />
+              Tandai Lunas
+            </label>
           </template>
         </div>
       </div>

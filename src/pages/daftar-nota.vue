@@ -14,6 +14,23 @@ const notaTugas = ref([])
 const daftarToko = ref([])
 const selectedTokoID = ref('')
 const notaKunjungan = ref([])
+const poTugas = ref([])
+
+const activeTab = ref('REGULER') // Kontrol Tab
+const listPesanan = ref([])      // Wadah data pesanan
+
+// Fungsi tarik data riwayat pesanan
+const fetchRiwayatPesanan = async () => {
+  try {
+    const token = localStorage.getItem('admin_token')
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pesanan/riwayat`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    if (res.ok) listPesanan.value = await res.json()
+  } catch (err) {
+    console.error("Gagal tarik riwayat PO", err)
+  }
+}
 
 const fetchSuperadminData = async (token) => {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notas`, {
@@ -32,6 +49,7 @@ const fetchSalesData = async (token) => {
       const dash = await resDash.json()
       notaAktif.value = dash.aktif || []
       notaTugas.value = dash.tugas || []
+      poTugas.value = dash.tugas_po || []
     }
 
     // 2. Ambil Dropdown Toko
@@ -124,14 +142,70 @@ const filteredNotaAktifSales = computed(() => {
   return notaAktif.value.filter(n => n.Status !== 'SELESAI')
 })
 
+// ... (di bawah filterWaktu dkk) ...
+const filterWaktuPO = ref('14')
+const filterTokoPO = ref('semua')
+
+// Ambil titik unik untuk Dropdown Filter Toko PO
+const filteredUniqueTokosPO = computed(() => {
+  const map = new Map()
+  listPesanan.value.forEach(p => {
+    const id = p.TokoID || 0
+    const nama = p.JenisPengambilan === 'PABRIK' ? 'PABRIK (Direct)' : p.NamaTokoSnapshot
+    if (!map.has(id)) map.set(id, { id, nama })
+  })
+  return Array.from(map.values()).sort((a, b) => a.nama.localeCompare(b.nama))
+})
+
+// Fungsi memfilter List PO berdasarkan Toko dan Waktu
+const filteredListPesanan = computed(() => {
+  const now = new Date().getTime()
+  return listPesanan.value.filter(po => {
+    // Filter Toko
+    if (filterTokoPO.value !== 'semua') {
+      const targetId = Number(filterTokoPO.value)
+      const poId = po.TokoID || 0
+      if (poId !== targetId) return false
+    }
+    // Filter Waktu
+    if (filterWaktuPO.value !== 'semua') {
+      const poTime = new Date(po.TanggalKirim).getTime()
+      const daysDiff = (now - poTime) / (1000 * 3600 * 24)
+      if (filterWaktuPO.value === '14' && daysDiff > 14) return false
+      if (filterWaktuPO.value === '30' && daysDiff > 30) return false
+    }
+    return true
+  })
+})
+
 onMounted(() => {
   const token = localStorage.getItem('admin_token')
   if (role.value === 'superadmin') {
     fetchSuperadminData(token)
+    fetchRiwayatPesanan()
   } else {
     fetchSalesData(token)
   }
 })
+
+// Fungsi membatalkan pesanan
+const batalkanPO = async (id, noNota) => {
+  if (!confirm(`Yakin ingin membatalkan pesanan ${noNota}?`)) return
+  
+  try {
+    const token = localStorage.getItem('admin_token')
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pesanan/${id}/batal`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    if (res.ok) {
+      alert("Pesanan dibatalkan!")
+      fetchRiwayatPesanan() // Refresh tabel
+    }
+  } catch (err) {
+    alert("Gagal membatalkan pesanan.")
+  }
+}
 
 const formatTanggal = (tgl) => {
   return new Date(tgl).toLocaleDateString('id-ID', {
@@ -145,75 +219,169 @@ const formatTanggal = (tgl) => {
     <h1 class="text-2xl font-bold mb-6 text-blue-900 border-b-2 pb-2">
       {{ role === 'superadmin' ? 'Riwayat Nota Keseluruhan' : 'Dashboard Pengiriman' }}
     </h1>
+
+    <!-- TAB NAVIGASI KHUSUS SUPERADMIN -->
+    <div v-if="role === 'superadmin'" class="flex mb-6 bg-gray-200 p-1 rounded-lg w-max shadow-sm">
+      <button @click="activeTab = 'REGULER'" 
+              class="px-5 py-2.5 rounded-md font-bold text-sm transition"
+              :class="activeTab === 'REGULER' ? 'bg-white shadow-md text-blue-800' : 'text-gray-500 hover:text-gray-800'">
+        📦 RIWAYAT REGULER
+      </button>
+      <button @click="activeTab = 'PESANAN'" 
+              class="px-5 py-2.5 rounded-md font-bold text-sm transition"
+              :class="activeTab === 'PESANAN' ? 'bg-yellow-400 shadow-md text-yellow-900' : 'text-gray-500 hover:text-gray-800'">
+        🎂 RIWAYAT PESANAN (PO)
+      </button>
+    </div>
     
     <div v-if="role === 'superadmin'" class="bg-white shadow-md rounded-lg p-6">
-      
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 bg-gray-50 p-4 border rounded-lg">
-        
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1">Filter Waktu</label>
-          <select v-model="filterWaktu" class="w-full border rounded p-2 outline-none font-semibold">
-            <option value="14">2 Minggu Terakhir</option>
-            <option value="30">1 Bulan Terakhir</option>
-            <option value="semua">Semua Riwayat</option>
-          </select>
+      <div v-if="activeTab === 'REGULER'">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 bg-gray-50 p-4 border rounded-lg">
+          
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1">Filter Waktu</label>
+            <select v-model="filterWaktu" class="w-full border rounded p-2 outline-none font-semibold">
+              <option value="14">2 Minggu Terakhir</option>
+              <option value="30">1 Bulan Terakhir</option>
+              <option value="semua">Semua Riwayat</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1">Filter Siklus</label>
+            <select v-model="filterSiklus" class="w-full border rounded p-2 outline-none font-semibold text-blue-700">
+              <option value="semua">-- Semua Siklus --</option>
+              <option value="HARIAN">HARIAN</option>
+              <option value="SiklusKamisSenin">Kamis - Senin</option>
+              <option value="SiklusJumatSelasa">Jumat - Selasa</option>
+              <option value="SiklusSabtuRabu">Sabtu - Rabu</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1">Pilih Toko</label>
+            <select 
+              v-model="filterTokoSuperadmin" 
+              class="w-full border rounded p-2 outline-none font-semibold cursor-pointer"
+            >
+              <option value="semua">-- Tampilkan Semua Toko --</option>
+              <option v-for="t in filteredUniqueTokos" :key="t.id" :value="t.id">
+                {{ t.nama }}
+              </option>
+            </select>
+            <p class="text-[10px] text-gray-400 mt-1 italic">* Pilihan menyesuaikan filter siklus</p>
+          </div>
+
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1">Filter Siklus</label>
-          <select v-model="filterSiklus" class="w-full border rounded p-2 outline-none font-semibold text-blue-700">
-            <option value="semua">-- Semua Siklus --</option>
-            <option value="HARIAN">HARIAN</option>
-            <option value="SiklusKamisSenin">Kamis - Senin</option>
-            <option value="SiklusJumatSelasa">Jumat - Selasa</option>
-            <option value="SiklusSabtuRabu">Sabtu - Rabu</option>
-          </select>
+        <div class="overflow-x-auto rounded border border-gray-200">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-blue-600 text-white uppercase text-xs">
+              <tr>
+                <th class="p-3 border">Tanggal</th>
+                <th class="p-3 border">No. Nota</th>
+                <th class="p-3 border">Nama Toko</th>
+                <th class="p-3 border text-right">Total Kirim</th>
+                <th class="p-3 border text-center">Status Bayar</th>
+                <th class="p-3 border text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="nota in filteredListNota" :key="nota.ID" class="hover:bg-gray-50">
+                <td class="p-3 border font-medium">{{ formatTanggal(nota.TanggalKirim) }}</td>
+                <td class="p-3 border font-mono font-bold">{{ nota.NoNota }}</td>
+                <td class="p-3 border">{{ nota.NamaTokoSnapshot || nota.Toko?.NamaToko }}</td>
+                <td class="p-3 border text-right">Rp {{ nota.JumlahKirim.toLocaleString() }}</td>
+                <td class="p-3 border text-center">
+                  <span v-if="nota.is_lunas" class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold shadow-sm border border-green-200">✅ LUNAS</span>
+                  <span v-else class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold shadow-sm border border-red-200">⏳ PIUTANG</span>
+                </td>
+                <td class="p-3 border text-center">
+                  <router-link :to="'/buat-nota?edit=' + nota.ID" class="bg-green-500 text-white px-3 py-1.5 rounded font-bold hover:bg-green-600 transition shadow-sm">
+                      Lihat / Edit
+                  </router-link>
+                </td>
+              </tr>
+              <tr v-if="filteredListNota.length === 0">
+                <td colspan="5" class="p-6 text-center text-gray-500 italic">Tidak ada nota yang cocok dengan filter.</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1">Pilih Toko</label>
-          <select 
-            v-model="filterTokoSuperadmin" 
-            class="w-full border rounded p-2 outline-none font-semibold cursor-pointer"
-          >
-            <option value="semua">-- Tampilkan Semua Toko --</option>
-            <option v-for="t in filteredUniqueTokos" :key="t.id" :value="t.id">
-              {{ t.nama }}
-            </option>
-          </select>
-          <p class="text-[10px] text-gray-400 mt-1 italic">* Pilihan menyesuaikan filter siklus</p>
-        </div>
-
       </div>
 
-      <div class="overflow-x-auto rounded border border-gray-200">
-        <table class="w-full text-left border-collapse text-sm">
-          <thead class="bg-blue-600 text-white uppercase text-xs">
-            <tr>
-              <th class="p-3 border">Tanggal</th>
-              <th class="p-3 border">No. Nota</th>
-              <th class="p-3 border">Nama Toko</th>
-              <th class="p-3 border text-right">Total Kirim</th>
-              <th class="p-3 border text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="nota in filteredListNota" :key="nota.ID" class="hover:bg-gray-50">
-              <td class="p-3 border font-medium">{{ formatTanggal(nota.TanggalKirim) }}</td>
-              <td class="p-3 border font-mono font-bold">{{ nota.NoNota }}</td>
-              <td class="p-3 border">{{ nota.NamaTokoSnapshot || nota.Toko?.NamaToko }}</td>
-              <td class="p-3 border text-right">Rp {{ nota.JumlahKirim.toLocaleString() }}</td>
-              <td class="p-3 border text-center">
-                <router-link :to="'/buat-nota?edit=' + nota.ID" class="bg-green-500 text-white px-3 py-1.5 rounded font-bold hover:bg-green-600 transition shadow-sm">
+      <div v-if="activeTab === 'PESANAN'">
+        
+        <!-- KOTAK FILTER PO -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-yellow-50 p-4 border border-yellow-200 rounded-lg">
+          <div>
+            <label class="block text-xs font-bold text-yellow-800 mb-1">Filter Waktu</label>
+            <select v-model="filterWaktuPO" class="w-full border border-yellow-300 rounded p-2 outline-none font-semibold bg-white">
+              <option value="14">2 Minggu Terakhir</option>
+              <option value="30">1 Bulan Terakhir</option>
+              <option value="semua">Semua Riwayat</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-yellow-800 mb-1">Pilih Titik Ambil</label>
+            <select v-model="filterTokoPO" class="w-full border border-yellow-300 rounded p-2 outline-none font-semibold cursor-pointer bg-white">
+              <option value="semua">-- Tampilkan Semua Titik --</option>
+              <option v-for="t in filteredUniqueTokosPO" :key="t.id" :value="t.id">
+                {{ t.nama }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded border border-yellow-200">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-yellow-500 text-yellow-950 uppercase text-xs">
+              <tr>
+                <th class="p-3 border-r border-yellow-600">Jadwal Kirim</th>
+                <th class="p-3 border-r border-yellow-600">No. PO & Pemesan</th>
+                <th class="p-3 border-r border-yellow-600">Titik Ambil</th>
+                <th class="p-3 border-r border-yellow-600 text-right">Total Tagihan</th>
+                <th class="p-3 border-r border-yellow-600 text-center">Status</th>
+                <th class="p-3 border text-center">Status Bayar</th>
+                <th class="p-3 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- UBAH listPesanan MENJADI filteredListPesanan DI SINI -->
+              <tr v-for="po in filteredListPesanan" :key="po.ID" class="hover:bg-yellow-50 border-b">
+                <td class="p-3 border-r font-medium text-gray-800">{{ formatTanggal(po.TanggalKirim) }}</td>
+                <td class="p-3 border-r">
+                  <p class="font-mono font-bold text-blue-800">{{ po.NoNota }}</p>
+                  <p class="text-xs font-bold text-gray-600">👤 {{ po.NamaPemesan }}</p>
+                </td>
+                <td class="p-3 border-r font-bold text-gray-700">
+                  <span v-if="po.JenisPengambilan === 'PABRIK'" class="bg-gray-200 px-2 py-1 rounded text-xs">🏢 PABRIK</span>
+                  <span v-else class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">🏪 {{ po.NamaTokoSnapshot }}</span>
+                </td>
+                <td class="p-3 border-r text-right font-black text-green-700">Rp {{ po.TotalBayar.toLocaleString() }}</td>
+                <td class="p-3 border-r text-center">
+                  <span v-if="po.Status === 'DIBATALKAN'" class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold">DIBATALKAN</span>
+                  <span v-else class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">{{ po.Status }}</span>
+                </td>
+                <td class="p-3 border text-center">
+                  <span v-if="po.is_lunas" class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold shadow-sm border border-green-200">✅ LUNAS</span>
+                  <span v-else class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold shadow-sm border border-red-200">⏳ PIUTANG</span>
+                </td>
+                <td class="p-3 text-center flex justify-center gap-2">
+                  <button v-if="po.Status !== 'DIBATALKAN'" @click="batalkanPO(po.ID, po.NoNota)" class="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 shadow-sm">
+                    Batal
+                  </button>
+                  <router-link v-if="po.Status !== 'DIBATALKAN'" :to="'/buat-pesanan?edit=' + po.ID" class="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600 shadow-sm">
                     Lihat / Edit
-                </router-link>
-              </td>
-            </tr>
-            <tr v-if="filteredListNota.length === 0">
-              <td colspan="5" class="p-6 text-center text-gray-500 italic">Tidak ada nota yang cocok dengan filter.</td>
-            </tr>
-          </tbody>
-        </table>
+                  </router-link>
+                </td>
+              </tr>
+              <tr v-if="filteredListPesanan.length === 0">
+                <td colspan="6" class="p-6 text-center text-gray-500 italic">Belum ada riwayat pesanan (PO) yang sesuai filter.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -250,11 +418,12 @@ const formatTanggal = (tgl) => {
         </div>
       </div>
 
-      <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-orange-500">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><span>🔔</span> Tugas Khusus Superadmin</h2>
+      <!-- KOTAK TUGAS REGULER / RETUR -->
+      <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-orange-500 mb-8">
+        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><span>🔔</span> Tugas Retur / Reguler</h2>
         
         <div v-if="notaTugas.length === 0" class="text-center p-4 text-gray-500 italic text-sm border border-dashed rounded">
-          Belum ada tugas khusus dari Superadmin.
+          Belum ada tugas retur khusus dari Superadmin.
         </div>
 
         <div v-for="nota in notaTugas" :key="'t-'+nota.ID" class="bg-orange-50 p-3 border border-orange-200 rounded mb-2 flex justify-between items-center">
@@ -268,6 +437,28 @@ const formatTanggal = (tgl) => {
             class="text-white px-4 py-2 rounded font-bold text-sm shadow-sm transition"
           >
             {{ nota.JumlahRetur > 0 ? 'Perbaiki Retur' : 'Selesaikan' }}
+          </router-link>
+        </div>
+      </div>
+
+      <!-- KOTAK TUGAS PO / PESANAN -->
+      <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-yellow-500">
+        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><span>🎂</span> Tugas Antar Pesanan (PO)</h2>
+        
+        <div v-if="poTugas.length === 0" class="text-center p-4 text-gray-500 italic text-sm border border-dashed rounded">
+          Belum ada tugas antar PO dari Superadmin.
+        </div>
+
+        <div v-for="po in poTugas" :key="'po-'+po.ID" class="bg-yellow-50 p-3 border border-yellow-400 rounded mb-2 flex justify-between items-center shadow-sm">
+          <div>
+            <p class="font-bold font-mono text-yellow-900">{{ po.NoNota }}</p>
+            <p class="text-xs text-yellow-800">👤 {{ po.NamaPemesan }} | 📍 {{ po.NamaTokoSnapshot }}</p>
+          </div>
+          <router-link 
+            :to="'/buat-pesanan?edit=' + po.ID" 
+            class="bg-yellow-600 text-white px-4 py-2 rounded font-bold text-sm shadow-sm transition hover:bg-yellow-700"
+          >
+            Lihat Detail PO
           </router-link>
         </div>
       </div>

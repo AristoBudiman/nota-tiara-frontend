@@ -7,6 +7,7 @@ import Rangkuman from '../pages/Rangkuman.vue'
 import MasterToko from '../pages/MasterToko.vue'
 import MasterBarang from '../pages/MasterBarang.vue'
 import Sampah from '../pages/Sampah.vue'
+import BuatPesanan from '../pages/buat-pesanan.vue'
 
 const routes = [
   { path: '/', redirect: '/login' }, 
@@ -17,7 +18,8 @@ const routes = [
   { path: '/rangkuman', component: Rangkuman },
   { path: '/master-toko', component: MasterToko },
   { path: '/master-barang', component: MasterBarang },
-  { path: '/sampah', component: Sampah }
+  { path: '/sampah', component: Sampah },
+  { path: '/buat-pesanan', component: BuatPesanan }
 ]
 
 const router = createRouter({

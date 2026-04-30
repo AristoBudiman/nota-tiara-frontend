@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 
 const rawNotas = ref([])
+const activeTab = ref('REGULER') // Default buka tab reguler
+const dataPesanan = ref([])      // Wadah untuk data dari backend pesanan
 
 const getLocalDateString = (d) => {
   const date = d ? new Date(d) : new Date()
@@ -51,7 +53,7 @@ const penjelasanTanggal = computed(() => {
   return `Menarik data pengiriman aktual di sekitar tanggal ${targetTanggalNota.value} (Toleransi 3 Hari).`
 })
 
-const fetchData = async () => {
+const fetchDataReguler = async () => {
   try {
     const token = localStorage.getItem('admin_token')
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notas`, {
@@ -68,6 +70,26 @@ const fetchData = async () => {
   } catch (err) {
     console.error("Gagal konek ke Backend:", err)
   }
+}
+
+// Fungsi baru tarik data pesanan
+const fetchDataPesanan = async () => {
+  try {
+    const token = localStorage.getItem('admin_token')
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pesanan/catatan?tanggal=${selectedTanggal.value}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    const data = await res.json()
+    dataPesanan.value = data || []
+  } catch (err) {
+    console.error("Gagal narik pesanan:", err)
+  }
+}
+
+// Fungsi pengatur lalu lintas (otomatis milih fungsi mana yang ditarik berdasarkan Tab)
+const fetchAll = () => {
+  if (activeTab.value === 'REGULER') fetchDataReguler()
+  else fetchDataPesanan()
 }
 
 const filteredTokos = computed(() => {
@@ -236,8 +258,29 @@ const getTotals = (tokoID) => {
   return { kirim: totalNominalKirim, retur: totalNominalRetur }
 }
 
+const rekapPesanan = computed(() => {
+  const tokosMap = new Set()
+  const barangsMap = new Map()
+
+  dataPesanan.value.forEach(row => {
+    tokosMap.add(row.nama_toko) // Masukin nama toko / 'PABRIK'
+    
+    if (!barangsMap.has(row.nama_barang_bebas)) {
+      barangsMap.set(row.nama_barang_bebas, {})
+    }
+    const currentBarang = barangsMap.get(row.nama_barang_bebas)
+    currentBarang[row.nama_toko] = (currentBarang[row.nama_toko] || 0) + row.total_banyak
+  })
+
+  return {
+    kolomToko: Array.from(tokosMap).sort(), // Untuk header tabel atas
+    barisBarang: Array.from(barangsMap.entries()).sort() // Untuk baris barang kiri
+  }
+})
+
 const exportToExcel = () => {
-  const originalTable = document.getElementById('table-catatan-besar')
+  const targetId = activeTab.value === 'REGULER' ? 'table-catatan-besar' : 'table-pesanan'
+  const originalTable = document.getElementById(targetId)
   if (!originalTable) return alert('Tabel belum siap!')
 
   const table = originalTable.cloneNode(true)
@@ -312,10 +355,10 @@ const geserHari = (offset) => {
   selectedTanggal.value = `${y}-${m}-${d}`
   
   // 4. Tarik data dari database
-  fetchData()
+  fetchAll()
 }
 
-onMounted(fetchData)
+onMounted(fetchAll)
 </script>
 
 <template>
@@ -323,10 +366,23 @@ onMounted(fetchData)
     <div class="flex justify-between items-start mb-6">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">Catatan Besar Harian</h1>
-        <p class="text-sm font-medium text-blue-600 mt-1">
+        <!-- SWITCH TAB NAVIGASI -->
+        <div class="flex mt-3 bg-gray-200 p-1 rounded-lg w-max">
+          <button @click="activeTab = 'REGULER'; fetchAll()" 
+                  class="px-4 py-2 rounded-md font-bold text-sm transition"
+                  :class="activeTab === 'REGULER' ? 'bg-white shadow text-blue-800' : 'text-gray-500 hover:text-gray-800'">
+            📦 PENGIRIMAN REGULER
+          </button>
+          <button @click="activeTab = 'PESANAN'; fetchAll()" 
+                  class="px-4 py-2 rounded-md font-bold text-sm transition"
+                  :class="activeTab === 'PESANAN' ? 'bg-yellow-400 shadow text-yellow-900' : 'text-gray-500 hover:text-gray-800'">
+            🎂 PESANAN KHUSUS (PO)
+          </button>
+        </div>
+        <p v-if="activeTab === 'REGULER'" class="text-sm font-medium text-blue-600 mt-1">
           Fase: <span class="uppercase font-bold">{{ isFaseRetur ? 'Fokus Retur' : 'Fokus Kirim' }}</span>
         </p>
-        <p class="text-xs text-gray-500 mt-1 italic">
+        <p v-if="activeTab === 'REGULER'" class="text-xs text-gray-500 mt-1 italic">
           * {{ penjelasanTanggal }}
         </p>
       </div>
@@ -346,7 +402,7 @@ onMounted(fetchData)
             <input 
               type="date" 
               v-model="selectedTanggal" 
-              @change="fetchData" 
+              @change="fetchAll" 
               class="border-2 border-gray-300 rounded px-4 py-2 font-bold bg-white focus:outline-none focus:border-blue-500 h-10"
             />
 
@@ -361,7 +417,7 @@ onMounted(fetchData)
         </div>
         
         <button 
-          @click="fetchData" 
+          @click="fetchAll" 
           class="bg-blue-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-blue-700 transition border-2 border-blue-600 flex items-center gap-2 h-10.5"
           title="Tarik data terbaru dari database"
         >
@@ -375,68 +431,123 @@ onMounted(fetchData)
         </button>
       </div>
     </div>
+    
+    <div v-if="activeTab === 'REGULER'">
+      <div v-if="filteredTokos.length === 0" class="bg-yellow-100 text-yellow-800 p-4 rounded mb-4">
+        Tidak ada siklus toko yang jadwalnya beroperasi di tanggal ini.
+      </div>
 
-    <div v-if="filteredTokos.length === 0" class="bg-yellow-100 text-yellow-800 p-4 rounded mb-4">
-      Tidak ada siklus toko yang jadwalnya beroperasi di tanggal ini.
+      <div v-else class="bg-white rounded border overflow-x-auto shadow-sm">
+        <table id="table-catatan-besar" class="w-full text-sm border-collapse">
+          <thead class="bg-gray-800 text-white">
+            <tr>
+              <th class="p-3 border border-gray-700 text-left sticky left-0 bg-gray-800 z-10" rowspan="2">
+                Nama Barang
+              </th>
+              <th v-for="toko in filteredTokos" :key="toko.ID" colspan="2" class="p-2 border border-gray-700 text-center">
+                {{ toko.NamaToko }}
+              </th>
+            </tr>
+            <tr class="bg-gray-700 text-[10px] uppercase tracking-widest">
+              <template v-for="toko in filteredTokos" :key="'sub-'+toko.ID">
+                <th class="p-2 border border-gray-600 text-center w-16" :class="{'text-gray-400': isFaseRetur}">Kirim</th>
+                <th class="p-2 border border-gray-600 text-center w-16" :class="{'text-gray-400': !isFaseRetur}">Retur</th>
+              </template>
+            </tr>
+          </thead>
+          
+          <tbody>
+            <tr v-for="barang in uniqueBarangs" :key="barang.id" class="hover:bg-gray-50 border-b">
+              
+              <td class="p-3 border-r font-bold sticky left-0 bg-white shadow-sm">{{ barang.nama }}</td>
+              
+              <template v-for="toko in filteredTokos" :key="toko.ID + '-' + barang.id">
+                <td class="p-2 border-r text-center font-semibold text-blue-700" 
+                    :class="{'opacity-20': isFaseRetur && !toko.IsHarian}">
+                  {{ getCellData(toko.ID, barang.id).kirim }}
+                </td>
+
+                <td class="p-2 border-r text-center font-semibold text-red-600" 
+                    :class="{'opacity-20': !isFaseRetur && !toko.IsHarian}">
+                  {{ getCellData(toko.ID, barang.id).retur }}
+                </td>
+              </template>
+            </tr>
+          </tbody>
+
+          <tfoot class="bg-gray-100 font-bold border-t-2 border-gray-300">
+            <tr>
+              <td class="p-3 border-r sticky left-0 bg-gray-100 text-gray-700">Total Kirim (Rp)</td>
+              <template v-for="toko in filteredTokos" :key="'totK-'+toko.ID">
+                <td colspan="2" class="p-2 border-r text-center text-blue-800">
+                  {{ formatRp(getTotals(toko.ID).kirim) }}
+                </td>
+              </template>
+            </tr>
+            <tr>
+              <td class="p-3 border-r sticky left-0 bg-gray-100 text-gray-700">Total Retur (Rp)</td>
+              <template v-for="toko in filteredTokos" :key="'totR-'+toko.ID">
+                <td colspan="2" class="p-2 border-r text-center text-red-800">
+                  {{ formatRp(getTotals(toko.ID).retur) }}
+                </td>
+              </template>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
 
-    <div v-else class="bg-white rounded border overflow-x-auto shadow-sm">
-      <table id="table-catatan-besar" class="w-full text-sm border-collapse">
-        <thead class="bg-gray-800 text-white">
-          <tr>
-            <th class="p-3 border border-gray-700 text-left sticky left-0 bg-gray-800 z-10" rowspan="2">
-              Nama Barang
-            </th>
-            <th v-for="toko in filteredTokos" :key="toko.ID" colspan="2" class="p-2 border border-gray-700 text-center">
-              {{ toko.NamaToko }}
-            </th>
-          </tr>
-          <tr class="bg-gray-700 text-[10px] uppercase tracking-widest">
-            <template v-for="toko in filteredTokos" :key="'sub-'+toko.ID">
-              <th class="p-2 border border-gray-600 text-center w-16" :class="{'text-gray-400': isFaseRetur}">Kirim</th>
-              <th class="p-2 border border-gray-600 text-center w-16" :class="{'text-gray-400': !isFaseRetur}">Retur</th>
-            </template>
-          </tr>
-        </thead>
-        
-        <tbody>
-          <tr v-for="barang in uniqueBarangs" :key="barang.id" class="hover:bg-gray-50 border-b">
-            
-            <td class="p-3 border-r font-bold sticky left-0 bg-white shadow-sm">{{ barang.nama }}</td>
-            
-            <template v-for="toko in filteredTokos" :key="toko.ID + '-' + barang.id">
-              <td class="p-2 border-r text-center font-semibold text-blue-700" 
-                  :class="{'opacity-20': isFaseRetur && !toko.IsHarian}">
-                {{ getCellData(toko.ID, barang.id).kirim }}
+    <!-- TAMPILAN TAB PESANAN -->
+    <div v-if="activeTab === 'PESANAN'">
+      <div v-if="dataPesanan.length === 0" class="bg-gray-100 p-4 rounded text-center font-bold text-gray-500">
+        Tidak ada pesanan masuk untuk dikirim/diambil pada tanggal ini.
+      </div>
+      
+      <div v-else class="bg-white rounded border overflow-x-auto shadow-sm">
+        <table id="table-pesanan" class="w-full text-sm border-collapse">
+          <thead class="bg-yellow-500 text-yellow-950">
+            <tr>
+              <th class="p-3 border-r border-yellow-600 text-left sticky left-0 bg-yellow-500">Roti Pesanan</th>
+              <th v-for="toko in rekapPesanan.kolomToko" :key="toko" class="p-3 border-r border-yellow-600 text-center font-black">
+                {{ toko }}
+              </th>
+              <th class="p-3 border-l-4 border-yellow-700 text-center bg-yellow-600 text-white">Total Produksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="[namaBarang, dataToko] in rekapPesanan.barisBarang" :key="namaBarang" class="border-b hover:bg-yellow-50">
+              <td class="p-3 border-r font-bold sticky left-0 bg-white">{{ namaBarang }}</td>
+              
+              <td v-for="toko in rekapPesanan.kolomToko" :key="toko" class="p-3 border-r text-center font-medium">
+                {{ dataToko[toko] || '-' }}
               </td>
 
-              <td class="p-2 border-r text-center font-semibold text-red-600" 
-                  :class="{'opacity-20': !isFaseRetur && !toko.IsHarian}">
-                {{ getCellData(toko.ID, barang.id).retur }}
+              <!-- Total Per Baris -->
+              <td class="p-3 border-l-4 border-gray-300 text-center font-black text-lg bg-gray-50 text-blue-800">
+                {{ rekapPesanan.kolomToko.reduce((sum, t) => sum + (dataToko[t] || 0), 0) }}
               </td>
-            </template>
-          </tr>
-        </tbody>
-
-        <tfoot class="bg-gray-100 font-bold border-t-2 border-gray-300">
-          <tr>
-            <td class="p-3 border-r sticky left-0 bg-gray-100 text-gray-700">Total Kirim (Rp)</td>
-            <template v-for="toko in filteredTokos" :key="'totK-'+toko.ID">
-              <td colspan="2" class="p-2 border-r text-center text-blue-800">
-                {{ formatRp(getTotals(toko.ID).kirim) }}
+            </tr>
+          </tbody>
+          <tfoot class="bg-yellow-100 font-bold border-t-4 border-yellow-500">
+            <tr>
+              <td class="p-3 border-r border-yellow-300 sticky left-0 bg-yellow-100 text-yellow-900 uppercase">
+                TOTAL OMZET (Rp)
               </td>
-            </template>
-          </tr>
-          <tr>
-            <td class="p-3 border-r sticky left-0 bg-gray-100 text-gray-700">Total Retur (Rp)</td>
-            <template v-for="toko in filteredTokos" :key="'totR-'+toko.ID">
-              <td colspan="2" class="p-2 border-r text-center text-red-800">
-                {{ formatRp(getTotals(toko.ID).retur) }}
+              
+              <!-- Looping Total Rupiah per Toko -->
+              <td v-for="toko in rekapPesanan.kolomToko" :key="'tot-'+toko" class="p-3 border-r border-yellow-300 text-right text-yellow-800 text-sm">
+                {{ formatRp(dataPesanan.filter(d => d.nama_toko === toko).reduce((sum, d) => sum + d.total_rupiah, 0)) }}
               </td>
-            </template>
-          </tr>
-        </tfoot>
-      </table>
+              
+              <!-- Grand Total Ujung Kanan Bawah (Semua Rupiah) -->
+              <td class="p-3 border-l-4 border-yellow-500 text-right text-lg text-yellow-950 bg-yellow-200">
+                {{ formatRp(dataPesanan.reduce((sum, d) => sum + d.total_rupiah, 0)) }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
+
   </div>
 </template>
