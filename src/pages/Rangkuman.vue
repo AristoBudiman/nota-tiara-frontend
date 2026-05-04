@@ -68,7 +68,6 @@ const loadDataBulanIni = async () => {
   
   const dataReg = await fetchSummaryAPI(toYMD(firstDay), toYMD(now))
   if (dataReg) {
-    // Vaksin: Pastikan tidak null
     dataReg.perToko = dataReg.perToko || []
     dataReg.perBarang = dataReg.perBarang || []
     summaryBulanIni.value = dataReg
@@ -76,7 +75,6 @@ const loadDataBulanIni = async () => {
   
   const dataPO = await fetchSummaryPesananAPI(toYMD(firstDay), toYMD(now))
   if (dataPO) {
-    // Vaksin: Pastikan tidak null
     dataPO.per_titik = dataPO.per_titik || []
     dataPO.detail_barang = dataPO.detail_barang || []
     summaryPesananBulanIni.value = dataPO
@@ -112,7 +110,6 @@ const fetchDetailBarangPerToko = async () => {
   
   isLoadingDetail.value = true
   
-  // Menggunakan blok try-catch-finally agar status loading pasti mati meski error/kosong
   try {
     const token = localStorage.getItem('admin_token')
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/rangkuman-per-toko?start=${filter.value.start}&end=${filter.value.end}&toko_id=${selectedTokoDetail.value}`, {
@@ -121,7 +118,7 @@ const fetchDetailBarangPerToko = async () => {
     
     if (res.ok) {
       const data = await res.json()
-      barangPerTokoSelected.value = data || [] // Vaksin null
+      barangPerTokoSelected.value = data || []
     } else {
       barangPerTokoSelected.value = []
     }
@@ -129,12 +126,11 @@ const fetchDetailBarangPerToko = async () => {
     console.error(err)
     barangPerTokoSelected.value = []
   } finally {
-    isLoadingDetail.value = false // Berapapun datanya, loading dijamin berhenti!
+    isLoadingDetail.value = false 
   }
 }
 
 const detailBarangPO = computed(() => {
-  // Vaksin keamanan ganda: Cek semua induknya dulu sebelum di-filter
   if (!customSummaryPesanan.value || !selectedTokoPO.value || !customSummaryPesanan.value.detail_barang) {
     return []
   }
@@ -146,13 +142,11 @@ onMounted(() => {
 })
 </script>
 
-
 <template>
   <div class="p-8 bg-gray-50 min-h-screen">
     <div class="max-w-6xl mx-auto">
       <h1 class="text-3xl font-bold text-gray-900 mb-8">Rangkuman Keuangan (Basis Catatan Besar)</h1>
 
-      <!-- TAB NAVIGASI RANGKUMAN -->
       <div class="flex mb-8 bg-gray-200 p-1 rounded-lg w-max shadow-sm">
         <button @click="activeTab = 'REGULER'" 
                 class="px-5 py-2.5 rounded-md font-bold text-sm transition"
@@ -177,7 +171,8 @@ onMounted(() => {
               <p class="text-xs text-red-700 font-bold uppercase">Total Retur</p>
               <div class="flex items-baseline gap-2">
                 <p class="text-xl font-black text-red-900">Rp {{ formatRp(summaryBulanIni.retur) }}</p>
-                <span class="text-xs font-bold text-red-600">({{ summaryBulanIni.persentase.toFixed(1) }}%)</span>
+                <!-- Menampilkan nilai dari Backend -->
+                <span class="text-xs font-bold text-red-600">({{ (summaryBulanIni.persentase || 0).toFixed(1) }}%)</span>
               </div>
             </div>
             <div class="p-4 bg-green-100 rounded-lg border-2 border-green-200">
@@ -213,7 +208,8 @@ onMounted(() => {
               <p class="text-xs text-gray-500 font-bold">TOTAL RETUR</p>
               <div class="flex items-baseline gap-2">
                 <p class="text-lg font-black text-gray-800">Rp {{ formatRp(customSummary.retur) }}</p>
-                <span class="text-xs font-bold text-red-600">({{ customSummary.persentase.toFixed(1) }}%)</span>
+                <!-- Menampilkan nilai dari Backend -->
+                <span class="text-xs font-bold text-red-600">({{ (customSummary.persentase || 0).toFixed(1) }}%)</span>
               </div>
             </div>
             <div class="p-4 bg-gray-900 text-white rounded-lg shadow-md">
@@ -242,8 +238,9 @@ onMounted(() => {
                     <td class="p-3 border-r font-bold text-gray-800">{{ toko.nama }}</td>
                     <td class="p-3 border-r text-right text-blue-700 font-medium">{{ formatRp(toko.kirim) }}</td>
                     <td class="p-3 border-r text-right text-red-600 font-medium">{{ formatRp(toko.retur) }}</td>
+                    <!-- Menampilkan nilai dari Backend -->
                     <td class="p-3 border-r text-center font-bold" :class="toko.persentase > 20 ? 'text-red-600' : 'text-orange-600'">
-                      {{ toko.persentase.toFixed(1) }}%
+                      {{ (toko.persentase || 0).toFixed(1) }}%
                     </td>
                     <td class="p-3 text-right font-black text-gray-900">
                       {{ formatRp(toko.pendapatan) }}
@@ -273,8 +270,9 @@ onMounted(() => {
                     <td class="p-3 border-r font-bold text-gray-800">{{ brg.nama }}</td>
                     <td class="p-3 border-r text-center font-medium">{{ brg.qty_kirim }}</td>
                     <td class="p-3 border-r text-center text-red-600 font-medium">{{ brg.qty_retur }}</td>
+                    <!-- Menampilkan nilai dari Backend -->
                     <td class="p-3 border-r text-center font-bold" :class="brg.persentase > 20 ? 'text-red-600' : 'text-orange-600'">
-                      {{ brg.persentase.toFixed(1) }}%
+                      {{ (brg.persentase || 0).toFixed(1) }}%
                     </td>
                     <td class="p-3 text-center font-black text-green-700 bg-green-50">
                       {{ brg.qty_laku }}
@@ -324,9 +322,10 @@ onMounted(() => {
                     <td class="p-3 text-center font-medium">{{ item.total_kirim }}</td>
                     <td class="p-3 text-center text-red-600 font-medium">{{ item.total_retur }}</td>
                     
+                    <!-- Menampilkan nilai dari Backend -->
                     <td class="p-3 text-center font-bold" 
-                        :class="(item.total_retur / item.total_kirim * 100) > 20 ? 'text-red-600' : 'text-orange-600'">
-                      {{ item.total_kirim > 0 ? (item.total_retur / item.total_kirim * 100).toFixed(1) : 0 }}%
+                        :class="item.persentase > 20 ? 'text-red-600' : 'text-orange-600'">
+                      {{ (item.persentase || 0).toFixed(1) }}%
                     </td>
 
                     <td class="p-3 text-center font-black text-green-700 bg-green-50">
@@ -341,8 +340,6 @@ onMounted(() => {
       </div>
 
       <div v-if="activeTab === 'PESANAN'">
-        
-        <!-- SUMMARY BULAN INI (PO) -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-yellow-200 mb-8">
           <h2 class="text-sm font-bold text-yellow-700 uppercase tracking-widest mb-4">Omzet Pesanan Bulan Ini ({{ namaBulanInI }})</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6" v-if="summaryPesananBulanIni">
@@ -357,7 +354,6 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- FILTER TANGGAL (Sama dengan reguler, tapi datanya untuk PO) -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h2 class="text-lg font-bold text-gray-800 mb-4">Filter Tanggal Omzet Pesanan</h2>
           
@@ -375,7 +371,6 @@ onMounted(() => {
             </button>
           </div>
 
-          <!-- HASIL FILTER PO -->
           <div v-if="customSummaryPesanan" class="border-t pt-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <div class="p-4 border rounded-lg bg-gray-50 text-center">
@@ -388,7 +383,6 @@ onMounted(() => {
               </div>
             </div>
 
-            <!-- TABEL BREAKDOWN TITIK AMBIL -->
             <h3 class="text-md font-bold text-gray-800 mb-4 flex items-center gap-2">
               📍 Rincian Omzet Berdasarkan Titik Ambil / Mitra
             </h3>
@@ -418,13 +412,12 @@ onMounted(() => {
                 </tbody>
               </table>
             </div>
-            <!-- ANALISIS DETAIL BARANG PO PER TOKO -->
+            
             <div class="border-t border-yellow-300 pt-8 mt-10">
               <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <span>🔍</span> Analisis Roti Pesanan per Mitra / Titik
               </h3>
               
-              <!-- Dropdown Pilih Toko -->
               <div class="flex gap-3 mb-6 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                 <div class="flex-1">
                   <label class="block text-xs font-bold text-yellow-800 mb-1">Pilih Titik Pengambilan:</label>
@@ -438,7 +431,6 @@ onMounted(() => {
                 </div>
               </div>
 
-              <!-- Tabel Detail Barang PO -->
               <div v-if="selectedTokoPO && detailBarangPO.length > 0" class="overflow-x-auto border border-yellow-300 rounded-lg shadow-sm">
                 <table class="w-full text-sm text-left">
                   <thead class="bg-yellow-600 text-white">
@@ -457,7 +449,6 @@ onMounted(() => {
                       </td>
                     </tr>
                   </tbody>
-                  <!-- Total Baris Bawah -->
                   <tfoot class="bg-yellow-100">
                      <tr>
                         <td class="p-3 text-right font-bold text-yellow-900">TOTAL:</td>
