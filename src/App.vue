@@ -34,7 +34,7 @@ const handleLogout = () => {
 
 <template>
   <div class="min-h-screen bg-gray-50">
-    <nav v-if="token && route.path !== '/login'" class="bg-blue-900 text-white shadow-lg no-print">
+    <nav v-if="token && route.path !== '/login'" class="bg-blue-900 text-white shadow-lg no-print sticky top-0 z-50">
       <div class="max-w-6xl mx-auto px-4">
         <div class="flex flex-col md:flex-row justify-between md:items-center py-3 md:py-0 md:h-16">
           
