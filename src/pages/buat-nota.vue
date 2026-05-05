@@ -438,6 +438,9 @@ const cetakPDF = () => { window.print() }
     max-width: 100% !important; 
     min-width: 100% !important;
   }
+  .print-transparent { 
+    visibility: hidden !important; 
+  }
 }
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .hide-arrows::-webkit-outer-spin-button, .hide-arrows::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
