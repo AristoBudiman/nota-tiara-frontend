@@ -426,13 +426,18 @@ const cetakPDF = () => { window.print() }
 
 <style scoped>
 @media print {
-  @page { size: B5 portrait; margin: 0; }
+  @page { margin: 5mm; }
   body { margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .overflow-x-auto { overflow: visible !important; }
-  .nota-container { box-shadow: none !important; border: none !important; margin: 0 auto !important; padding: 10mm !important; width: 100% !important; max-width: none !important; }
-  input, select { border: none !important; background: transparent !important; outline: none !important; appearance: none; -webkit-appearance: none; }
-  .print-transparent { color: transparent !important; }
-  .print-row td { padding-top: 2px !important; padding-bottom: 2px !important; line-height: 1 !important; font-size: 11px !important; }
+  .nota-container { 
+    box-shadow: none !important; 
+    border: none !important; 
+    margin: 0 auto !important; 
+    padding: 0 !important;
+    width: 100% !important; 
+    max-width: 100% !important; 
+    min-width: 100% !important;
+  }
 }
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .hide-arrows::-webkit-outer-spin-button, .hide-arrows::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
