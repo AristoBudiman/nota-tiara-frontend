@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 
-const summaryBulanIni = ref({ kirim: 0, retur: 0, pendapatan: 0, persentase: 0, perToko: [], perBarang: [] })
+const summaryBulanIni = ref({ kirim: 0, retur: 0, diskon: 0, pendapatan: 0, persentase: 0, perToko: [], perBarang: [] })
 const customSummary = ref(null)
 const barangPerToko = ref([]) 
 
@@ -159,10 +159,11 @@ onMounted(() => {
           🎂 OMZET PESANAN (PO)
         </button>
       </div>
+      
       <div v-if="activeTab === 'REGULER'">
         <div class="bg-white p-6 rounded-xl shadow-sm border border-blue-200 mb-8">
           <h2 class="text-sm font-bold text-blue-600 uppercase tracking-widest mb-4">Total Siklus Bulan Ini ({{ namaBulanInI }})</h2>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="p-4 bg-blue-50 rounded-lg">
               <p class="text-xs text-blue-700 font-bold uppercase">Total Kirim</p>
               <p class="text-xl font-black text-blue-900">Rp {{ formatRp(summaryBulanIni.kirim) }}</p>
@@ -171,9 +172,12 @@ onMounted(() => {
               <p class="text-xs text-red-700 font-bold uppercase">Total Retur</p>
               <div class="flex items-baseline gap-2">
                 <p class="text-xl font-black text-red-900">Rp {{ formatRp(summaryBulanIni.retur) }}</p>
-                <!-- Menampilkan nilai dari Backend -->
                 <span class="text-xs font-bold text-red-600">({{ (summaryBulanIni.persentase || 0).toFixed(1) }}%)</span>
               </div>
+            </div>
+            <div class="p-4 bg-orange-50 border border-orange-100 rounded-lg">
+              <p class="text-xs text-orange-700 font-bold uppercase">Diskon & Voucher</p>
+              <p class="text-xl font-black text-orange-900">Rp {{ formatRp(summaryBulanIni.diskon) }}</p>
             </div>
             <div class="p-4 bg-green-100 rounded-lg border-2 border-green-200">
               <p class="text-xs text-green-700 font-bold uppercase">Pendapatan Bersih</p>
@@ -199,7 +203,7 @@ onMounted(() => {
             </button>
           </div>
 
-          <div v-if="customSummary" class="border-t pt-6 grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div v-if="customSummary" class="border-t pt-6 grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="p-4 border rounded-lg bg-gray-50">
               <p class="text-xs text-gray-500 font-bold">TOTAL KIRIM</p>
               <p class="text-lg font-black text-gray-800">Rp {{ formatRp(customSummary.kirim) }}</p>
@@ -208,9 +212,12 @@ onMounted(() => {
               <p class="text-xs text-gray-500 font-bold">TOTAL RETUR</p>
               <div class="flex items-baseline gap-2">
                 <p class="text-lg font-black text-gray-800">Rp {{ formatRp(customSummary.retur) }}</p>
-                <!-- Menampilkan nilai dari Backend -->
                 <span class="text-xs font-bold text-red-600">({{ (customSummary.persentase || 0).toFixed(1) }}%)</span>
               </div>
+            </div>
+            <div class="p-4 border rounded-lg bg-orange-50">
+              <p class="text-xs text-orange-700 font-bold">DISKON & VOUCHER</p>
+              <p class="text-lg font-black text-orange-900">Rp {{ formatRp(customSummary.diskon) }}</p>
             </div>
             <div class="p-4 bg-gray-900 text-white rounded-lg shadow-md">
               <p class="text-xs font-bold opacity-70">PENDAPATAN BERSIH</p>
@@ -230,6 +237,7 @@ onMounted(() => {
                     <th class="p-3 border-b border-r text-right font-bold w-32">Kirim (Rp)</th>
                     <th class="p-3 border-b border-r text-right font-bold w-32 text-red-600">Retur (Rp)</th>
                     <th class="p-3 border-b border-r text-center font-bold w-24 text-orange-600">% Retur</th>
+                    <th class="p-3 border-b border-r text-right font-bold w-32 text-orange-600">Diskon (Rp)</th>
                     <th class="p-3 border-b text-right font-bold w-40 text-green-700">Net Income</th>
                   </tr>
                 </thead>
@@ -238,10 +246,10 @@ onMounted(() => {
                     <td class="p-3 border-r font-bold text-gray-800">{{ toko.nama }}</td>
                     <td class="p-3 border-r text-right text-blue-700 font-medium">{{ formatRp(toko.kirim) }}</td>
                     <td class="p-3 border-r text-right text-red-600 font-medium">{{ formatRp(toko.retur) }}</td>
-                    <!-- Menampilkan nilai dari Backend -->
                     <td class="p-3 border-r text-center font-bold" :class="toko.persentase > 20 ? 'text-red-600' : 'text-orange-600'">
                       {{ (toko.persentase || 0).toFixed(1) }}%
                     </td>
+                    <td class="p-3 border-r text-right text-orange-600 font-medium">{{ formatRp(toko.diskon) }}</td>
                     <td class="p-3 text-right font-black text-gray-900">
                       {{ formatRp(toko.pendapatan) }}
                     </td>
@@ -250,6 +258,7 @@ onMounted(() => {
               </table>
             </div>
           </div>
+          
           <div v-if="customSummary && customSummary.perBarang && customSummary.perBarang.length > 0" class="border-t pt-6 mt-8">
             <h3 class="text-md font-bold text-gray-800 mb-4 flex items-center gap-2">
               <span>📦</span> Rincian Penjualan Tiap Produk
@@ -270,7 +279,6 @@ onMounted(() => {
                     <td class="p-3 border-r font-bold text-gray-800">{{ brg.nama }}</td>
                     <td class="p-3 border-r text-center font-medium">{{ brg.qty_kirim }}</td>
                     <td class="p-3 border-r text-center text-red-600 font-medium">{{ brg.qty_retur }}</td>
-                    <!-- Menampilkan nilai dari Backend -->
                     <td class="p-3 border-r text-center font-bold" :class="brg.persentase > 20 ? 'text-red-600' : 'text-orange-600'">
                       {{ (brg.persentase || 0).toFixed(1) }}%
                     </td>
@@ -282,6 +290,7 @@ onMounted(() => {
               </table>
             </div>
           </div>
+          
           <div class="border-t pt-8 mt-10">
             <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
               <span>🔍</span> Analisis Detail Produk per Toko
@@ -321,13 +330,10 @@ onMounted(() => {
                     <td class="p-3 font-bold text-gray-800">{{ item.nama_barang }}</td>
                     <td class="p-3 text-center font-medium">{{ item.total_kirim }}</td>
                     <td class="p-3 text-center text-red-600 font-medium">{{ item.total_retur }}</td>
-                    
-                    <!-- Menampilkan nilai dari Backend -->
                     <td class="p-3 text-center font-bold" 
                         :class="item.persentase > 20 ? 'text-red-600' : 'text-orange-600'">
                       {{ (item.persentase || 0).toFixed(1) }}%
                     </td>
-
                     <td class="p-3 text-center font-black text-green-700 bg-green-50">
                       {{ item.total_laku }}
                     </td>
@@ -342,13 +348,18 @@ onMounted(() => {
       <div v-if="activeTab === 'PESANAN'">
         <div class="bg-white p-6 rounded-xl shadow-sm border border-yellow-200 mb-8">
           <h2 class="text-sm font-bold text-yellow-700 uppercase tracking-widest mb-4">Omzet Pesanan Bulan Ini ({{ namaBulanInI }})</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6" v-if="summaryPesananBulanIni">
+          <!-- UBAH GRID MENJADI 3 KOLOM -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6" v-if="summaryPesananBulanIni">
             <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-100">
               <p class="text-xs text-yellow-700 font-bold uppercase">Total SPK / Nota Selesai</p>
               <p class="text-2xl font-black text-yellow-900">{{ summaryPesananBulanIni.total_pesanan }} Nota</p>
             </div>
+            <div class="p-4 bg-orange-50 border border-orange-100 rounded-lg">
+              <p class="text-xs text-orange-700 font-bold uppercase">Total Voucher Diskon</p>
+              <p class="text-xl font-black text-orange-900">Rp {{ formatRp(summaryPesananBulanIni.total_diskon) }}</p>
+            </div>
             <div class="p-4 bg-green-100 rounded-lg border-2 border-green-200">
-              <p class="text-xs text-green-700 font-bold uppercase">Total Pendapatan Bersih (PO)</p>
+              <p class="text-xs text-green-700 font-bold uppercase">Pendapatan Bersih (PO)</p>
               <p class="text-2xl font-black text-green-900">Rp {{ formatRp(summaryPesananBulanIni.total_pendapatan) }}</p>
             </div>
           </div>
@@ -372,10 +383,15 @@ onMounted(() => {
           </div>
 
           <div v-if="customSummaryPesanan" class="border-t pt-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- UBAH GRID BAWAH MENJADI 3 KOLOM JUGA -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div class="p-4 border rounded-lg bg-gray-50 text-center">
                 <p class="text-xs text-gray-500 font-bold">NOTA PESANAN TERCETAK</p>
                 <p class="text-xl font-black text-gray-800">{{ customSummaryPesanan.total_pesanan }}</p>
+              </div>
+              <div class="p-4 border rounded-lg bg-orange-50 text-center border-b-4 border-orange-400">
+                <p class="text-xs font-bold opacity-70 uppercase tracking-widest text-orange-800">Total Voucher Diskon</p>
+                <p class="text-2xl font-black text-orange-700">Rp {{ formatRp(customSummaryPesanan.total_diskon) }}</p>
               </div>
               <div class="p-4 bg-gray-900 text-white rounded-lg shadow-md text-center border-b-4 border-yellow-500">
                 <p class="text-xs font-bold opacity-70 uppercase tracking-widest">Pendapatan PO (Custom)</p>
@@ -392,7 +408,8 @@ onMounted(() => {
                   <tr>
                     <th class="p-3 border-b border-r border-yellow-200 font-bold">Titik Pengambilan</th>
                     <th class="p-3 border-b border-r border-yellow-200 text-center font-bold w-32">Total SPK/Nota</th>
-                    <th class="p-3 border-b text-right font-bold w-48">Total Omzet (Rp)</th>
+                    <th class="p-3 border-b border-r border-yellow-200 text-right font-bold w-32 text-orange-600">Diskon (Rp)</th>
+                    <th class="p-3 border-b text-right font-bold w-48 text-green-700">Total Omzet (Rp)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -402,6 +419,7 @@ onMounted(() => {
                       <span v-else>🏪 {{ titik.nama_titik }}</span>
                     </td>
                     <td class="p-3 border-r text-center font-medium">{{ titik.total_nota }}</td>
+                    <td class="p-3 border-r text-right font-medium text-orange-600">{{ formatRp(titik.diskon) }}</td>
                     <td class="p-3 text-right font-black text-green-700">
                       {{ formatRp(titik.pendapatan) }}
                     </td>

@@ -21,10 +21,11 @@ const form = ref({
   jenis_pengambilan: 'PABRIK',
   toko_id: '',
   assigned_to: 0,
-  status: 'BELUM DIAMBIL'
+  status: 'BELUM DIAMBIL',
+  uang_muka: 0,
+  total_voucher: 0
 })
 
-// State untuk Form Baris Barang
 const details = ref([
   { isKustom: false, idBarangM: '', namaKustom: '', banyak: 1, hargaJual: 0, idResep: '', gramasi: 0 }
 ])
@@ -95,7 +96,6 @@ const generateNoNota = async () => {
   } catch (err) { console.error(err) }
 }
 
-// Fungsi Sapu Jagat untuk mereset form 100% bersih
 const resetForm = () => {
   form.value = {
     no_nota: '',
@@ -105,18 +105,17 @@ const resetForm = () => {
     toko_id: '',
     assigned_to: 0,
     status: 'BELUM DIAMBIL',
-    is_lunas: false
+    is_lunas: false,
+    uang_muka: 0,
+    total_voucher: 0
   }
   details.value = [{ isKustom: false, idBarangM: '', namaKustom: '', banyak: 1, hargaJual: 0, idResep: '', gramasi: 0 }]
   isEdit.value = false
   generateNoNota()
 }
 
-// Pengintai (Watcher) untuk mendeteksi jika URL berubah dari Edit ke Buat Baru
 watch(() => route.query.edit, (newVal) => {
-  if (!newVal) { // Jika query ?edit hilang (karena klik + Pesanan)
-    resetForm()
-  }
+  if (!newVal) resetForm()
 })
 
 onMounted(async () => {
@@ -144,7 +143,9 @@ onMounted(async () => {
         toko_id: poLama.TokoID || '',
         assigned_to: poLama.assigned_to,
         status: poLama.Status,
-        is_lunas: poLama.is_lunas || false
+        is_lunas: poLama.is_lunas || false,
+        uang_muka: poLama.uang_muka || 0,
+        total_voucher: poLama.total_voucher || 0
       }
 
       details.value = poLama.Details.map(d => ({
@@ -180,8 +181,10 @@ const onPilihBarangMaster = (index) => {
   if (brg) row.hargaJual = brg.HargaDefault
 }
 
-const totalBayar = computed(() => details.value.reduce((sum, row) => sum + (row.banyak * row.hargaJual), 0))
 const formatRp = (val) => new Intl.NumberFormat('id-ID').format(val || 0)
+
+const totalBayar = computed(() => details.value.reduce((sum, row) => sum + (row.banyak * row.hargaJual), 0))
+const sisaTagihan = computed(() => totalBayar.value - (form.value.uang_muka || 0) - (form.value.total_voucher || 0))
 
 const simpanPesanan = async () => {
   if (!form.value.nama_pemesan) return alert("Nama pemesan wajib diisi!")
@@ -207,7 +210,7 @@ const simpanPesanan = async () => {
       nama_barang_bebas: namaBebas,
       banyak: d.banyak,
       harga_jual: Number(d.hargaJual),
-      resep_id: null, // Nanti diupdate kalau modul resep sudah ada
+      resep_id: null,
       gramasi: Number(d.gramasi)
     })
   }
@@ -223,11 +226,13 @@ const simpanPesanan = async () => {
     assigned_to: Number(form.value.assigned_to || 0),
     status: form.value.status, 
     is_lunas: form.value.is_lunas, 
+    uang_muka: Number(form.value.uang_muka || 0),
+    total_voucher: Number(form.value.total_voucher || 0),
     details: payloadDetails
   }
 
   const url = isEdit.value ? `${import.meta.env.VITE_API_URL}/api/pesanan/${route.query.edit}` : `${import.meta.env.VITE_API_URL}/api/pesanan`
-  const method = isEdit.value ? 'POST' : 'POST' // Endpoint Update di backend mu didefinisikan sebagai POST
+  const method = isEdit.value ? 'POST' : 'POST' 
 
   try {
     const token = localStorage.getItem('admin_token')
@@ -254,7 +259,6 @@ const cetakPDF = () => window.print()
   <div class="nota-container p-8 max-w-5xl mx-auto bg-white shadow-lg my-4 border border-gray-200 rounded">
     
     <fieldset :disabled="isSales" class="border-0 p-0 m-0 w-full min-w-0">
-        <!-- HEADER PROFIL DAN INFO NOTA -->
         <div class="flex justify-between items-start mb-6 print:mb-2 border-b-2 pb-4 print:pb-2">
         <div class="flex flex-col items-start gap-1 flex-1 pr-4">
             <div class="shrink-0">
@@ -271,13 +275,11 @@ const cetakPDF = () => window.print()
             </div>
         </div>
 
-        <!-- Kunci lebar kanan agar tidak tergencet oleh Logo -->
         <div class="info-nota shrink-0 w-full md:w-90 print:w-70">
             <div class="text-right">
             <h2 class="text-xl font-bold mb-2 print:mb-1 bg-yellow-600 text-white px-2 inline-block">NOTA PESANAN (PO)</h2>
             </div>
             
-            <!-- Grid diseragamkan: Kiri Label (100px), Kanan Input (1fr) -->
             <div class="grid grid-cols-[100px_1fr] print:grid-cols-[80px_1fr] gap-x-2 gap-y-1 text-sm print:text-xs mt-1 items-center">
             
             <span class="font-semibold text-left">Pemesan:</span>
@@ -313,7 +315,6 @@ const cetakPDF = () => window.print()
                 <option value="DIAMBIL" class="bg-green-100 text-green-800">✅ DIAMBIL (Selesai)</option>
                 </select>
 
-                <!-- Checkbox Lunas disejajarkan ke dalam grid -->
                 <span class="font-semibold text-left text-green-600 print:hidden mt-1">Pembayaran:</span>
                 <label class="flex items-center justify-center gap-2 font-bold text-green-700 bg-green-50 px-2 py-0.5 mt-1 rounded border border-green-300 w-full print:hidden cursor-pointer hover:bg-green-100 transition shadow-sm">
                 <input type="checkbox" v-model="form.is_lunas" class="w-4 h-4 accent-green-600 cursor-pointer" />
@@ -324,7 +325,6 @@ const cetakPDF = () => window.print()
         </div>
         </div>
 
-        <!-- TABEL BARANG (Mirip dengan nota pengiriman) -->
         <div class="overflow-x-auto w-full mb-6">
         <table class="w-full border-collapse border border-gray-400 text-sm">
             <thead class="bg-gray-100">
@@ -334,8 +334,6 @@ const cetakPDF = () => window.print()
                 <th class="border border-gray-400 p-2 w-16">Qty</th>
                 <th class="border border-gray-400 p-2 w-24">Harga/Pcs</th>
                 <th class="border border-gray-400 p-2 w-28">Subtotal (Rp)</th>
-                <!-- Kolom Inventory Khusus Kustom -->
-                <th v-if="false" class="border border-gray-400 p-2 w-20 print:hidden text-purple-700 bg-purple-50 text-[9px]">Inventory:<br>Gramasi Total</th>
                 <th class="border border-gray-400 p-2 w-8 print:hidden text-red-500">❌</th>
             </tr>
             </thead>
@@ -369,12 +367,6 @@ const cetakPDF = () => window.print()
                 {{ formatRp(row.banyak * row.hargaJual) }}
                 </td>
 
-                <!-- Input Gramasi Khusus Barang Kustom (Sembunyi saat diprint) -->
-                <td v-if="false" class="border border-gray-400 p-1 text-center bg-purple-50 print:hidden">
-                <input v-if="row.isKustom" type="number" v-model.number="row.gramasi" class="w-full text-center outline-none bg-transparent font-bold text-purple-800 text-xs" placeholder="0 gr" />
-                <span v-else class="text-[10px] text-gray-400 italic">Otomatis</span>
-                </td>
-
                 <td class="border border-gray-400 p-1 text-center print:hidden">
                 <button @click="hapusBaris(idx)" class="text-red-500 hover:text-red-700 font-bold text-lg leading-none">×</button>
                 </td>
@@ -388,7 +380,6 @@ const cetakPDF = () => window.print()
         </div>
     </fieldset>
 
-    <!-- AREA FOOTER -->
     <div class="mt-4 print:mt-2 flex justify-between items-end">
       <div class="signature-area hidden print:flex gap-12 text-xs">
         <div class="text-center w-32">
@@ -403,15 +394,34 @@ const cetakPDF = () => window.print()
         </div>
       </div>
 
-      <div class="w-48 bg-yellow-50 print:bg-transparent p-2 rounded border border-gray-400 shadow-sm print:shadow-none ml-auto">
-        <div class="flex justify-between font-black text-sm text-yellow-900 print:text-black">
-          <span>TOTAL PO:</span>
-          <span>Rp{{ formatRp(totalBayar) }}</span>
+      <!-- KOTAK KALKULASI TAGIHAN BARU -->
+      <div class="w-64 bg-yellow-50 print:bg-transparent p-2 rounded border border-gray-400 shadow-sm print:shadow-none ml-auto">
+        <div class="flex justify-between text-xs mb-1 text-gray-700 print:text-black">
+          <span>Total Pesanan:</span>
+          <span class="font-bold">Rp{{ formatRp(totalBayar) }}</span>
+        </div>
+        
+        <!-- ROW DP: Sembunyi saat di-print jika tidak ada DP (0) -->
+        <div class="flex justify-between items-center text-xs mb-1 text-gray-700 print:text-black" 
+             :class="{'print:hidden': !form.uang_muka || form.uang_muka === 0}">
+          <span>Uang Muka (DP):</span>
+          <input type="number" v-model.number="form.uang_muka" class="w-24 text-right font-bold outline-none bg-white border border-gray-300 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
+        </div>
+        
+        <!-- ROW VOUCHER: Sembunyi saat di-print jika tidak ada Voucher (0) -->
+        <div class="flex justify-between items-center text-xs mb-1.5 text-gray-700 print:text-black border-b border-gray-300 pb-1" 
+             :class="{'print:hidden': !form.total_voucher || form.total_voucher === 0}">
+          <span>Voucher (Rp):</span>
+          <input type="number" v-model.number="form.total_voucher" class="w-24 text-right font-bold outline-none bg-white border border-gray-300 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
+        </div>
+
+        <div class="flex justify-between font-black text-sm text-yellow-900 print:text-black mt-1.5">
+          <span>SISA TAGIHAN:</span>
+          <span :class="{'text-red-600': sisaTagihan > 0, 'text-green-600': sisaTagihan <= 0}">Rp{{ formatRp(sisaTagihan) }}</span>
         </div>
       </div>
     </div>
 
-    <!-- ACTION BUTTONS -->
     <div class="mt-8 flex flex-col md:flex-row justify-end items-stretch md:items-center gap-3 print:hidden border-t-2 pt-4">
       <button v-if="!isSales" @click="simpanPesanan" class="justify-center bg-yellow-500 hover:bg-yellow-600 text-yellow-950 px-6 py-3 md:py-2 rounded shadow font-bold transition flex items-center gap-2">
         <span>💾</span> {{ isEdit ? 'UPDATE PESANAN' : 'SIMPAN PO' }}
@@ -434,5 +444,6 @@ const cetakPDF = () => window.print()
   .print-row td { padding-top: 2px !important; padding-bottom: 2px !important; line-height: 1 !important; font-size: 11px !important; }
 }
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.hide-arrows::-webkit-outer-spin-button, .hide-arrows::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 tbody tr:nth-child(even) { background-color: #f9fafb; }
 </style>
