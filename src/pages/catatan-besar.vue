@@ -24,9 +24,9 @@ const dayOfWeek = computed(() => {
 
 const getSiklusQuery = () => {
   const d = dayOfWeek.value
-  if (d === 1 || d === 4) return 'siklus_kamis_senin'
-  if (d === 2 || d === 5) return 'siklus_jumat_selasa'
-  if (d === 3 || d === 6) return 'siklus_sabtu_rabu'
+  if (d === 1 || d === 4) return 'SiklusKamisSenin'
+  if (d === 2 || d === 5) return 'SiklusJumatSelasa'
+  if (d === 3 || d === 6) return 'SiklusSabtuRabu'
   return '' 
 }
 
@@ -102,10 +102,27 @@ const uniqueBarangs = computed(() => {
   return Array.from(mapBarang.values()).sort((a, b) => a.nama.localeCompare(b.nama))
 })
 
+// 1. BUAT KAMUS MEMORI (Hanya dihitung 1x oleh Vue)
+const cellDictionary = computed(() => {
+  const dict = {}
+  rawDataBesar.value.forEach(row => {
+    // Membuat kunci unik, contoh: "Toko C-Roti Tawar"
+    const key = `${row.nama_toko}-${row.nama_barang}`
+    
+    if (!dict[key]) {
+      dict[key] = { kirim: 0, retur: 0 }
+    }
+    // Jika backend pecah baris, dia akan otomatis dijumlahkan di sini. Sangat aman!
+    dict[key].kirim += row.qty_kirim
+    dict[key].retur += row.qty_retur
+  })
+  return dict
+})
+
+// 2. FUNGSI PENGAMBILAN DATA INSTAN (Tidak ada looping lagi!)
 const getCellData = (namaToko, namaBarang) => {
-  const row = rawDataBesar.value.find(r => r.nama_toko === namaToko && r.nama_barang === namaBarang)
-  if (!row) return { kirim: 0, retur: 0 }
-  return { kirim: row.qty_kirim, retur: row.qty_retur }
+  const key = `${namaToko}-${namaBarang}`
+  return cellDictionary.value[key] || { kirim: 0, retur: 0 }
 }
 
 const getTotals = (namaToko) => {

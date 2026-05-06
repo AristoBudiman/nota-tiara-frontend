@@ -22,6 +22,8 @@ const form = ref({
   toko_id: '',
   assigned_to: 0,
   status: 'BELUM DIAMBIL',
+  is_lunas: false,
+  ongkir: 0,
   uang_muka: 0,
   total_voucher: 0
 })
@@ -106,6 +108,7 @@ const resetForm = () => {
     assigned_to: 0,
     status: 'BELUM DIAMBIL',
     is_lunas: false,
+    ongkir: 0,
     uang_muka: 0,
     total_voucher: 0
   }
@@ -144,6 +147,7 @@ onMounted(async () => {
         assigned_to: poLama.assigned_to,
         status: poLama.Status,
         is_lunas: poLama.is_lunas || false,
+        ongkir: poLama.ongkir || poLama.Ongkir || 0,
         uang_muka: poLama.uang_muka || 0,
         total_voucher: poLama.total_voucher || 0
       }
@@ -184,7 +188,7 @@ const onPilihBarangMaster = (index) => {
 const formatRp = (val) => new Intl.NumberFormat('id-ID').format(val || 0)
 
 const totalBayar = computed(() => details.value.reduce((sum, row) => sum + (row.banyak * row.hargaJual), 0))
-const sisaTagihan = computed(() => totalBayar.value - (form.value.uang_muka || 0) - (form.value.total_voucher || 0))
+const sisaTagihan = computed(() => totalBayar.value + (form.value.ongkir || 0) - (form.value.uang_muka || 0) - (form.value.total_voucher || 0))
 
 const simpanPesanan = async () => {
   if (!form.value.nama_pemesan) return alert("Nama pemesan wajib diisi!")
@@ -225,7 +229,8 @@ const simpanPesanan = async () => {
     toko_id: form.value.jenis_pengambilan === 'MITRA' ? Number(form.value.toko_id) : null,
     assigned_to: Number(form.value.assigned_to || 0),
     status: form.value.status, 
-    is_lunas: form.value.is_lunas, 
+    is_lunas: form.value.is_lunas,
+    ongkir: Number(form.value.ongkir || 0),
     uang_muka: Number(form.value.uang_muka || 0),
     total_voucher: Number(form.value.total_voucher || 0),
     details: payloadDetails
@@ -356,11 +361,11 @@ const cetakPDF = () => window.print()
                 </td>
                 
                 <td class="border border-gray-400 p-1">
-                <input type="number" v-model.number="row.banyak" min="1" class="w-full text-center outline-none focus:bg-yellow-100 font-bold" />
+                <input type="number" v-model.number="row.banyak" min="1" @wheel="$event.target.blur()" class="w-full text-center outline-none focus:bg-yellow-100 font-bold" />
                 </td>
                 
                 <td class="border border-gray-400 p-1 text-right">
-                <input type="number" v-model.number="row.hargaJual" :disabled="!row.isKustom" class="w-full text-right outline-none bg-transparent" :class="{'text-gray-500': !row.isKustom}" />
+                <input type="number" v-model.number="row.hargaJual" :disabled="!row.isKustom" @wheel="$event.target.blur()" class="w-full text-right outline-none bg-transparent" :class="{'text-gray-500': !row.isKustom}" />
                 </td>
                 
                 <td class="border border-gray-400 p-2 text-right font-bold text-blue-800">
@@ -400,19 +405,26 @@ const cetakPDF = () => window.print()
           <span>Total Pesanan:</span>
           <span class="font-bold">Rp{{ formatRp(totalBayar) }}</span>
         </div>
+
+        <!-- ROW ONGKIR: Sembunyi saat di-print jika tidak ada Ongkir (0) -->
+        <div class="flex justify-between items-center text-xs mb-1 text-gray-700 print:text-black" 
+             :class="{'print:hidden': !form.ongkir || form.ongkir === 0}">
+          <span>Ongkos Kirim:</span>
+          <input type="number" v-model.number="form.ongkir" @wheel="$event.target.blur()" class="w-24 text-right font-bold outline-none bg-white border border-gray-300 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
+        </div>
         
         <!-- ROW DP: Sembunyi saat di-print jika tidak ada DP (0) -->
         <div class="flex justify-between items-center text-xs mb-1 text-gray-700 print:text-black" 
              :class="{'print:hidden': !form.uang_muka || form.uang_muka === 0}">
           <span>Uang Muka (DP):</span>
-          <input type="number" v-model.number="form.uang_muka" class="w-24 text-right font-bold outline-none bg-white border border-gray-300 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
+          <input type="number" v-model.number="form.uang_muka" @wheel="$event.target.blur()" class="w-24 text-right font-bold outline-none bg-white border border-gray-300 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
         </div>
         
         <!-- ROW VOUCHER: Sembunyi saat di-print jika tidak ada Voucher (0) -->
         <div class="flex justify-between items-center text-xs mb-1.5 text-gray-700 print:text-black border-b border-gray-300 pb-1" 
              :class="{'print:hidden': !form.total_voucher || form.total_voucher === 0}">
           <span>Voucher (Rp):</span>
-          <input type="number" v-model.number="form.total_voucher" class="w-24 text-right font-bold outline-none bg-white border border-gray-300 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
+          <input type="number" v-model.number="form.total_voucher" @wheel="$event.target.blur()" class="w-24 text-right font-bold outline-none bg-white border border-gray-300 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
         </div>
 
         <div class="flex justify-between font-black text-sm text-yellow-900 print:text-black mt-1.5">

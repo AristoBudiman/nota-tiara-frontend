@@ -347,11 +347,11 @@ const cetakPDF = () => { window.print() }
             <td class="border border-gray-400 p-2 font-medium">{{ item.nama_barang }}</td>
             <td class="border border-gray-400 p-2 text-right">Rp{{ item.harga_barang.toLocaleString() }}</td>
             <td class="border border-gray-400 p-2">
-              <input type="number" v-model.number="item.banyak_kirim" :readonly="isEdit" class="w-full text-center outline-none focus:bg-blue-100" />
+              <input type="number" v-model.number="item.banyak_kirim" :readonly="isEdit" @wheel="$event.target.blur()" class="w-full text-center outline-none focus:bg-blue-100" />
             </td>
             <td class="border border-gray-400 p-2 text-right font-bold text-blue-800">{{ (item.banyak_kirim * item.harga_barang).toLocaleString() }}</td>
             <td class="border border-gray-400 p-2 bg-red-50">
-              <input type="number" v-model.number="item.banyak_retur" :readonly="!isEdit" class="w-full text-center outline-none bg-transparent focus:bg-red-100 text-red-700 font-bold" :class="{'print-transparent': isPrintPabrik}" />
+              <input type="number" v-model.number="item.banyak_retur" :readonly="!isEdit" @wheel="$event.target.blur()" class="w-full text-center outline-none bg-transparent focus:bg-red-100 text-red-700 font-bold" :class="{'print-transparent': isPrintPabrik}" />
             </td>
             <td class="border border-gray-400 p-2 text-right font-bold bg-red-50 text-red-700">
               <span :class="{'print-transparent': isPrintPabrik}">{{ (item.banyak_retur * item.harga_barang).toLocaleString() }}</span>
@@ -389,14 +389,14 @@ const cetakPDF = () => { window.print() }
         <div v-if="isEdit && (form.total_diskon > 0 || !isPrintPabrik)" class="flex justify-between items-center text-[10px] mb-1 text-orange-600 print:text-black" 
              :class="{'print:hidden': !form.total_diskon || form.total_diskon === 0}">
           <span>Diskon (Rp):</span>
-          <input type="number" v-model.number="form.total_diskon" class="w-20 text-right font-bold outline-none bg-white border border-gray-200 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
+          <input type="number" v-model.number="form.total_diskon" @wheel="$event.target.blur()" class="w-20 text-right font-bold outline-none bg-white border border-gray-200 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
         </div>
         
         <!-- ROW VOUCHER: Selalu tampil di layar, tapi sembunyi di kertas (print) jika nilainya 0 -->
         <div v-if="isEdit && (form.total_voucher > 0 || !isPrintPabrik)" class="flex justify-between items-center text-[10px] mb-1.5 text-orange-600 print:text-black border-b border-gray-300 pb-1" 
              :class="{'print:hidden': !form.total_voucher || form.total_voucher === 0}">
           <span>Voucher (Rp):</span>
-          <input type="number" v-model.number="form.total_voucher" class="w-20 text-right font-bold outline-none bg-white border border-gray-200 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
+          <input type="number" v-model.number="form.total_voucher" @wheel="$event.target.blur()" class="w-20 text-right font-bold outline-none bg-white border border-gray-200 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
         </div>
 
         <div class="flex justify-between font-black text-sm text-blue-900 print:text-black mt-1.5">
