@@ -13,7 +13,8 @@ const form = ref({
   SiklusKamisSenin: false, 
   SiklusJumatSelasa: false, 
   SiklusSabtuRabu: false,
-  IsHarian: false
+  IsHarian: false,
+  SiklusDua: false
 })
 
 watch(selectedSiklus, (val) => {
@@ -21,6 +22,7 @@ watch(selectedSiklus, (val) => {
   form.value.SiklusJumatSelasa = (val === 'JumatSelasa')
   form.value.SiklusSabtuRabu = (val === 'SabtuRabu')
   form.value.IsHarian = (val === 'Harian')
+  form.value.SiklusDua = (val === 'SiklusDua')
 })
 
 const fetchToko = async () => {
@@ -79,6 +81,7 @@ const editToko = (toko) => {
   else if (toko.SiklusJumatSelasa) selectedSiklus.value = 'JumatSelasa'
   else if (toko.SiklusSabtuRabu) selectedSiklus.value = 'SabtuRabu'
   else if (toko.IsHarian) selectedSiklus.value = 'Harian'
+  else if (toko.SiklusDua) selectedSiklus.value = 'SiklusDua'
   else selectedSiklus.value = ''
 }
 
@@ -106,7 +109,7 @@ const resetForm = () => {
   selectedSiklus.value = '' // Reset Radio Button
   form.value = {
     ID: null, NamaToko: '', Alamat: '', NoTelp: '',
-    SiklusKamisSenin: false, SiklusJumatSelasa: false, SiklusSabtuRabu: false, IsHarian: false
+    SiklusKamisSenin: false, SiklusJumatSelasa: false, SiklusSabtuRabu: false, IsHarian: false, SiklusDua: false
   }
 }
 
@@ -162,6 +165,10 @@ onMounted(fetchToko)
                 <span class="text-sm font-medium text-gray-700">Siklus Sabtu - Rabu</span>
               </label>
               <label class="flex items-center gap-3 p-2 bg-white rounded-lg border cursor-pointer hover:bg-blue-100 transition shadow-sm">
+                <input type="radio" v-model="selectedSiklus" value="SiklusDua" class="w-5 h-5 accent-blue-600">
+                <span class="text-sm font-medium text-gray-700">Siklus Dua (Grup 3 Harian)</span>
+              </label>
+              <label class="flex items-center gap-3 p-2 bg-white rounded-lg border cursor-pointer hover:bg-blue-100 transition shadow-sm">
                 <input type="radio" v-model="selectedSiklus" value="Harian" class="w-5 h-5 accent-blue-600">
                 <span class="text-sm font-medium text-gray-700">Harian</span>
               </label>
@@ -195,6 +202,7 @@ onMounted(fetchToko)
                   <span v-if="toko.SiklusKamisSenin" class="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-[10px] font-bold border border-blue-200">KAMIS-SENIN</span>
                   <span v-if="toko.SiklusJumatSelasa" class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-[10px] font-bold border border-green-200">JUMAT-SELASA</span>
                   <span v-if="toko.SiklusSabtuRabu" class="bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full text-[10px] font-bold border border-purple-200">SABTU-RABU</span>
+                  <span v-if="toko.SiklusDua" class="bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full text-[10px] font-bold border border-indigo-200">SIKLUS DUA</span>
                   <span v-if="toko.IsHarian" class="bg-purple-100 text-orange-700 px-2.5 py-1 rounded-full text-[10px] font-bold border border-purple-200">HARIAN</span>
                 </div>
               </td>

@@ -164,11 +164,11 @@ onMounted(async () => {
       // Hanya ingin menampilkan barang yang ada di nota lama ini.
       // PAKSA harganya pakai harga snapshot.
       const detailIds = notaLama.Details.map(d => d.BarangID)
-      const isTokoHarian = (notaLama.SiklusSnapshot === 'HARIAN')
+      const tampilSemuaBarang = (notaLama.SiklusSnapshot === 'HARIAN' || notaLama.SiklusSnapshot === 'SiklusDua')
       
       items.value = items.value
         // Toko harian akan mem-bypass filter ini sehingga SEMUA barang tampil
-        .filter(item => isTokoHarian || detailIds.includes(item.barang_id))
+        .filter(item => tampilSemuaBarang || detailIds.includes(item.barang_id))
         .map(item => {
           const d = notaLama.Details.find(det => det.BarangID === item.barang_id)
           return {
