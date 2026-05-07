@@ -139,7 +139,7 @@ onMounted(fetchBarang)
 
 
 <template>
-  <div class="p-8 bg-gray-50 min-h-screen">
+  <div class="p-4 md:p-8 bg-gray-50 min-h-screen">
     <div class="max-w-4xl mx-auto">
       <h1 class="text-3xl font-bold text-gray-900 mb-8">Kelola Master Barang</h1>
 
@@ -170,14 +170,14 @@ onMounted(fetchBarang)
         </form>
       </div>
 
-      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      <div class="bg-white rounded-xl border border-gray-200 overflow-x-auto shadow-sm">
         <div class="flex justify-end mb-3">
             <button @click="simpanUrutan" class="bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded shadow font-bold text-sm transition">
                 💾 Simpan Posisi Urutan
             </button>
         </div>
 
-        <table class="w-full text-sm text-left">
+        <table class="w-full text-sm text-left min-w-150">
             <thead class="bg-gray-800 text-white">
                 <tr>
                     <th class="p-4 w-24 text-center font-bold">Posisi</th> <th class="p-4 uppercase tracking-wider font-bold">Nama Barang</th>

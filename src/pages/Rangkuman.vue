@@ -147,7 +147,7 @@ onMounted(() => {
     <div class="max-w-6xl mx-auto">
       <h1 class="text-3xl font-bold text-gray-900 mb-8">Rangkuman Keuangan (Basis Catatan Besar)</h1>
 
-      <div class="flex mb-8 bg-gray-200 p-1 rounded-lg w-max shadow-sm">
+      <div class="flex flex-col sm:flex-row mb-8 bg-gray-200 p-1 rounded-lg w-full md:w-max shadow-sm gap-1">
         <button @click="activeTab = 'REGULER'" 
                 class="px-5 py-2.5 rounded-md font-bold text-sm transition"
                 :class="activeTab === 'REGULER' ? 'bg-white shadow-md text-blue-800' : 'text-gray-500 hover:text-gray-800'">

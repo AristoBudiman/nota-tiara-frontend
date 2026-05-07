@@ -231,11 +231,11 @@ onMounted(fetchAll)
 
 <template>
   <div class="p-8 bg-gray-50 min-h-screen">
-    <div class="flex justify-between items-start mb-6">
+    <div class="flex flex-col lg:flex-row justify-between items-start mb-6 gap-6 lg:gap-0">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">Catatan Besar Harian</h1>
         <!-- SWITCH TAB NAVIGASI -->
-        <div class="flex mt-3 bg-gray-200 p-1 rounded-lg w-max">
+        <div class="flex flex-col sm:flex-row mt-3 bg-gray-200 p-1 rounded-lg w-full md:w-max gap-1">
           <button @click="activeTab = 'REGULER'; fetchAll()" 
                   class="px-4 py-2 rounded-md font-bold text-sm transition"
                   :class="activeTab === 'REGULER' ? 'bg-white shadow text-blue-800' : 'text-gray-500 hover:text-gray-800'">
@@ -249,7 +249,7 @@ onMounted(fetchAll)
         </div>
       </div>
       
-      <div class="flex items-end gap-3">
+      <div class="flex flex-wrap lg:flex-nowrap items-end gap-3 w-full lg:w-auto">
         <div class="flex flex-col">
           <label class="text-xs font-bold text-gray-500 mb-1">Pilih Tanggal Harian</label>
           <div class="flex items-center gap-1">

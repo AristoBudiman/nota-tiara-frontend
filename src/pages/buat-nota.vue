@@ -279,7 +279,7 @@ const cetakPDF = () => { window.print() }
 <template>
   <div class="nota-container p-8 max-w-5xl mx-auto bg-white shadow-lg my-4 border border-gray-200 rounded">
     
-    <div class="flex justify-between items-start mb-6 print:mb-2 border-b-2 pb-4 print:pb-2">
+    <div class="flex flex-col md:flex-row justify-between items-start mb-6 print:mb-2 border-b-2 pb-4 print:pb-2 gap-4 md:gap-0">
       <div class="flex flex-col items-start gap-1 flex-1">
         <div class="shrink-0">
           <img :src="logoTiara" alt="Logo" class="w-48 max-h-24 object-contain print:hidden" />
@@ -296,7 +296,7 @@ const cetakPDF = () => { window.print() }
       </div>
 
       <div class="info-nota shrink-0 w-full md:w-80 print:w-70">
-        <div class="text-right">
+        <div class="text-left md:text-right print:text-right">
           <h2 class="text-xl font-bold mb-2 print:mb-1 bg-blue-900 text-white px-2 inline-block">NOTA PENGIRIMAN</h2>
         </div>
         <div class="grid grid-cols-[90px_1fr] print:grid-cols-[75px_1fr] gap-x-2 gap-y-1 text-sm print:text-xs mt-1 items-center">

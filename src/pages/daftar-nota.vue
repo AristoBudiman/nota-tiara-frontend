@@ -221,7 +221,7 @@ const formatTanggal = (tgl) => {
     </h1>
 
     <!-- TAB NAVIGASI KHUSUS SUPERADMIN -->
-    <div v-if="role === 'superadmin'" class="flex mb-6 bg-gray-200 p-1 rounded-lg w-max shadow-sm">
+    <div v-if="role === 'superadmin'" class="flex flex-col sm:flex-row mb-6 bg-gray-200 p-1 rounded-lg w-full md:w-max shadow-sm gap-1">
       <button @click="activeTab = 'REGULER'" 
               class="px-5 py-2.5 rounded-md font-bold text-sm transition"
               :class="activeTab === 'REGULER' ? 'bg-white shadow-md text-blue-800' : 'text-gray-500 hover:text-gray-800'">
@@ -275,7 +275,7 @@ const formatTanggal = (tgl) => {
         </div>
 
         <div class="overflow-x-auto rounded border border-gray-200">
-          <table class="w-full text-left border-collapse text-sm">
+          <table class="w-full text-left border-collapse text-sm min-w-200">
             <thead class="bg-blue-600 text-white uppercase text-xs">
               <tr>
                 <th class="p-3 border">Tanggal</th>
@@ -292,11 +292,11 @@ const formatTanggal = (tgl) => {
                 <td class="p-3 border font-mono font-bold">{{ nota.NoNota }}</td>
                 <td class="p-3 border">{{ nota.NamaTokoSnapshot || nota.Toko?.NamaToko }}</td>
                 <td class="p-3 border text-right">Rp {{ nota.JumlahKirim.toLocaleString() }}</td>
-                <td class="p-3 border text-center">
+                <td class="p-3 border text-center whitespace-nowrap">
                   <span v-if="nota.is_lunas" class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold shadow-sm border border-green-200">✅ LUNAS</span>
                   <span v-else class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold shadow-sm border border-red-200">⏳ PIUTANG</span>
                 </td>
-                <td class="p-3 border text-center">
+                <td class="p-3 border text-center whitespace-nowrap">
                   <router-link :to="'/buat-nota?edit=' + nota.ID" class="bg-green-500 text-white px-3 py-1.5 rounded font-bold hover:bg-green-600 transition shadow-sm">
                       Lihat / Edit
                   </router-link>
@@ -334,7 +334,7 @@ const formatTanggal = (tgl) => {
         </div>
 
         <div class="overflow-x-auto rounded border border-yellow-200">
-          <table class="w-full text-left border-collapse text-sm">
+          <table class="w-full text-left border-collapse text-sm min-w-225">
             <thead class="bg-yellow-500 text-yellow-950 uppercase text-xs">
               <tr>
                 <th class="p-3 border-r border-yellow-600">Jadwal Kirim</th>
@@ -359,15 +359,15 @@ const formatTanggal = (tgl) => {
                   <span v-else class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">🏪 {{ po.NamaTokoSnapshot }}</span>
                 </td>
                 <td class="p-3 border-r text-right font-black text-green-700">Rp {{ po.TotalBayar.toLocaleString() }}</td>
-                <td class="p-3 border-r text-center">
+                <td class="p-3 border-r text-center" whitespace-nowrap>
                   <span v-if="po.Status === 'DIBATALKAN'" class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold">DIBATALKAN</span>
                   <span v-else class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">{{ po.Status }}</span>
                 </td>
-                <td class="p-3 border text-center">
+                <td class="p-3 border text-center" whitespace-nowrap>
                   <span v-if="po.is_lunas" class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold shadow-sm border border-green-200">✅ LUNAS</span>
                   <span v-else class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold shadow-sm border border-red-200">⏳ PIUTANG</span>
                 </td>
-                <td class="p-3 text-center flex justify-center gap-2">
+                <td class="p-3 text-center flex justify-center gap-2 whitespace-nowrap">
                   <button v-if="po.Status !== 'DIBATALKAN'" @click="batalkanPO(po.ID, po.NoNota)" class="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 shadow-sm">
                     Batal
                   </button>

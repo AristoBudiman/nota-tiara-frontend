@@ -118,7 +118,7 @@ onMounted(fetchToko)
 
 
 <template>
-  <div class="p-8 bg-gray-50 min-h-screen">
+  <div class="p-4 md:p-8 bg-gray-50 min-h-screen">
     <div class="max-w-6xl mx-auto">
       <h1 class="text-3xl font-bold text-gray-900 mb-8">Kelola Master Toko</h1>
 
@@ -184,7 +184,7 @@ onMounted(fetchToko)
         </form>
       </div>
 
-      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      <div class="bg-white rounded-xl border border-gray-200 overflow-x-auto shadow-sm">
         <table class="w-full text-sm text-left">
           <thead class="bg-gray-800 text-white">
             <tr>
