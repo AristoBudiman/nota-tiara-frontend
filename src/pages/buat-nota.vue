@@ -351,7 +351,7 @@ const cetakPDF = () => { window.print() }
             <td class="border border-gray-400 p-2 font-medium">{{ item.nama_barang }}</td>
             <td class="border border-gray-400 p-2 text-right">Rp{{ item.harga_barang.toLocaleString() }}</td>
             <td class="border border-gray-400 p-2">
-              <input type="number" v-model.number="item.banyak_kirim" :readonly="isEdit" @wheel="$event.target.blur()" class="w-full text-center outline-none focus:bg-blue-100" />
+              <input type="number" v-model.number="item.banyak_kirim" @wheel="$event.target.blur()" class="w-full text-center outline-none focus:bg-blue-100" />
             </td>
             <td class="border border-gray-400 p-2 text-right font-bold text-blue-800">{{ (item.banyak_kirim * item.harga_barang).toLocaleString() }}</td>
             <td class="border border-gray-400 p-2 bg-red-50">
