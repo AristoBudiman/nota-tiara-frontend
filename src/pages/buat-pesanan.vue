@@ -291,7 +291,8 @@ const cetakPDF = () => window.print()
             <input type="text" v-model="form.nama_pemesan" class="border rounded px-2 py-0.5 print:border-none print:p-0 font-bold w-full" placeholder="Nama Pemesan" />
             
             <span class="font-semibold text-left">Tgl Selesai:</span>
-            <input type="date" v-model="form.tanggal_kirim" class="border rounded px-2 py-0.5 print:border-none print:p-0 font-bold w-full" />
+            <input type="date" v-model="form.tanggal_kirim" class="border rounded px-2 py-0.5 font-bold w-full print:hidden" />
+            <span class="hidden print:block font-bold">{{ form.tanggal_kirim.split('-').reverse().join('/') }}</span>
             
             <span class="font-semibold text-left">Titik Ambil:</span>
             <div class="flex gap-1 w-full border rounded print:hidden">

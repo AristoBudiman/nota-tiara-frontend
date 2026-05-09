@@ -301,13 +301,17 @@ const cetakPDF = () => { window.print() }
         </div>
         <div class="grid grid-cols-[90px_1fr] print:grid-cols-[75px_1fr] gap-x-2 gap-y-1 text-sm print:text-xs mt-1 items-center">
           <span class="font-semibold text-left">Tanggal:</span>
-          <input type="date" v-model="form.tanggal_kirim" @change="generateNoNota" class="border rounded px-2 py-0.5 print:border-none print:p-0 font-bold w-full" />
+          <input type="date" v-model="form.tanggal_kirim" @change="generateNoNota" class="border rounded px-2 py-0.5 font-bold w-full print:hidden" />
+          <span class="hidden print:block font-bold">{{ form.tanggal_kirim.split('-').reverse().join('/') }}</span>
           
           <span class="font-semibold text-left">Mitra:</span>
-          <select v-model="form.toko_id" @change="generateNoNota" class="border rounded px-2 py-0.5 print:border-none print:p-0 print:appearance-none font-bold w-full bg-white outline-none" :disabled="isEdit">
+          <select v-model="form.toko_id" @change="generateNoNota" class="border rounded px-2 py-0.5 font-bold w-full bg-white outline-none print:hidden" :disabled="isEdit">
             <option :value="null" disabled>Pilih Mitra</option>
             <option v-for="t in daftarToko" :key="t.ID" :value="t.ID">{{ t.NamaToko }}</option>
           </select>
+          <span class="hidden print:block font-bold">
+            {{ daftarToko.find(t => t.ID === form.toko_id)?.NamaToko || '' }}
+          </span>
           
           <span class="font-semibold text-left">No. Nota:</span>
           <input v-model="form.no_nota" class="border rounded px-2 py-0.5 font-mono text-[10px] bg-gray-50 print:bg-transparent w-full print:border-none print:p-0 font-bold" placeholder="Otomatis..." readonly />
