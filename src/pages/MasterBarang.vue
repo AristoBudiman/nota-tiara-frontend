@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import draggable from 'vuedraggable'
 
 const listBarang = ref([])
 const isEdit = ref(false)
@@ -88,26 +89,25 @@ const resetForm = () => {
 
 // FITUR ATUR URUTAN 
 
-const geserAtas = (index) => {
-  if (index > 0) {
-    // Tukar posisi array saat ini dengan yang di atasnya
-    const temp = listBarang.value[index]
-    listBarang.value[index] = listBarang.value[index - 1]
-    listBarang.value[index - 1] = temp
-  }
-}
+// const geserAtas = (index) => {
+//   if (index > 0) {
+//     // Tukar posisi array saat ini dengan yang di atasnya
+//     const temp = listBarang.value[index]
+//     listBarang.value[index] = listBarang.value[index - 1]
+//     listBarang.value[index - 1] = temp
+//   }
+// }
 
-const geserBawah = (index) => {
-  if (index < listBarang.value.length - 1) {
-    // Tukar posisi array saat ini dengan yang di bawahnya
-    const temp = listBarang.value[index]
-    listBarang.value[index] = listBarang.value[index + 1]
-    listBarang.value[index + 1] = temp
-  }
-}
+// const geserBawah = (index) => {
+//   if (index < listBarang.value.length - 1) {
+//     // Tukar posisi array saat ini dengan yang di bawahnya
+//     const temp = listBarang.value[index]
+//     listBarang.value[index] = listBarang.value[index + 1]
+//     listBarang.value[index + 1] = temp
+//   }
+// }
 
 const simpanUrutan = async () => {
-  // Buat format data { id, urutan } berdasarkan posisi array terbaru
   const payload = listBarang.value.map((barang, index) => ({
     id: barang.ID,
     urutan: index
@@ -126,11 +126,8 @@ const simpanUrutan = async () => {
 
     if (!res.ok) throw new Error("Gagal menyimpan urutan")
     
-    alert("Urutan barang berhasil dikunci!")
-    fetchBarang()
   } catch (err) {
     console.error("Gagal simpan urutan:", err.message)
-    alert("Gagal mengunci urutan. Cek konsol.")
   }
 }
 
@@ -180,32 +177,43 @@ onMounted(fetchBarang)
         <table class="w-full text-sm text-left min-w-150">
             <thead class="bg-gray-800 text-white">
                 <tr>
-                    <th class="p-4 w-24 text-center font-bold">Posisi</th> <th class="p-4 uppercase tracking-wider font-bold">Nama Barang</th>
+                    <th class="p-4 w-24 text-center font-bold">Posisi</th> 
+                    <th class="p-4 uppercase tracking-wider font-bold">Nama Barang</th>
                     <th class="p-4 uppercase tracking-wider font-bold">Harga</th>
                     <th class="p-4 text-center uppercase tracking-wider font-bold">Aksi</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
-                <tr v-for="(barang, index) in listBarang" :key="barang.ID" class="hover:bg-indigo-50 transition">
-                
-                    <td class="p-4 text-center border-r bg-white">
-                        <div class="flex flex-col items-center gap-1">
-                            <button @click="geserAtas(index)" :disabled="index === 0" class="text-gray-400 hover:text-blue-600 disabled:opacity-20 font-black text-lg p-1 leading-none">▲</button>
-                            <span class="text-xs font-bold text-gray-500">{{ index + 1 }}</span>
-                            <button @click="geserBawah(index)" :disabled="index === listBarang.length - 1" class="text-gray-400 hover:text-blue-600 disabled:opacity-20 font-black text-lg p-1 leading-none">▼</button>
-                        </div>
-                    </td>
+            
+            <draggable 
+                v-model="listBarang" 
+                tag="tbody" 
+                item-key="ID" 
+                handle=".drag-handle" 
+                @end="simpanUrutan"
+                class="divide-y divide-gray-200"
+                animation="200"
+            >
+                <template #item="{ element, index }">
+                    <tr class="hover:bg-indigo-50 transition bg-white">
+                    
+                        <td class="p-4 text-center border-r drag-handle cursor-grab active:cursor-grabbing">
+                            <div class="flex flex-col items-center gap-1 opacity-50 hover:opacity-100 transition-opacity">
+                                <span class="text-2xl leading-none">☰</span>
+                                <span class="text-[10px] font-bold text-gray-400">#{{ index + 1 }}</span>
+                            </div>
+                        </td>
 
-                    <td class="p-4 font-bold text-gray-800">{{ barang.NamaBarang }}</td>
-                    <td class="p-4 text-gray-600">Rp {{ barang.HargaDefault.toLocaleString() }}</td>
-                    <td class="p-4 text-center">
-                        <div class="flex justify-center gap-4">
-                            <button @click="editBarang(barang)" class="text-blue-600 hover:text-blue-800 font-bold">Edit</button>
-                            <button @click="hapusBarang(barang.ID)" class="text-red-600 hover:text-red-800 font-bold">Hapus</button>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
+                        <td class="p-4 font-bold text-gray-800">{{ element.NamaBarang }}</td>
+                        <td class="p-4 text-gray-600">Rp {{ element.HargaDefault.toLocaleString() }}</td>
+                        <td class="p-4 text-center">
+                            <div class="flex justify-center gap-4">
+                                <button @click="editBarang(element)" class="text-blue-600 hover:text-blue-800 font-bold">Edit</button>
+                                <button @click="hapusBarang(element.ID)" class="text-red-600 hover:text-red-800 font-bold">Hapus</button>
+                            </div>
+                        </td>
+                    </tr>
+                </template>
+            </draggable>
         </table>
       </div>
     </div>

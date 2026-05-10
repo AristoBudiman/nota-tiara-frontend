@@ -82,11 +82,31 @@ const filteredTokos = computed(() => {
     if (!tokosMap.has(row.nama_toko)) {
       tokosMap.set(row.nama_toko, { 
         NamaToko: row.nama_toko,
-        IsHarian: row.is_harian 
+        IsHarian: row.is_harian,
+        Siklus: row.siklus // Pastikan ini ditangkap dari backend
       })
     }
   })
-  return Array.from(tokosMap.values())
+
+  return Array.from(tokosMap.values()).sort((a, b) => {
+    // 1. Tentukan bobot hierarki
+    const getPriority = (siklus) => {
+      if (siklus === 'HARIAN') return 1
+      if (siklus === 'SiklusDua') return 2
+      return 3 // Untuk Kamis-Senin, Jumat-Selasa, dsb
+    }
+
+    const priorityA = getPriority(a.Siklus)
+    const priorityB = getPriority(b.Siklus)
+
+    // 2. Jika beda hierarki, urutkan berdasarkan bobot (1 dulu, lalu 2, dst)
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB
+    }
+
+    // 3. Jika hierarki sama, urutkan A sampai Z berdasarkan nama
+    return a.NamaToko.localeCompare(b.NamaToko)
+  })
 })
 
 // MEMBANGUN BARIS BARANG (Hanya barang yang ada transaksinya hari ini)
