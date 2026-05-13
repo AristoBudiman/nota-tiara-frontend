@@ -12,6 +12,10 @@ const isSales = computed(() => role.value === 'sales')
 
 const barangsMaster = ref([])
 const tokosMaster = ref([])
+const resepsMaster = ref([]) // <--- State untuk katalog resep
+const bahansMaster = ref([]) // Katalog Dus/Kemasan
+const showModalKemasan = ref(false)
+const activeIdx = ref(null)
 const isEdit = ref(false)
 
 const form = ref({
@@ -29,16 +33,27 @@ const form = ref({
 })
 
 const details = ref([
-  { isKustom: false, idBarangM: '', namaKustom: '', banyak: 1, hargaJual: 0, idResep: '', gramasi: 0 }
+  { isKustom: false, idBarangM: '', namaKustom: '', banyak: 1, hargaJual: 0, idResep: '', gramasi: 0, kemasan_detail: [] }
 ])
 
 const daftarSales = ref([])
+
+const checkAuthError = (res) => {
+  if (res.status === 401 || res.status === 403) {
+    alert("Sesi habis atau Akses Ditolak!")
+    localStorage.clear()
+    router.push('/login')
+    return true
+  }
+  return false
+}
 
 const fetchSales = async () => {
   const token = localStorage.getItem('admin_token')
   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admins`, {
     headers: { 'Authorization': `Bearer ${token}` }
   })
+  if (checkAuthError(res)) return
   if (res.ok) {
     const admins = await res.json()
     daftarSales.value = admins.filter(a => a.Role === 'sales')
@@ -50,6 +65,7 @@ const fetchProfil = async () => {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/profil`, {
     headers: { 'Authorization': `Bearer ${token}` }
   })
+  if (checkAuthError(res)) return
   if (res.ok) profil.value = await res.json()
 }
 
@@ -59,10 +75,18 @@ const fetchData = async () => {
     const headers = { 'Authorization': `Bearer ${token}` }
 
     const resB = await fetch(`${import.meta.env.VITE_API_URL}/api/barangs`, { headers })
-    barangsMaster.value = await resB.json()
+    if (resB.ok) barangsMaster.value = await resB.json()
 
     const resT = await fetch(`${import.meta.env.VITE_API_URL}/api/tokos`, { headers })
-    tokosMaster.value = await resT.json()
+    if (resT.ok) tokosMaster.value = await resT.json()
+
+    // Ambil Data Resep untuk PO Kustom
+    const resR = await fetch(`${import.meta.env.VITE_API_URL}/api/resep`, { headers })
+    if (resR.ok) resepsMaster.value = await resR.json()
+
+    const resBhn = await fetch(`${import.meta.env.VITE_API_URL}/api/bahan`, { headers })
+    if (resBhn.ok) bahansMaster.value = await resBhn.json()
+
   } catch (err) { console.error("Gagal tarik master data", err) }
 }
 
@@ -93,6 +117,7 @@ const generateNoNota = async () => {
     const token = localStorage.getItem('admin_token')
     const url = `${import.meta.env.VITE_API_URL}/api/pesanan/next-number?tanggal=${form.value.tanggal_kirim}&toko_id=${form.value.toko_id || ''}`
     const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } })
+    if (checkAuthError(res)) return
     const data = await res.json()
     form.value.no_nota = data.no_nota
   } catch (err) { console.error(err) }
@@ -110,7 +135,8 @@ const resetForm = () => {
     is_lunas: false,
     ongkir: 0,
     uang_muka: 0,
-    total_voucher: 0
+    total_voucher: 0, 
+    kemasan_detail: []
   }
   details.value = [{ isKustom: false, idBarangM: '', namaKustom: '', banyak: 1, hargaJual: 0, idResep: '', gramasi: 0 }]
   isEdit.value = false
@@ -136,6 +162,7 @@ onMounted(async () => {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pesanan/${route.query.edit}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
+      if (checkAuthError(res)) return
       const poLama = await res.json()
       
       form.value = {
@@ -158,8 +185,9 @@ onMounted(async () => {
         namaKustom: d.BarangID === null ? d.NamaBarangBebas : '',
         banyak: d.Banyak,
         hargaJual: d.HargaJual,
-        idResep: d.resep_id || '',
-        gramasi: d.gramasi || 0
+        idResep: d.ResepID || d.resep_id || '', // Adaptasi aman dari JSON Golang
+        gramasi: d.Gramasi || d.gramasi || 0,
+        kemasan_detail: (d.KemasanDetail || d.kemasan_detail || []).map(k => ({ bahan_id: k.bahan_id || k.BahanID, kebutuhan: k.kebutuhan || k.Kebutuhan }))
       }))
 
     } catch (e) {
@@ -170,13 +198,13 @@ onMounted(async () => {
   }
 })
 
-const tambahBaris = () => details.value.push({ isKustom: false, idBarangM: '', namaKustom: '', banyak: 1, hargaJual: 0, idResep: '', gramasi: 0 })
+const tambahBaris = () => details.value.push({ isKustom: false, idBarangM: '', namaKustom: '', banyak: 1, hargaJual: 0, idResep: '', gramasi: 0, kemasan_detail: [] })
 const hapusBaris = (index) => details.value.splice(index, 1)
 
 const gantiMode = (index) => {
   const row = details.value[index]
   row.isKustom = !row.isKustom
-  row.idBarangM = ''; row.namaKustom = ''; row.hargaJual = 0; row.gramasi = 0
+  row.idBarangM = ''; row.namaKustom = ''; row.hargaJual = 0; row.idResep = ''; row.gramasi = 0; row.kemasan_detail =  []
 }
 
 const onPilihBarangMaster = (index) => {
@@ -214,8 +242,9 @@ const simpanPesanan = async () => {
       nama_barang_bebas: namaBebas,
       banyak: d.banyak,
       harga_jual: Number(d.hargaJual),
-      resep_id: null,
-      gramasi: Number(d.gramasi)
+      resep_id: d.isKustom && d.idResep ? Number(d.idResep) : null,
+      gramasi: d.isKustom ? Number(d.gramasi) : 0,
+      kemasan_detail: d.isKustom && d.kemasan_detail ? d.kemasan_detail.map(k => ({ bahan_id: Number(k.bahan_id), kebutuhan: Number(k.kebutuhan) })) : []
     })
   }
 
@@ -237,15 +266,15 @@ const simpanPesanan = async () => {
   }
 
   const url = isEdit.value ? `${import.meta.env.VITE_API_URL}/api/pesanan/${route.query.edit}` : `${import.meta.env.VITE_API_URL}/api/pesanan`
-  const method = isEdit.value ? 'POST' : 'POST' 
-
+  
   try {
     const token = localStorage.getItem('admin_token')
     const res = await fetch(url, {
-      method: method,
+      method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify(payload)
     })
+    if (checkAuthError(res)) return
     if (!res.ok) throw new Error(await res.text())
     
     alert(isEdit.value ? "Pesanan berhasil diupdate!" : "Pesanan berhasil dibuat!")
@@ -256,6 +285,10 @@ const simpanPesanan = async () => {
     }
   } catch (err) { alert("Gagal: " + err.message) }
 }
+
+const bukaModalKemasan = (idx) => { activeIdx.value = idx; showModalKemasan.value = true }
+const tambahKemasanKustom = () => details.value[activeIdx.value].kemasan_detail.push({ bahan_id: '', kebutuhan: 1 })
+const hapusKemasanKustom = (kIdx) => details.value[activeIdx.value].kemasan_detail.splice(kIdx, 1)
 
 const cetakPDF = () => window.print()
 </script>
@@ -346,35 +379,51 @@ const cetakPDF = () => window.print()
             <tbody>
             <tr v-for="(row, idx) in details" :key="idx" class="hover:bg-gray-50 border-b border-gray-300 print-row">
                 
-                <td class="border border-gray-400 p-1 text-center print:hidden">
-                <button @click="gantiMode(idx)" class="px-1 py-1 text-[10px] font-bold rounded shadow-sm border w-full"
-                        :class="row.isKustom ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-blue-100 text-blue-700 border-blue-300'">
-                    {{ row.isKustom ? '✍️' : '📦' }}
-                </button>
+                <td class="border border-gray-400 p-1 text-center print:hidden align-top pt-2">
+                  <button @click="gantiMode(idx)" class="px-1 py-1 text-[10px] font-bold rounded shadow-sm border w-full"
+                          :class="row.isKustom ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-blue-100 text-blue-700 border-blue-300'">
+                      {{ row.isKustom ? '✍️' : '📦' }}
+                  </button>
                 </td>
 
-                <td class="border border-gray-400 p-1 font-medium">
-                <input v-if="row.isKustom" type="text" v-model="row.namaKustom" placeholder="Ketik kue..." class="w-full px-2 outline-none font-bold" />
-                <select v-else v-model="row.idBarangM" @change="onPilihBarangMaster(idx)" class="w-full px-1 outline-none bg-transparent appearance-none font-bold">
-                    <option value="" disabled>Pilih Barang</option>
-                    <option v-for="b in barangsMaster" :key="b.ID" :value="b.ID">{{ b.NamaBarang }}</option>
-                </select>
+                <td class="border border-gray-400 p-1 font-medium align-top">
+                  <div v-if="row.isKustom">
+                      <input type="text" v-model="row.namaKustom" placeholder="Ketik kue kustom..." class="w-full px-2 outline-none font-bold pt-1" />
+                      
+                      <div v-if="false" class="flex items-center gap-1 px-2 mt-1 print:hidden">
+                          <select v-model="row.idResep" class="w-full outline-none text-[10px] text-gray-500 bg-gray-100 rounded border border-gray-300 px-1 py-0.5 cursor-pointer">
+                              <option value="">- Potong Resep Apa? -</option>
+                              <option v-for="r in resepsMaster" :key="r.ID" :value="r.ID">{{ r.nama_resep }}</option>
+                          </select>
+                          <input type="number" v-model.number="row.gramasi" placeholder="0" class="w-12 outline-none text-[10px] text-center text-gray-500 bg-gray-100 rounded border border-gray-300 hide-arrows py-0.5" />
+                          <span class="text-[9px] text-gray-400 font-bold">gr</span>
+                          <button @click="bukaModalKemasan(idx)" class="text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-300 font-bold hover:bg-blue-200 whitespace-nowrap shadow-sm">
+                            📦 {{ row.kemasan_detail?.length || 0 }} Kemasan
+                          </button>
+                      </div>
+                  </div>
+                  <div v-else class="pt-1">
+                      <select v-model="row.idBarangM" @change="onPilihBarangMaster(idx)" class="w-full px-1 outline-none bg-transparent appearance-none font-bold cursor-pointer">
+                          <option value="" disabled>Pilih Barang</option>
+                          <option v-for="b in barangsMaster" :key="b.ID" :value="b.ID">{{ b.NamaBarang }}</option>
+                      </select>
+                  </div>
                 </td>
                 
-                <td class="border border-gray-400 p-1">
-                <input type="number" v-model.number="row.banyak" min="1" @wheel="$event.target.blur()" class="w-full text-center outline-none focus:bg-yellow-100 font-bold" />
+                <td class="border border-gray-400 p-1 align-top pt-2">
+                <input type="number" v-model.number="row.banyak" min="1" @wheel="$event.target.blur()" class="w-full text-center outline-none focus:bg-yellow-100 font-bold bg-transparent" />
                 </td>
                 
-                <td class="border border-gray-400 p-1 text-right">
-                <input type="number" v-model.number="row.hargaJual" :disabled="!row.isKustom" @wheel="$event.target.blur()" class="w-full text-right outline-none bg-transparent" :class="{'text-gray-500': !row.isKustom}" />
+                <td class="border border-gray-400 p-1 text-right align-top pt-2">
+                <input type="number" v-model.number="row.hargaJual" :disabled="!row.isKustom" @wheel="$event.target.blur()" class="w-full text-right outline-none bg-transparent font-bold" :class="{'text-gray-500': !row.isKustom}" />
                 </td>
                 
-                <td class="border border-gray-400 p-2 text-right font-bold text-blue-800">
+                <td class="border border-gray-400 p-2 text-right font-bold text-blue-800 align-top pt-2">
                 {{ formatRp(row.banyak * row.hargaJual) }}
                 </td>
 
-                <td class="border border-gray-400 p-1 text-center print:hidden">
-                <button @click="hapusBaris(idx)" class="text-red-500 hover:text-red-700 font-bold text-lg leading-none">×</button>
+                <td class="border border-gray-400 p-1 text-center print:hidden align-top pt-1">
+                <button @click="hapusBaris(idx)" class="text-red-500 hover:text-red-700 font-bold text-xl leading-none">×</button>
                 </td>
             </tr>
             </tbody>
@@ -383,6 +432,31 @@ const cetakPDF = () => window.print()
         <button @click="tambahBaris" class="mt-2 text-xs font-bold text-yellow-600 hover:underline px-2 print:hidden">
             + Tambah Baris Baru
         </button>
+        </div>
+        <div v-if="showModalKemasan" class="fixed inset-0 bg-black/50 flex justify-center items-center z-60 p-4">
+          <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-t-8 border-blue-600">
+            <div class="p-6">
+              <h3 class="text-lg font-black text-gray-800 mb-1">📦 Kemasan Kustom</h3>
+              <p class="text-xs font-bold text-gray-500 mb-4">
+                Rakit kemasan untuk: <span class="text-purple-600">{{ details[activeIdx].namaKustom || 'Item Baru' }}</span>
+              </p>
+              
+              <div class="space-y-3 max-h-60 overflow-y-auto pr-2 mb-6">
+                <div v-for="(k, kIdx) in details[activeIdx].kemasan_detail" :key="kIdx" class="flex gap-2 items-center bg-gray-50 p-2 rounded border border-gray-200 shadow-sm">
+                  <select v-model="k.bahan_id" class="flex-1 text-xs font-bold p-1 outline-none border rounded bg-white cursor-pointer">
+                    <option value="" disabled>-- Pilih Dus/Plastik/Pita --</option>
+                    <option v-for="b in bahansMaster" :key="b.ID" :value="b.ID">{{ b.nama_bahan }} ({{ b.satuan }})</option>
+                  </select>
+                  <input type="number" v-model.number="k.kebutuhan" class="w-14 text-xs font-bold p-1 border rounded text-center outline-none" min="0.1" step="any" placeholder="Qty">
+                  <button @click="hapusKemasanKustom(kIdx)" class="text-red-500 font-black px-2 hover:bg-red-100 rounded">×</button>
+                </div>
+                
+                <button @click="tambahKemasanKustom" class="w-full py-2 border-2 border-dashed border-blue-300 text-blue-600 text-xs font-bold rounded-lg hover:bg-blue-50 transition">+ Tambah Lapis Kemasan</button>
+              </div>
+
+              <button @click="showModalKemasan = false" class="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-3 rounded-lg font-black shadow-md">TUTUP & SIMPAN</button>
+            </div>
+          </div>
         </div>
     </fieldset>
 
@@ -400,28 +474,24 @@ const cetakPDF = () => window.print()
         </div>
       </div>
 
-      <!-- KOTAK KALKULASI TAGIHAN BARU -->
       <div class="w-64 bg-yellow-50 print:bg-transparent p-2 rounded border border-gray-400 shadow-sm print:shadow-none ml-auto">
         <div class="flex justify-between text-xs mb-1 text-gray-700 print:text-black">
           <span>Total Pesanan:</span>
           <span class="font-bold">Rp{{ formatRp(totalBayar) }}</span>
         </div>
 
-        <!-- ROW ONGKIR: Sembunyi saat di-print jika tidak ada Ongkir (0) -->
         <div class="flex justify-between items-center text-xs mb-1 text-gray-700 print:text-black" 
              :class="{'print:hidden': !form.ongkir || form.ongkir === 0}">
           <span>Ongkos Kirim:</span>
           <input type="number" v-model.number="form.ongkir" @wheel="$event.target.blur()" class="w-24 text-right font-bold outline-none bg-white border border-gray-300 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
         </div>
         
-        <!-- ROW DP: Sembunyi saat di-print jika tidak ada DP (0) -->
         <div class="flex justify-between items-center text-xs mb-1 text-gray-700 print:text-black" 
              :class="{'print:hidden': !form.uang_muka || form.uang_muka === 0}">
           <span>Uang Muka (DP):</span>
           <input type="number" v-model.number="form.uang_muka" @wheel="$event.target.blur()" class="w-24 text-right font-bold outline-none bg-white border border-gray-300 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
         </div>
         
-        <!-- ROW VOUCHER: Sembunyi saat di-print jika tidak ada Voucher (0) -->
         <div class="flex justify-between items-center text-xs mb-1.5 text-gray-700 print:text-black border-b border-gray-300 pb-1" 
              :class="{'print:hidden': !form.total_voucher || form.total_voucher === 0}">
           <span>Voucher (Rp):</span>

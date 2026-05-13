@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const summaryBulanIni = ref({ kirim: 0, retur: 0, diskon: 0, pendapatan: 0, persentase: 0, perToko: [], perBarang: [] })
 const customSummary = ref(null)
 const barangPerToko = ref([]) 
@@ -10,12 +12,23 @@ const summaryPesananBulanIni = ref(null)
 const customSummaryPesanan = ref(null)
 const selectedTokoPO = ref('')
 
+const checkAuthError = (res) => {
+  if (res.status === 401 || res.status === 403) {
+    alert("Sesi habis atau Akses Ditolak!")
+    localStorage.clear()
+    router.push('/login')
+    return true
+  }
+  return false
+}
+
 const fetchSummaryPesananAPI = async (startDate, endDate) => {
   try {
     const token = localStorage.getItem('admin_token')
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pesanan/rangkuman-bulanan?start=${startDate}&end=${endDate}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
+    if (checkAuthError(res)) return null
     if (!res.ok) throw new Error("Gagal mengambil data rangkuman pesanan")
     return await res.json()
   } catch (e) {
@@ -54,6 +67,7 @@ const fetchSummaryAPI = async (startDate, endDate) => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/rangkuman?start=${startDate}&end=${endDate}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
+    if (checkAuthError(res)) return null
     if (!res.ok) throw new Error("Gagal mengambil data rangkuman")
     return await res.json()
   } catch (e) {
@@ -115,6 +129,7 @@ const fetchDetailBarangPerToko = async () => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/rangkuman-per-toko?start=${filter.value.start}&end=${filter.value.end}&toko_id=${selectedTokoDetail.value}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
+    if (checkAuthError(res)) return null
     
     if (res.ok) {
       const data = await res.json()

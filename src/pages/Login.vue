@@ -20,6 +20,10 @@ const handleLogin = async () => {
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error)
+
+    if (data.role !== 'superadmin' && data.role !== 'sales') {
+      throw new Error(`Akses Ditolak! Kasta '${data.role}' tidak memiliki akses ke Sistem Nota.`)
+    }
     
     localStorage.setItem('admin_token', data.token)
     localStorage.setItem('admin_role', data.role)

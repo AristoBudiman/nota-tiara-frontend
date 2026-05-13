@@ -19,6 +19,16 @@ const poTugas = ref([])
 const activeTab = ref('REGULER') // Kontrol Tab
 const listPesanan = ref([])      // Wadah data pesanan
 
+const checkAuthError = (res) => {
+  if (res.status === 401 || res.status === 403) {
+    alert("Sesi habis atau Akses Ditolak!")
+    localStorage.clear()
+    router.push('/login')
+    return true
+  }
+  return false
+}
+
 // Fungsi tarik data riwayat pesanan
 const fetchRiwayatPesanan = async () => {
   try {
@@ -26,6 +36,7 @@ const fetchRiwayatPesanan = async () => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pesanan/riwayat`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
+    if (checkAuthError(res)) return
     if (res.ok) listPesanan.value = await res.json()
   } catch (err) {
     console.error("Gagal tarik riwayat PO", err)
@@ -36,6 +47,7 @@ const fetchSuperadminData = async (token) => {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notas`, {
     headers: { 'Authorization': `Bearer ${token}` }
   })
+  if (checkAuthError(res)) return
   if (res.ok) listNota.value = await res.json()
 }
 
@@ -45,6 +57,7 @@ const fetchSalesData = async (token) => {
     const resDash = await fetch(`${import.meta.env.VITE_API_URL}/api/sales/dashboard`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
+    if (checkAuthError(resDash)) return
     if (resDash.ok) {
       const dash = await resDash.json()
       notaAktif.value = dash.aktif || []
@@ -56,6 +69,7 @@ const fetchSalesData = async (token) => {
     const resToko = await fetch(`${import.meta.env.VITE_API_URL}/api/tokos`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
+    if (checkAuthError(resToko)) return
     
     if (resToko.ok) {
       daftarToko.value = await resToko.json()
@@ -74,6 +88,7 @@ const fetchKunjungan = async () => {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/sales/kunjungan/${selectedTokoID.value}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   })
+  if (checkAuthError(res)) return
   if (res.ok) notaKunjungan.value = await res.json()
 }
 
@@ -198,12 +213,71 @@ const batalkanPO = async (id, noNota) => {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${token}` }
     })
+    if (checkAuthError(res)) return
     if (res.ok) {
       alert("Pesanan dibatalkan!")
       fetchRiwayatPesanan() // Refresh tabel
     }
   } catch (err) {
     alert("Gagal membatalkan pesanan.")
+  }
+}
+
+// Fungsi membatalkan Nota Reguler
+const batalkanNota = async (id, noNota) => {
+  if (!confirm(`Yakin ingin membatalkan nota reguler ${noNota}? Uang di kasir akan otomatis ditarik kembali.`)) return
+  
+  try {
+    const token = localStorage.getItem('admin_token')
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notas/${id}/batal`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    if (checkAuthError(res)) return
+    if (res.ok) {
+      alert("Nota berhasil dibatalkan!")
+      fetchSuperadminData(token) // Refresh tabel
+    }
+  } catch (err) {
+    alert("Gagal membatalkan nota.")
+  }
+}
+
+const pulihkanNota = async (id, noNota) => {
+  if (!confirm(`Kembalikan nota reguler ${noNota} ke status aktif? Uang kas akan kembali tercatat otomatis.`)) return
+  
+  try {
+    const token = localStorage.getItem('admin_token')
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notas/${id}/pulihkan`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    if (checkAuthError(res)) return
+    if (res.ok) {
+      alert("✅ Nota berhasil dipulihkan!")
+      fetchSuperadminData(token) // Refresh tabel
+    }
+  } catch (err) {
+    alert("Gagal memulihkan nota.")
+  }
+}
+
+const pulihkanPO = async (id, noNota) => {
+  if (!confirm(`Kembalikan pesanan ${noNota} ke status aktif? Uang kas (DP) akan kembali tercatat otomatis.`)) return
+  
+  try {
+    const token = localStorage.getItem('admin_token')
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pesanan/${id}/pulihkan`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    if (checkAuthError(res)) return
+    if (res.ok) {
+      alert("✅ Pesanan berhasil dipulihkan!")
+      fetchRiwayatPesanan() // Refresh tabel
+    }
+  } catch (err) {
+    alert("Gagal memulihkan pesanan.")
   }
 }
 
@@ -293,13 +367,26 @@ const formatTanggal = (tgl) => {
                 <td class="p-3 border">{{ nota.NamaTokoSnapshot || nota.Toko?.NamaToko }}</td>
                 <td class="p-3 border text-right">Rp {{ nota.JumlahKirim.toLocaleString() }}</td>
                 <td class="p-3 border text-center whitespace-nowrap">
-                  <span v-if="nota.is_lunas" class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold shadow-sm border border-green-200">✅ LUNAS</span>
-                  <span v-else class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold shadow-sm border border-red-200">⏳ PIUTANG</span>
+                  <span v-if="nota.Status === 'DIBATALKAN'" class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold shadow-sm border border-red-200">DIBATALKAN</span>
+                  <span v-else-if="nota.is_lunas" class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold shadow-sm border border-green-200">✅ LUNAS</span>
+                  <span v-else class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold shadow-sm border border-orange-200">⏳ PIUTANG</span>
                 </td>
                 <td class="p-3 border text-center whitespace-nowrap">
-                  <router-link :to="'/buat-nota?edit=' + nota.ID" class="bg-green-500 text-white px-3 py-1.5 rounded font-bold hover:bg-green-600 transition shadow-sm">
-                      Lihat / Edit
-                  </router-link>
+                  <div class="flex justify-center gap-2">
+                    <template v-if="nota.Status !== 'DIBATALKAN'">
+                      <button @click="batalkanNota(nota.ID, nota.NoNota)" class="bg-red-500 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-red-600 transition shadow-sm">
+                          Batal
+                      </button>
+                      <router-link :to="'/buat-nota?edit=' + nota.ID" class="bg-green-500 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-600 transition shadow-sm">
+                          Lihat / Edit
+                      </router-link>
+                    </template>
+                    <template v-else>
+                      <button @click="pulihkanNota(nota.ID, nota.NoNota)" class="bg-blue-600 text-white px-4 py-1.5 rounded text-xs font-bold hover:bg-blue-700 transition shadow-md flex items-center gap-1">
+                        🔄 Pulihkan
+                      </button>
+                    </template>
+                  </div>
                 </td>
               </tr>
               <tr v-if="filteredListNota.length === 0">
@@ -367,13 +454,22 @@ const formatTanggal = (tgl) => {
                   <span v-if="po.is_lunas" class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold shadow-sm border border-green-200">✅ LUNAS</span>
                   <span v-else class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold shadow-sm border border-red-200">⏳ PIUTANG</span>
                 </td>
-                <td class="p-3 text-center flex justify-center gap-2 whitespace-nowrap">
-                  <button v-if="po.Status !== 'DIBATALKAN'" @click="batalkanPO(po.ID, po.NoNota)" class="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 shadow-sm">
-                    Batal
-                  </button>
-                  <router-link v-if="po.Status !== 'DIBATALKAN'" :to="'/buat-pesanan?edit=' + po.ID" class="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600 shadow-sm">
-                    Lihat / Edit
-                  </router-link>
+                <td class="p-3 border text-center whitespace-nowrap">
+                  <div class="flex justify-center gap-2">
+                    <template v-if="po.Status !== 'DIBATALKAN'">
+                      <button @click="batalkanPO(po.ID, po.NoNota)" class="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 shadow-sm">
+                        Batal
+                      </button>
+                      <router-link :to="'/buat-pesanan?edit=' + po.ID" class="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600 shadow-sm">
+                        Lihat / Edit
+                      </router-link>
+                    </template>
+                    <template v-else>
+                      <button @click="pulihkanPO(po.ID, po.NoNota)" class="bg-blue-600 text-white px-4 py-1 rounded text-xs font-bold hover:bg-blue-700 transition shadow-md flex items-center gap-1">
+                        🔄 Pulihkan
+                      </button>
+                    </template>
+                  </div>
                 </td>
               </tr>
               <tr v-if="filteredListPesanan.length === 0">

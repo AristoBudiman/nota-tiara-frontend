@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import draggable from 'vuedraggable'
+import { useRouter } from 'vue-router'
 
 const listBarang = ref([])
 const isEdit = ref(false)
@@ -9,6 +10,17 @@ const form = ref({
   NamaBarang: '',
   HargaDefault: 0
 })
+
+// Fungsi pembantu untuk cek error RBAC
+const checkAuthError = (res) => {
+  if (res.status === 401 || res.status === 403) {
+    alert("Sesi habis atau Akses Ditolak (Bukan Superadmin)!")
+    localStorage.clear()
+    router.push('/login')
+    return true
+  }
+  return false
+}
 
 const fetchBarang = async () => {
   try {
@@ -20,8 +32,9 @@ const fetchBarang = async () => {
         'Authorization': `Bearer ${token}`
       }
     })
+    if (checkAuthError(res)) return
     
-    if (!res.ok) throw new Error("Akses ditolak")
+    if (!res.ok) throw new Error("Gagal load data")
     listBarang.value = await res.json()
   } catch (err) {
     console.error("Gagal load barang:", err)
@@ -47,6 +60,7 @@ const handleSubmit = async () => {
       },
       body: JSON.stringify(form.value)
     })
+    if (checkAuthError(res)) return
 
     if (!res.ok) throw new Error("Gagal menyimpan data")
 
@@ -73,6 +87,8 @@ const hapusBarang = async (id) => {
         }
       })
 
+      if (checkAuthError(res)) return
+
       if (!res.ok) throw new Error("Gagal menghapus barang atau sesi habis")
 
       fetchBarang()
@@ -86,26 +102,6 @@ const resetForm = () => {
   isEdit.value = false
   form.value = { ID: null, NamaBarang: '', HargaDefault: 0 }
 }
-
-// FITUR ATUR URUTAN 
-
-// const geserAtas = (index) => {
-//   if (index > 0) {
-//     // Tukar posisi array saat ini dengan yang di atasnya
-//     const temp = listBarang.value[index]
-//     listBarang.value[index] = listBarang.value[index - 1]
-//     listBarang.value[index - 1] = temp
-//   }
-// }
-
-// const geserBawah = (index) => {
-//   if (index < listBarang.value.length - 1) {
-//     // Tukar posisi array saat ini dengan yang di bawahnya
-//     const temp = listBarang.value[index]
-//     listBarang.value[index] = listBarang.value[index + 1]
-//     listBarang.value[index + 1] = temp
-//   }
-// }
 
 const simpanUrutan = async () => {
   const payload = listBarang.value.map((barang, index) => ({
@@ -123,6 +119,7 @@ const simpanUrutan = async () => {
       },
       body: JSON.stringify(payload)
     })
+    if (checkAuthError(res)) return
 
     if (!res.ok) throw new Error("Gagal menyimpan urutan")
     

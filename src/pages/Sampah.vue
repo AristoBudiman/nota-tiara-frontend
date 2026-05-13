@@ -1,13 +1,26 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const trash = ref({ tokos: [], barangs: [] })
+
+const checkAuthError = (res) => {
+  if (res.status === 401 || res.status === 403) {
+    alert("Sesi habis atau Akses Ditolak!")
+    localStorage.clear()
+    router.push('/login')
+    return true
+  }
+  return false
+}
 
 const fetchTrash = async () => {
   const token = localStorage.getItem('admin_token')
   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/sampah`, {
     headers: { 'Authorization': `Bearer ${token}` }
   })
+  if (checkAuthError(res)) return
   if (res.ok) trash.value = await res.json()
 }
 
@@ -18,6 +31,7 @@ const restore = async (type, id) => {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${token}` }
     })
+    if (checkAuthError(res)) return
     fetchTrash()
   }
 }

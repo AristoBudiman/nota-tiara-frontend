@@ -12,6 +12,16 @@ const isEdit = ref(false)
 const role = ref(localStorage.getItem('admin_role') || '')
 const isPrintPabrik = ref(true)
 
+const checkAuthError = (res) => {
+  if (res.status === 401 || res.status === 403) {
+    alert("Sesi habis atau Akses Ditolak!")
+    localStorage.clear()
+    router.push('/login')
+    return true
+  }
+  return false
+}
+
 const getTanggalWIB = () => {
   const date = new Date()
   return date.toLocaleString('en-CA', { 
@@ -40,6 +50,7 @@ const fetchProfil = async () => {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/profil`, {
     headers: { 'Authorization': `Bearer ${token}` }
   })
+  if (checkAuthError(res)) return
   if (res.ok) {
     profil.value = await res.json()
   }
@@ -74,6 +85,7 @@ const generateNoNota = async () => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notas/next-number?toko_id=${form.value.toko_id}&tanggal=${form.value.tanggal_kirim}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
+    if (checkAuthError(res)) return
     
     if (res.ok) {
       const data = await res.json()
@@ -110,10 +122,12 @@ const fetchData = async () => {
     }
 
     const resToko = await fetch(`${import.meta.env.VITE_API_URL}/api/tokos`, requestOptions)
+    if (checkAuthError(resToko)) return
     if (!resToko.ok) throw new Error("Akses ditolak atau sesi habis")
     daftarToko.value = await resToko.json()
 
     const resBarang = await fetch(`${import.meta.env.VITE_API_URL}/api/barangs`, requestOptions)
+    if (checkAuthError(resBarang)) return
     if (!resBarang.ok) throw new Error("Akses ditolak atau sesi habis")
     const barangs = await resBarang.json()
     
@@ -147,6 +161,7 @@ onMounted(async () => {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notas/${route.query.edit}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
+      if (checkAuthError(res)) return
       const notaLama = await res.json()
       
       form.value = {
@@ -238,6 +253,7 @@ const simpanData = async () => {
       },
       body: JSON.stringify(payload)
     });
+    if (checkAuthError(res)) return
 
     if (res.ok) {
       alert(isEdit.value ? "Retur Berhasil Diupdate!" : "Nota Berhasil Disimpan!");
@@ -267,6 +283,7 @@ const fetchSales = async () => {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admins`, {
     headers: { 'Authorization': `Bearer ${token}` }
   })
+  if (checkAuthError(res)) return
   if (res.ok) {
     const admins = await res.json()
     daftarSales.value = admins.filter(a => a.Role === 'sales')

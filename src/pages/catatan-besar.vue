@@ -1,9 +1,21 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const rawDataBesar = ref([]) // Data matang dari Backend
 const activeTab = ref('REGULER') 
 const dataPesanan = ref([])
+
+const checkAuthError = (res) => {
+  if (res.status === 401 || res.status === 403) {
+    alert("Sesi habis atau Akses Ditolak!")
+    localStorage.clear()
+    router.push('/login')
+    return true
+  }
+  return false
+}
 
 const getLocalDateString = (d) => {
   const date = d ? new Date(d) : new Date()
@@ -47,7 +59,8 @@ const fetchDataReguler = async () => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       }
-    }) 
+    })
+    if (checkAuthError(res)) return 
     
     if (!res.ok) throw new Error("Akses ditolak")
     const data = await res.json()
@@ -63,6 +76,7 @@ const fetchDataPesanan = async () => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pesanan/catatan?tanggal=${selectedTanggal.value}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
+    if (checkAuthError(res)) return
     const data = await res.json()
     dataPesanan.value = data || []
   } catch (err) {

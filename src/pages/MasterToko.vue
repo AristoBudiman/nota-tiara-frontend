@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const listToko = ref([])
 const isEdit = ref(false)
 
@@ -25,6 +27,16 @@ watch(selectedSiklus, (val) => {
   form.value.SiklusDua = (val === 'SiklusDua')
 })
 
+const checkAuthError = (res) => {
+  if (res.status === 401 || res.status === 403) {
+    alert("Sesi habis atau Akses Ditolak!")
+    localStorage.clear()
+    router.push('/login')
+    return true
+  }
+  return false
+}
+
 const fetchToko = async () => {
   try {
     const token = localStorage.getItem('admin_token')
@@ -35,6 +47,7 @@ const fetchToko = async () => {
         'Authorization': `Bearer ${token}`
       }
     })
+    if (checkAuthError(res)) return
     
     if (!res.ok) throw new Error("Akses ditolak")
     listToko.value = await res.json()
@@ -62,6 +75,7 @@ const handleSubmit = async () => {
       },
       body: JSON.stringify(form.value)
     })
+    if (checkAuthError(res)) return
 
     if (!res.ok) throw new Error("Gagal menyimpan data")
 
@@ -95,6 +109,7 @@ const hapusToko = async (id) => {
           'Authorization': `Bearer ${token}`
         }
       })
+      if (checkAuthError(res)) return
 
       if (!res.ok) throw new Error("Gagal menghapus toko atau sesi habis")
       
