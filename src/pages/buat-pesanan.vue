@@ -390,7 +390,7 @@ const cetakPDF = () => window.print()
                   <div v-if="row.isKustom">
                       <input type="text" v-model="row.namaKustom" placeholder="Ketik kue kustom..." class="w-full px-2 outline-none font-bold pt-1" />
                       
-                      <div v-if="false" class="flex items-center gap-1 px-2 mt-1 print:hidden">
+                      <div class="flex items-center gap-1 px-2 mt-1 print:hidden">
                           <select v-model="row.idResep" class="w-full outline-none text-[10px] text-gray-500 bg-gray-100 rounded border border-gray-300 px-1 py-0.5 cursor-pointer">
                               <option value="">- Potong Resep Apa? -</option>
                               <option v-for="r in resepsMaster" :key="r.ID" :value="r.ID">{{ r.nama_resep }}</option>

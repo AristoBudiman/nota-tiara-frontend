@@ -185,10 +185,10 @@ onMounted(async () => {
         // Toko harian akan mem-bypass filter ini sehingga SEMUA barang tampil
         .filter(item => tampilSemuaBarang || detailIds.includes(item.barang_id))
         .map(item => {
-          const d = notaLama.Details.find(det => det.BarangID === item.barang_id)
+          const d = notaLama.Details.find(det => det.BarangID === item.barang_id || det.barang_id === item.barang_id)
           return {
             ...item,
-            detail_id: d ? d.ID : null,
+            detail_id: d ? (d.ID || d.id) : null,
             banyak_kirim: d ? d.BanyakKirim : 0,
             banyak_retur: d ? d.BanyakRetur : 0,
             harga_barang: d ? d.HargaJual : item.harga_barang,
@@ -227,7 +227,7 @@ const simpanData = async () => {
     total_diskon: Number(form.value.total_diskon || 0),
     total_voucher: Number(form.value.total_voucher || 0),
     details: items.value
-      .filter(i => i.banyak_kirim > 0 || i.banyak_retur > 0)
+      .filter(i => i.banyak_kirim > 0 || i.banyak_retur > 0 || i.detail_id)
       .map(i => ({
         id: i.detail_id ? Number(i.detail_id) : 0,
         barang_id: Number(i.barang_id),
