@@ -60,7 +60,7 @@ const handleLogout = () => {
           </div>
 
           <div :class="isMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'" 
-               class="absolute md:static top-full left-0 w-64 md:w-auto h-screen md:h-auto bg-blue-900 md:bg-transparent p-5 md:p-0 transform md:transform-none transition-transform duration-300 ease-in-out flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-1 shadow-2xl md:shadow-none border-r border-blue-800 md:border-none overflow-y-auto md:overflow-visible">
+               class="absolute md:static top-full left-0 w-64 md:w-auto h-[calc(100vh-4rem)] md:h-auto bg-blue-900 md:bg-transparent p-5 pb-24 md:p-0 transform md:transform-none transition-transform duration-300 ease-in-out flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-1 shadow-2xl md:shadow-none border-r border-blue-800 md:border-none overflow-y-auto md:overflow-visible">
             
             <template v-if="role === 'superadmin'">
               <div class="hidden md:block h-6 w-px bg-blue-800 mx-2"></div>
