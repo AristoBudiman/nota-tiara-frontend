@@ -16,7 +16,7 @@ const selectedTokoID = ref('')
 const notaKunjungan = ref([])
 const poTugas = ref([])
 
-const activeTab = ref('REGULER') // Kontrol Tab
+const activeTab = ref(sessionStorage.getItem('tab_nota') || 'REGULER') // Kontrol Tab
 const listPesanan = ref([])      // Wadah data pesanan
 
 const checkAuthError = (res) => {
@@ -96,9 +96,9 @@ const buatNotaBaru = () => {
   router.push(`/buat-nota?toko_id=${selectedTokoID.value}`)
 }
 
-const filterSiklus = ref('semua')
-const filterTokoSuperadmin = ref('semua')
-const filterWaktu = ref('14')
+const filterSiklus = ref(sessionStorage.getItem('filter_siklus') || 'semua')
+const filterTokoSuperadmin = ref(sessionStorage.getItem('filter_toko') || 'semua')
+const filterWaktu = ref(sessionStorage.getItem('filter_waktu') || '14')
 
 // Ambil daftar toko unik berdasarkan SIKLUS TERAKHIRNYA saja
 const filteredUniqueTokos = computed(() => {
@@ -157,9 +157,8 @@ const filteredNotaAktifSales = computed(() => {
   return notaAktif.value.filter(n => n.Status !== 'SELESAI')
 })
 
-// ... (di bawah filterWaktu dkk) ...
-const filterWaktuPO = ref('14')
-const filterTokoPO = ref('semua')
+const filterWaktuPO = ref(sessionStorage.getItem('filter_waktu_po') || '14')
+const filterTokoPO = ref(sessionStorage.getItem('filter_toko_po') || 'semua')
 
 // Ambil titik unik untuk Dropdown Filter Toko PO
 const filteredUniqueTokosPO = computed(() => {
@@ -192,6 +191,14 @@ const filteredListPesanan = computed(() => {
     return true
   })
 })
+
+// SIMPAN OTOMATIS KE SESSION STORAGE
+watch(activeTab, (val) => sessionStorage.setItem('tab_nota', val))
+watch(filterSiklus, (val) => sessionStorage.setItem('filter_siklus', val))
+watch(filterTokoSuperadmin, (val) => sessionStorage.setItem('filter_toko', val))
+watch(filterWaktu, (val) => sessionStorage.setItem('filter_waktu', val))
+watch(filterWaktuPO, (val) => sessionStorage.setItem('filter_waktu_po', val))
+watch(filterTokoPO, (val) => sessionStorage.setItem('filter_toko_po', val))
 
 onMounted(() => {
   const token = localStorage.getItem('admin_token')
