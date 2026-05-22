@@ -178,23 +178,38 @@ onMounted(async () => {
       // 2. LOGIKA KRUSIAL: Filter & Kunci Data
       // Hanya ingin menampilkan barang yang ada di nota lama ini.
       // PAKSA harganya pakai harga snapshot.
-      const detailIds = notaLama.Details.map(d => d.BarangID)
-      const tampilSemuaBarang = (notaLama.SiklusSnapshot === 'HARIAN' || notaLama.SiklusSnapshot === 'SiklusDua')
+      // const detailIds = notaLama.Details.map(d => d.BarangID)
+      // const tampilSemuaBarang = (notaLama.SiklusSnapshot === 'HARIAN' || notaLama.SiklusSnapshot === 'SiklusDua')
       
-      items.value = items.value
-        // Toko harian akan mem-bypass filter ini sehingga SEMUA barang tampil
-        .filter(item => tampilSemuaBarang || detailIds.includes(item.barang_id))
-        .map(item => {
-          const d = notaLama.Details.find(det => det.BarangID === item.barang_id || det.barang_id === item.barang_id)
-          return {
-            ...item,
-            detail_id: d ? (d.ID || d.id) : null,
-            banyak_kirim: d ? d.BanyakKirim : 0,
-            banyak_retur: d ? d.BanyakRetur : 0,
-            harga_barang: d ? d.HargaJual : item.harga_barang,
-            nama_barang: d ? d.NamaBarangSnapshot : item.nama_barang
-          }
-        })
+      // items.value = items.value
+      //   // Toko harian akan mem-bypass filter ini sehingga SEMUA barang tampil
+      //   .filter(item => tampilSemuaBarang || detailIds.includes(item.barang_id))
+      //   .map(item => {
+      //     const d = notaLama.Details.find(det => det.BarangID === item.barang_id || det.barang_id === item.barang_id)
+      //     return {
+      //       ...item,
+      //       detail_id: d ? (d.ID || d.id) : null,
+      //       banyak_kirim: d ? d.BanyakKirim : 0,
+      //       banyak_retur: d ? d.BanyakRetur : 0,
+      //       harga_barang: d ? d.HargaJual : item.harga_barang,
+      //       nama_barang: d ? d.NamaBarangSnapshot : item.nama_barang
+      //     }
+      //   })
+      // items.value.sort((a, b) => a.barang_id - b.barang_id)
+
+      // 2. LOGIKA KRUSIAL: Sinkronisasi Data (Filter Dihapus)
+      // Sekarang SEMUA barang akan selalu tampil agar bisa ditambah jika ada human error
+      items.value = items.value.map(item => {
+        const d = notaLama.Details.find(det => det.BarangID === item.barang_id || det.barang_id === item.barang_id)
+        return {
+          ...item,
+          detail_id: d ? (d.ID || d.id) : null,
+          banyak_kirim: d ? d.BanyakKirim : 0,
+          banyak_retur: d ? d.BanyakRetur : 0,
+          harga_barang: d ? d.HargaJual : item.harga_barang,
+          nama_barang: d ? d.NamaBarangSnapshot : item.nama_barang
+        }
+      })
       items.value.sort((a, b) => a.barang_id - b.barang_id)
     } catch (e) {
       console.error("Gagal sinkronisasi data sejarah:", e)
