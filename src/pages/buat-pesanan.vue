@@ -14,7 +14,9 @@ const barangsMaster = ref([])
 const tokosMaster = ref([])
 const resepsMaster = ref([]) // <--- State untuk katalog resep
 const bahansMaster = ref([]) // Katalog Dus/Kemasan
+const kompositMaster = ref([]) // <--- State untuk katalog komposit
 const showModalKemasan = ref(false)
+const showModalKomposit = ref(false) // <--- State untuk modal komposit
 const activeIdx = ref(null)
 const isEdit = ref(false)
 
@@ -33,7 +35,7 @@ const form = ref({
 })
 
 const details = ref([
-  { isKustom: false, idBarangM: '', namaKustom: '', banyak: 1, hargaJual: 0, idResep: '', gramasi: 0, kemasan_detail: [] }
+  { isKustom: false, idBarangM: '', namaKustom: '', banyak: 1, hargaJual: 0, idResep: '', gramasi: 0, kemasan_detail: [], komposit_detail: [] }
 ])
 
 const daftarSales = ref([])
@@ -87,6 +89,10 @@ const fetchData = async () => {
     const resBhn = await fetch(`${import.meta.env.VITE_API_URL}/api/bahan`, { headers })
     if (resBhn.ok) bahansMaster.value = await resBhn.json()
 
+    // Ambil Data Komposit
+    const resKomp = await fetch(`${import.meta.env.VITE_API_URL}/api/komposit`, { headers })
+    if (resKomp.ok) kompositMaster.value = await resKomp.json()
+
   } catch (err) { console.error("Gagal tarik master data", err) }
 }
 
@@ -138,7 +144,7 @@ const resetForm = () => {
     total_voucher: 0, 
     kemasan_detail: []
   }
-  details.value = [{ isKustom: false, idBarangM: '', namaKustom: '', banyak: 1, hargaJual: 0, idResep: '', gramasi: 0 }]
+  details.value = [{ isKustom: false, idBarangM: '', namaKustom: '', banyak: 1, hargaJual: 0, idResep: '', gramasi: 0, kemasan_detail: [], komposit_detail: [] }]
   isEdit.value = false
   generateNoNota()
 }
@@ -187,7 +193,8 @@ onMounted(async () => {
         hargaJual: d.HargaJual,
         idResep: d.ResepID || d.resep_id || '', // Adaptasi aman dari JSON Golang
         gramasi: d.Gramasi || d.gramasi || 0,
-        kemasan_detail: (d.KemasanDetail || d.kemasan_detail || []).map(k => ({ bahan_id: k.bahan_id || k.BahanID, kebutuhan: k.kebutuhan || k.Kebutuhan }))
+        kemasan_detail: (d.KemasanDetail || d.kemasan_detail || []).map(k => ({ bahan_id: k.bahan_id || k.BahanID, kebutuhan: k.kebutuhan || k.Kebutuhan })),
+        komposit_detail: (d.KompositDetail || d.komposit_detail || []).map(k => ({ resep_komposit_id: k.resep_komposit_id || k.ResepKompositID, kebutuhan: k.kebutuhan || k.Kebutuhan }))
       }))
 
     } catch (e) {
@@ -198,13 +205,13 @@ onMounted(async () => {
   }
 })
 
-const tambahBaris = () => details.value.push({ isKustom: false, idBarangM: '', namaKustom: '', banyak: 1, hargaJual: 0, idResep: '', gramasi: 0, kemasan_detail: [] })
+const tambahBaris = () => details.value.push({ isKustom: false, idBarangM: '', namaKustom: '', banyak: 1, hargaJual: 0, idResep: '', gramasi: 0, kemasan_detail: [], komposit_detail: [] })
 const hapusBaris = (index) => details.value.splice(index, 1)
 
 const gantiMode = (index) => {
   const row = details.value[index]
   row.isKustom = !row.isKustom
-  row.idBarangM = ''; row.namaKustom = ''; row.hargaJual = 0; row.idResep = ''; row.gramasi = 0; row.kemasan_detail =  []
+  row.idBarangM = ''; row.namaKustom = ''; row.hargaJual = 0; row.idResep = ''; row.gramasi = 0; row.kemasan_detail = []; row.komposit_detail = []
 }
 
 const onPilihBarangMaster = (index) => {
@@ -244,7 +251,8 @@ const simpanPesanan = async () => {
       harga_jual: Number(d.hargaJual),
       resep_id: d.isKustom && d.idResep ? Number(d.idResep) : null,
       gramasi: d.isKustom ? Number(d.gramasi) : 0,
-      kemasan_detail: d.isKustom && d.kemasan_detail ? d.kemasan_detail.map(k => ({ bahan_id: Number(k.bahan_id), kebutuhan: Number(k.kebutuhan) })) : []
+      kemasan_detail: d.isKustom && d.kemasan_detail ? d.kemasan_detail.map(k => ({ bahan_id: Number(k.bahan_id), kebutuhan: Number(k.kebutuhan) })) : [],
+      komposit_detail: d.isKustom && d.komposit_detail ? d.komposit_detail.map(k => ({ resep_komposit_id: Number(k.resep_komposit_id), kebutuhan: Number(k.kebutuhan) })) : []
     })
   }
 
@@ -289,6 +297,10 @@ const simpanPesanan = async () => {
 const bukaModalKemasan = (idx) => { activeIdx.value = idx; showModalKemasan.value = true }
 const tambahKemasanKustom = () => details.value[activeIdx.value].kemasan_detail.push({ bahan_id: '', kebutuhan: 1 })
 const hapusKemasanKustom = (kIdx) => details.value[activeIdx.value].kemasan_detail.splice(kIdx, 1)
+
+const bukaModalKomposit = (idx) => { activeIdx.value = idx; showModalKomposit.value = true }
+const tambahKompositKustom = () => details.value[activeIdx.value].komposit_detail.push({ resep_komposit_id: '', kebutuhan: 1 })
+const hapusKompositKustom = (kIdx) => details.value[activeIdx.value].komposit_detail.splice(kIdx, 1)
 
 const cetakPDF = () => window.print()
 </script>
@@ -397,7 +409,10 @@ const cetakPDF = () => window.print()
                           </select>
                           <input type="number" v-model.number="row.gramasi" placeholder="0" class="w-12 outline-none text-[10px] text-center text-gray-500 bg-gray-100 rounded border border-gray-300 hide-arrows py-0.5" />
                           <span class="text-[9px] text-gray-400 font-bold">gr</span>
-                          <button @click="bukaModalKemasan(idx)" class="text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-300 font-bold hover:bg-blue-200 whitespace-nowrap shadow-sm">
+                          <button @click="bukaModalKomposit(idx)" class="text-[9px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded border border-yellow-300 font-bold hover:bg-yellow-200 whitespace-nowrap shadow-sm ml-1">
+                            🧈 {{ row.komposit_detail?.length || 0 }} Komposit
+                          </button>
+                          <button @click="bukaModalKemasan(idx)" class="text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-300 font-bold hover:bg-blue-200 whitespace-nowrap shadow-sm ml-1">
                             📦 {{ row.kemasan_detail?.length || 0 }} Kemasan
                           </button>
                       </div>
@@ -455,6 +470,33 @@ const cetakPDF = () => window.print()
               </div>
 
               <button @click="showModalKemasan = false" class="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-3 rounded-lg font-black shadow-md">TUTUP & SIMPAN</button>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="showModalKomposit" class="fixed inset-0 bg-black/50 flex justify-center items-center z-60 p-4">
+          <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-t-8 border-yellow-500">
+            <div class="p-6">
+              <h3 class="text-lg font-black text-gray-800 mb-1">🧈 Isian & Topping (Komposit)</h3>
+              <p class="text-xs font-bold text-gray-500 mb-4">
+                Pilih komposit untuk: <span class="text-purple-600">{{ details[activeIdx].namaKustom || 'Item Baru' }}</span>
+              </p>
+              
+              <div class="space-y-3 max-h-60 overflow-y-auto pr-2 mb-6">
+                <div v-for="(k, kIdx) in details[activeIdx].komposit_detail" :key="kIdx" class="flex gap-2 items-center bg-gray-50 p-2 rounded border border-gray-200 shadow-sm">
+                  <select v-model="k.resep_komposit_id" class="flex-1 text-xs font-bold p-1 outline-none border rounded bg-white cursor-pointer">
+                    <option value="" disabled>-- Pilih Butter/Isian --</option>
+                    <option v-for="c in kompositMaster" :key="c.id" :value="c.id">{{ c.nama_komposit }}</option>
+                  </select>
+                  <input type="number" v-model.number="k.kebutuhan" class="w-16 text-xs font-bold p-1 border rounded text-center outline-none" min="0.1" step="any" placeholder="Gram">
+                  <span class="text-xs font-bold text-gray-400">gr</span>
+                  <button @click="hapusKompositKustom(kIdx)" class="text-red-500 font-black px-2 hover:bg-red-100 rounded">×</button>
+                </div>
+                
+                <button @click="tambahKompositKustom" class="w-full py-2 border-2 border-dashed border-yellow-300 text-yellow-600 text-xs font-bold rounded-lg hover:bg-yellow-50 transition">+ Tambah Lapis Komposit</button>
+              </div>
+
+              <button @click="showModalKomposit = false" class="w-full bg-yellow-500 hover:bg-yellow-600 transition text-yellow-950 py-3 rounded-lg font-black shadow-md">TUTUP & SIMPAN</button>
             </div>
           </div>
         </div>
