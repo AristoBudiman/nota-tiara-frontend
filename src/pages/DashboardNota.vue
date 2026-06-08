@@ -27,45 +27,44 @@ const fetchDashboardData = async () => {
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
     const lastDayStr = getLocalDateString(lastDay)
 
-    const [resNota, resPesanan, resRangkumanBulan, resRangkumanHari] = await Promise.all([
-      fetch(`${import.meta.env.VITE_API_URL}/api/notas`, { headers }),
-      fetch(`${import.meta.env.VITE_API_URL}/api/pesanan/riwayat`, { headers }),
+    const [resNotaHariIni, resPesanan, resRangkumanBulan, resRangkumanHari] = await Promise.all([
+      fetch(`${import.meta.env.VITE_API_URL}/api/notas?start_date=${todayStr}&end_date=${todayStr}`, { headers }),
+      fetch(`${import.meta.env.VITE_API_URL}/api/pesanan/riwayat?start_date=${firstDayStr}&end_date=${lastDayStr}`, { headers }),
       fetch(`${import.meta.env.VITE_API_URL}/api/rangkuman?start=${firstDayStr}&end=${lastDayStr}`, { headers }),
       fetch(`${import.meta.env.VITE_API_URL}/api/rangkuman?start=${todayStr}&end=${todayStr}`, { headers })
     ])
     
-    if (resNota.ok) {
-       const data = await resNota.json() || []
+    if (resNotaHariIni.ok) {
+       const data = await resNotaHariIni.json() || []
        
-       const notaBulanIni = data.filter(n => n.TanggalKirim && n.TanggalKirim.startsWith(monthStr))
-       const notaHariIni = data.filter(n => n.TanggalKirim && n.TanggalKirim.startsWith(todayStr))
+       // Karena backend sudah memfilter berdasar tanggal, kita cukup pastikan statusnya bukan DIBATALKAN
+       const notaHariIni = data.filter(n => n.Status !== 'DIBATALKAN')
        
        if (resRangkumanBulan.ok) {
          const dataBulan = await resRangkumanBulan.json()
          totalPendapatanBulanIni.value = dataBulan.kirim || 0
+         
+         // Top 5 Produk dari Rangkuman (berdasarkan Qty Kirim tertinggi)
+         if (dataBulan.perBarang) {
+           topProduk.value = dataBulan.perBarang
+             .sort((a,b) => b.qty_kirim - a.qty_kirim)
+             .slice(0, 5)
+             .map(b => ({
+               nama: b.nama,
+               qty: b.qty_kirim
+             }))
+         }
        }
-       if (resRangkumanHari.ok) {
-         const dataHari = await resRangkumanHari.json()
-         totalPendapatanHariIni.value = dataHari.kirim || 0
-       }
+       
+       // Omzet Hari Ini dikembalikan ke perhitungan manual murni hari ini (Gross / Total Kirim)
+       totalPendapatanHariIni.value = notaHariIni.reduce((sum, n) => sum + (n.JumlahKirim || 0), 0)
+       
        jumlahNotaHariIni.value = notaHariIni.length
        
        // Sort descending by ID to get the newest
        recentNota.value = notaHariIni.sort((a,b) => b.ID - a.ID).slice(0, 5)
 
-       // Calculate Top 5 Products this month
-       const produkMap = {}
-       notaBulanIni.forEach(nota => {
-         if (nota.Details) {
-           nota.Details.forEach(d => {
-             const key = d.NamaBarangSnapshot || (d.Barang && d.Barang.NamaBarang) || 'Barang'
-             if (!produkMap[key]) produkMap[key] = { nama: key, qty: 0, omzet: 0 }
-             produkMap[key].qty += d.BanyakKirim
-             produkMap[key].omzet += d.HargaKirim
-           })
-         }
-       })
-       topProduk.value = Object.values(produkMap).sort((a,b) => b.qty - a.qty).slice(0, 5)
+
     }
     
     if (resPesanan.ok) {
@@ -141,29 +140,44 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-center">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
-              <Calendar :size="20" />
+        <div class="bg-linear-to-br from-blue-500 to-indigo-600 p-6 rounded-3xl shadow-lg shadow-blue-500/20 text-white flex flex-col justify-center relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-blue-500/30">
+          <div class="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+          <div class="flex items-center gap-3 mb-4 relative z-10">
+            <div class="w-10 h-10 bg-white/20 text-white rounded-xl flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/10 shadow-inner">
+              <Calendar :size="18" stroke-width="2.5" />
             </div>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hari Ini</p>
+            <p class="text-[10px] font-black text-blue-100 uppercase tracking-widest">Hari Ini</p>
           </div>
-          <div>
-            <p class="text-2xl font-black text-slate-800">Rp {{ formatRp(totalPendapatanHariIni) }}</p>
-            <p class="text-xs font-bold text-slate-400 mt-1">Dari <span class="text-blue-600">{{ jumlahNotaHariIni }}</span> Nota Baru</p>
+          <div class="relative z-10">
+            <div class="flex items-baseline gap-1.5">
+              <span class="text-sm font-black text-blue-200">Rp</span>
+              <p class="text-3xl font-black tracking-tight drop-shadow-sm">{{ formatRp(totalPendapatanHariIni) }}</p>
+            </div>
+            <p class="text-xs font-bold text-blue-100 mt-1.5 flex items-center gap-1.5">
+              Dari <span class="text-white bg-white/20 px-2 py-0.5 rounded-md backdrop-blur-sm font-black shadow-inner">{{ jumlahNotaHariIni }}</span> Nota Baru
+            </p>
           </div>
         </div>
         
-        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-center">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shrink-0">
-              <ShoppingCart :size="20" />
+        <div class="bg-linear-to-br from-amber-500 to-orange-500 p-6 rounded-3xl shadow-lg shadow-amber-500/20 text-white flex flex-col justify-center relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-amber-500/30">
+          <div class="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+          <div class="flex items-center gap-3 mb-4 relative z-10">
+            <div class="w-10 h-10 bg-white/20 text-white rounded-xl flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/10 shadow-inner">
+              <ShoppingCart :size="18" stroke-width="2.5" />
             </div>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pesanan</p>
+            <p class="text-[10px] font-black text-amber-100 uppercase tracking-widest">PO Aktif</p>
           </div>
-          <div>
-            <p class="text-3xl font-black text-slate-800">{{ jumlahPesananAktif }} <span class="text-sm font-bold text-slate-400">PO Aktif</span></p>
-            <p class="text-[10px] font-bold text-amber-500 mt-1 uppercase tracking-wider">Belum Diambil</p>
+          <div class="relative z-10">
+            <div class="flex items-baseline gap-2">
+              <p class="text-4xl font-black drop-shadow-sm">{{ jumlahPesananAktif }}</p>
+              <p class="text-xs font-black text-amber-100 uppercase tracking-widest">Pesanan</p>
+            </div>
+            <div class="mt-1.5">
+              <span class="text-[9px] font-black bg-white/20 text-white inline-flex items-center px-2 py-1 rounded-md uppercase tracking-widest backdrop-blur-sm border border-white/10 shadow-inner">
+                <span class="w-1.5 h-1.5 rounded-full bg-white mr-1.5 animate-pulse"></span>
+                Belum Diambil
+              </span>
+            </div>
           </div>
         </div>
 
@@ -230,8 +244,7 @@ onMounted(() => {
               <thead class="bg-white border-b border-slate-100 text-[10px] uppercase font-black text-slate-400 tracking-wider">
                 <tr>
                   <th class="px-6 py-4">Nama Produk</th>
-                  <th class="px-6 py-4 text-center">Terjual</th>
-                  <th class="px-6 py-4 text-right">Sumbangan Omzet</th>
+                  <th class="px-6 py-4 text-center">Dikirim (Pcs)</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-50">
@@ -253,7 +266,6 @@ onMounted(() => {
                   <td class="px-6 py-4 text-center">
                     <span class="font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg">{{ prod.qty }}</span>
                   </td>
-                  <td class="px-6 py-4 text-right font-black text-slate-800">Rp {{ formatRp(prod.omzet) }}</td>
                 </tr>
               </tbody>
             </table>

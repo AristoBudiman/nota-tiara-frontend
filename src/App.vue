@@ -33,8 +33,8 @@ onMounted(() => {
 
 const handleLogout = async () => {
   if (window.$dialog && await window.$dialog.confirm("Apakah Anda yakin ingin keluar?")) {
-    localStorage.clear()
-    updateAuthStatus()
+    localStorage.removeItem('admin_token')
+    localStorage.removeItem('admin_role')
     isMenuOpen.value = false
     router.push('/login')
   }
@@ -174,11 +174,7 @@ const handleLogout = async () => {
 
         <!-- Main Scrollable Content -->
         <main class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-4 md:p-8">
-            <router-view v-slot="{ Component }">
-                <transition name="fade" mode="out-in">
-                    <component :is="Component" />
-                </transition>
-            </router-view>
+            <router-view />
         </main>
     </div>
   </div>
@@ -200,14 +196,7 @@ const handleLogout = async () => {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.15s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+
 @media print {
   aside, header { display: none !important; }
   .overflow-hidden, .overflow-y-auto { overflow: visible !important; height: auto !important; }

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { FileText, AlertCircle, Loader2, Server } from 'lucide-vue-next'
 
 const router = useRouter()
 const username = ref('')
@@ -56,9 +57,7 @@ const handleLogin = async () => {
         
         <div class="text-center mb-8">
           <div class="mx-auto bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mb-4 border border-blue-100 shadow-sm">
-            <svg class="w-8 h-8 text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+            <FileText :size="32" class="text-blue-800" stroke-width="1.5" />
           </div>
           <h1 class="text-2xl font-black text-blue-900 tracking-tight">Tiara Bakery</h1>
           <p class="text-slate-500 text-sm font-medium mt-1">Sistem Nota & Penjualan</p>
@@ -67,7 +66,7 @@ const handleLogin = async () => {
         <form @submit.prevent="handleLogin" class="space-y-5">
           
           <div v-if="errorMsg" class="bg-red-50 border-l-4 border-red-500 p-4 rounded-md flex items-start">
-            <svg class="w-5 h-5 text-red-500 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <AlertCircle :size="20" class="text-red-500 mr-2 shrink-0" stroke-width="2.5" />
             <p class="text-sm text-red-700 font-bold">{{ errorMsg }}</p>
           </div>
           
@@ -96,7 +95,7 @@ const handleLogin = async () => {
           </div>
 
           <div v-if="isLoading" class="bg-blue-50 border border-blue-200 p-3 rounded-lg flex items-start gap-3 mt-2">
-              <span class="text-xl">⏳</span>
+              <Server :size="24" class="text-blue-500 animate-pulse shrink-0" stroke-width="2" />
               <div>
                  <p class="text-sm font-bold text-blue-900">Membangunkan server...</p>
                  <p class="text-[10px] font-medium text-blue-700 leading-tight mt-0.5">Mohon tunggu sekitar 50 detik jika ini login pertama. Sistem sedang menyiapkan database.</p>
@@ -109,10 +108,7 @@ const handleLogin = async () => {
             class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-blue-900 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-900 transition-colors disabled:opacity-70 disabled:cursor-not-allowed mt-6 active:scale-[0.98]"
           >
             <span v-if="isLoading" class="flex items-center">
-              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+              <Loader2 :size="16" class="animate-spin -ml-1 mr-2 text-white" stroke-width="3" />
               Memverifikasi...
             </span>
             <span v-else>Masuk Sistem</span>
