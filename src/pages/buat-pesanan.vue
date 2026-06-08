@@ -307,255 +307,294 @@ const cetakPDF = () => window.print()
 </script>
 
 <template>
-  <div class="nota-container p-8 max-w-5xl mx-auto bg-white shadow-lg my-4 border border-gray-200 rounded">
-    
+  <div class="nota-container p-4 md:p-8 max-w-5xl mx-auto my-4">
+    <div class="bg-white shadow-sm border border-slate-200 rounded-2xl overflow-hidden print:shadow-none print:border-none print:rounded-none">
     <fieldset :disabled="isSales" class="border-0 p-0 m-0 w-full min-w-0">
-        <div class="flex flex-col md:flex-row print:flex-row justify-between items-start mb-6 print:mb-2 border-b-2 pb-4 print:pb-2 gap-4 md:gap-0 print:gap-0">
-        <div class="flex flex-col items-start gap-1 flex-1 pr-4">
-            <div class="shrink-0">
-            <img :src="logoTiara" alt="Logo" class="w-48 max-h-24 object-contain print:hidden" />
-            <img :src="logoTiara" alt="Logo" class="w-48 max-h-24 object-contain hidden print:block" style="filter: grayscale(100%);" />
+      
+      <!-- HEADER COMPACT -->
+      <div class="bg-slate-50 p-3 md:p-4 border-b border-slate-200 print:bg-white print:p-0 print:border-b-2 print:border-slate-800 print:mb-4">
+        <div class="flex flex-col md:flex-row print:flex-row justify-between items-center print:items-start gap-4 print:gap-0">
+          
+          <!-- PROFIL TENGAH -->
+          <div class="flex flex-col items-center print:items-start gap-1 flex-1 pr-4">
+            <div class="shrink-0 mb-1 print:mb-0">
+              <img :src="logoTiara" alt="Logo" class="w-40 max-h-16 object-contain print:w-48 print:max-h-24 print:hidden mx-auto print:mx-0" />
+              <img :src="logoTiara" alt="Logo" class="w-48 max-h-24 object-contain hidden print:block" style="filter: grayscale(100%);" />
             </div>
-            <div class="profile-perusahaan mt-1">
-            <p class="text-[12px] md:text-sm text-gray-800 font-bold leading-tight">{{ profil.Alamat }}</p>
-            <p class="text-[11px] text-gray-600 font-medium mt-1 print:mt-0">
+            <div class="mt-1 text-center print:text-left">
+              <p class="text-sm md:text-base print:text-[12px] text-slate-800 font-bold leading-tight">{{ profil.Alamat }}</p>
+              <p class="text-xs md:text-sm print:text-[11px] text-slate-500 font-medium mt-0.5">
                 <span v-if="profil.NoTelp">Telp: {{ profil.NoTelp }}</span>
                 <span v-if="profil.NoTelp && profil.NoHP" class="mx-1">|</span>
                 <span v-if="profil.NoHP">HP/WA: {{ profil.NoHP }}</span>
-            </p>
+              </p>
             </div>
-        </div>
+          </div>
 
-        <div class="info-nota shrink-0 w-full md:w-90 print:w-70">
-            <div class="text-left md:text-right print:text-right">
-            <h2 class="text-xl font-bold mb-2 print:mb-1 bg-yellow-600 text-white px-2 inline-block">NOTA PESANAN (PO)</h2>
+          <!-- FORM KANAN COMPACT -->
+          <div class="w-full md:w-[380px] print:w-72 print:flex-none bg-white print:bg-transparent rounded-xl border border-slate-200 print:border-none p-3 print:p-0 shadow-sm print:shadow-none shrink-0 mt-3 md:mt-0">
+            <div class="text-right mb-3 print:mb-2 border-b border-slate-100 print:border-none pb-2 print:pb-0">
+              <div class="inline-flex items-center gap-1.5 bg-amber-100 print:bg-slate-800 text-amber-800 print:text-white px-2.5 py-1 rounded-md">
+                <ShoppingCart :size="16" class="print:hidden" />
+                <h2 class="text-sm font-black tracking-wide">NOTA PESANAN (PO)</h2>
+              </div>
             </div>
             
-            <div class="grid grid-cols-[100px_1fr] print:grid-cols-[80px_1fr] gap-x-2 gap-y-1 text-sm print:text-xs mt-1 items-center">
-            
-            <span class="font-semibold text-left">Pemesan:</span>
-            <input type="text" v-model="form.nama_pemesan" class="border rounded px-2 py-0.5 print:border-none print:p-0 font-bold w-full" placeholder="Nama Pemesan" />
-            
-            <span class="font-semibold text-left">Tgl Selesai:</span>
-            <input type="date" v-model="form.tanggal_kirim" class="border rounded px-2 py-0.5 font-bold w-full print:hidden" />
-            <span class="hidden print:block font-bold">{{ form.tanggal_kirim.split('-').reverse().join('/') }}</span>
-            
-            <span class="font-semibold text-left">Titik Ambil:</span>
-            <div class="flex gap-1 w-full border rounded print:hidden">
-                <select v-model="form.jenis_pengambilan" class="px-1 py-0.5 outline-none font-bold text-xs bg-gray-50 flex-1 truncate">
-                <option value="PABRIK">PABRIK</option>
-                <option value="MITRA">MITRA</option>
+            <div class="grid grid-cols-[90px_1fr] print:grid-cols-[80px_1fr] gap-x-2 gap-y-1.5 text-xs print:text-xs items-center">
+              
+              <span class="font-bold text-slate-600">Pemesan:</span>
+              <input type="text" v-model="form.nama_pemesan" class="bg-slate-50 print:bg-transparent border border-slate-200 rounded px-2 py-1 print:border-none print:p-0 font-bold text-slate-800 w-full focus:ring-1 focus:ring-amber-500 outline-none transition-all" placeholder="Nama Pemesan" />
+              
+              <span class="font-bold text-slate-600">Tgl Selesai:</span>
+              <input type="date" v-model="form.tanggal_kirim" class="bg-slate-50 border border-slate-200 rounded px-2 py-1 font-bold text-slate-800 w-full focus:ring-1 focus:ring-amber-500 outline-none transition-all print:hidden" />
+              <span class="hidden print:block font-bold text-slate-800">{{ form.tanggal_kirim.split('-').reverse().join('/') }}</span>
+              
+              <span class="font-bold text-slate-600 whitespace-nowrap">Titik Ambil:</span>
+              <div class="flex gap-1 w-full min-w-0 print:hidden">
+                <select v-model="form.jenis_pengambilan" class="bg-slate-50 border border-slate-200 rounded px-1.5 py-1 font-bold text-slate-800 outline-none focus:ring-1 focus:ring-amber-500 flex-1 min-w-0 truncate">
+                  <option value="PABRIK">PABRIK</option>
+                  <option value="MITRA">MITRA</option>
                 </select>
-                <select v-if="form.jenis_pengambilan === 'MITRA'" v-model="form.toko_id" class="px-1 py-0.5 border-l text-xs outline-none flex-1 truncate font-bold bg-white">
-                <option value="" disabled>Pilih</option>
-                <option v-for="t in tokosMaster" :key="t.ID" :value="t.ID">{{ t.NamaToko }}</option>
+                <select v-if="form.jenis_pengambilan === 'MITRA'" v-model="form.toko_id" class="bg-slate-50 border border-slate-200 rounded px-1.5 py-1 font-bold text-slate-800 outline-none focus:ring-1 focus:ring-amber-500 flex-1 min-w-0 truncate">
+                  <option value="" disabled>Pilih</option>
+                  <option v-for="t in tokosMaster" :key="t.ID" :value="t.ID">{{ t.NamaToko }}</option>
                 </select>
-            </div>
-            <div class="hidden print:block font-bold">
+              </div>
+              <div class="hidden print:block font-bold text-slate-800">
                 <span v-if="form.jenis_pengambilan === 'PABRIK'">PABRIK</span>
                 <span v-else>MITRA - {{ tokosMaster.find(t => t.ID === form.toko_id)?.NamaToko || '?' }}</span>
-            </div>
-            
-            <span class="font-semibold text-left">No. PO:</span>
-            <input v-model="form.no_nota" class="border rounded px-2 py-0.5 font-mono text-[10px] bg-gray-50 print:bg-transparent w-full print:border-none print:p-0 font-bold" readonly />
-            
-            <template v-if="role === 'superadmin'">
-                <span class="font-semibold text-left text-orange-600 print:hidden mt-1">Tugaskan:</span>
-                <select v-model="penugasanDanStatus" class="border rounded px-2 py-0.5 mt-1 border-orange-400 bg-orange-50 print:hidden font-bold w-full outline-none">
-                <option :value="0">-- Belum Ditugaskan--</option>
-                <option v-for="s in daftarSales" :key="s.ID" :value="s.ID">Ke: {{ s.Username }}</option>
-                <option value="DIAMBIL" class="bg-green-100 text-green-800">[SELESAI] DIAMBIL</option>
+              </div>
+              
+              <span class="font-bold text-slate-600">No. PO:</span>
+              <input v-model="form.no_nota" class="bg-slate-100 border border-slate-200 rounded px-2 py-1 font-mono text-xs text-slate-600 print:bg-transparent w-full print:border-none print:p-0 font-bold" readonly />
+              
+              <template v-if="role === 'superadmin'">
+                <span class="font-bold text-orange-600 print:hidden mt-1">Tugaskan:</span>
+                <select v-model="penugasanDanStatus" class="bg-orange-50 border border-orange-200 rounded px-2 py-1 mt-1 font-bold text-orange-800 w-full outline-none focus:ring-1 focus:ring-orange-500 print:hidden">
+                  <option :value="0">-- Belum Ditugaskan--</option>
+                  <option v-for="s in daftarSales" :key="s.ID" :value="s.ID">Ke: {{ s.Username }}</option>
+                  <option value="DIAMBIL" class="bg-emerald-100 text-emerald-800">[SELESAI] DIAMBIL</option>
                 </select>
 
-                <span class="font-semibold text-left text-green-600 print:hidden mt-1">Pembayaran:</span>
-                <label class="flex items-center justify-center gap-2 font-bold text-green-700 bg-green-50 px-2 py-0.5 mt-1 rounded border border-green-300 w-full print:hidden cursor-pointer hover:bg-green-100 transition shadow-sm">
-                <input type="checkbox" v-model="form.is_lunas" class="w-4 h-4 accent-green-600 cursor-pointer" />
-                Tandai Lunas
+                <span class="font-bold text-emerald-600 print:hidden mt-1">Pembayaran:</span>
+                <label class="flex items-center justify-start gap-2 font-bold text-emerald-700 bg-emerald-50 px-2 py-1 mt-1 rounded border border-emerald-200 w-full print:hidden cursor-pointer hover:bg-emerald-100 transition shadow-sm">
+                  <input type="checkbox" v-model="form.is_lunas" class="w-3.5 h-3.5 accent-emerald-600 cursor-pointer rounded" />
+                  Tandai Lunas
                 </label>
-            </template>
+              </template>
             </div>
+          </div>
         </div>
-        </div>
+      </div>
 
-        <div class="overflow-x-auto w-full mb-6">
-        <table class="w-full border-collapse border border-gray-400 text-sm">
-            <thead class="bg-gray-100">
-            <tr class="uppercase text-[11px]">
-                <th class="border border-gray-400 p-2 text-left w-6 print:hidden">Mode</th>
-                <th class="border border-gray-400 p-2 text-left w-48">Barang Pesanan</th>
-                <th class="border border-gray-400 p-2 w-16">Qty</th>
-                <th class="border border-gray-400 p-2 w-24">Harga/Pcs</th>
-                <th class="border border-gray-400 p-2 w-28">Subtotal (Rp)</th>
-                <th class="border border-gray-400 p-2 w-8 print:hidden text-red-500 text-center"><XCircle :size="16" class="inline" /></th>
-            </tr>
+      <!-- BODY: TABEL -->
+      <div class="p-6 print:p-0 w-full overflow-x-auto print:overflow-visible">
+        <div class="rounded-xl border border-slate-200 overflow-hidden print:border-none">
+          <table class="w-full text-sm border-collapse">
+            <thead class="bg-slate-800 text-white print:bg-transparent print:text-black print:border-b-2 print:border-slate-800">
+              <tr class="tracking-wide">
+                <th class="p-3 text-center w-12 print:hidden font-bold">Mode</th>
+                <th class="p-3 text-left font-bold">Barang Pesanan</th>
+                <th class="p-3 w-20 text-center font-bold">Qty</th>
+                <th class="p-3 w-32 text-right font-bold">Harga/Pcs</th>
+                <th class="p-3 w-36 text-right font-bold">Subtotal (Rp)</th>
+                <th class="p-3 w-10 print:hidden text-center"></th>
+              </tr>
             </thead>
-            <tbody>
-            <tr v-for="(row, idx) in details" :key="idx" class="hover:bg-gray-50 border-b border-gray-300 print-row">
+            <tbody class="divide-y divide-slate-100 print:divide-slate-400">
+              <tr v-for="(row, idx) in details" :key="idx" class="hover:bg-amber-50/50 even:bg-slate-50 transition-colors print:even:bg-transparent">
                 
-                <td class="border border-gray-400 p-1 text-center print:hidden align-top pt-2">
-                  <button @click="gantiMode(idx)" class="px-1 py-1 text-[10px] font-bold rounded shadow-sm border w-full"
-                          :class="row.isKustom ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-blue-100 text-blue-700 border-blue-300'">
-                      <PenTool v-if="row.isKustom" :size="14" class="mx-auto" />
-                      <Package v-else :size="14" class="mx-auto" />
+                <td class="p-2 text-center print:hidden align-top pt-3">
+                  <button @click="gantiMode(idx)" class="p-1.5 rounded-lg shadow-sm border transition-all hover:scale-105 active:scale-95"
+                          :class="row.isKustom ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-amber-100 text-amber-700 border-amber-200'">
+                      <PenTool v-if="row.isKustom" :size="16" />
+                      <Package v-else :size="16" />
                   </button>
                 </td>
 
-                <td class="border border-gray-400 p-1 font-medium align-top">
+                <td class="p-2 align-top pt-3">
                   <div v-if="row.isKustom">
-                      <input type="text" v-model="row.namaKustom" placeholder="Ketik kue kustom..." class="w-full px-2 outline-none font-bold pt-1" />
+                      <input type="text" v-model="row.namaKustom" placeholder="Ketik kue kustom..." class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg outline-none font-bold text-slate-800 focus:ring-2 focus:ring-amber-500 transition-shadow print:border-none print:p-0 print:bg-transparent" />
                       
-                      <div class="flex items-center gap-1 px-2 mt-1 print:hidden">
-                          <select v-model="row.idResep" class="w-full outline-none text-[10px] text-gray-500 bg-gray-100 rounded border border-gray-300 px-1 py-0.5 cursor-pointer">
+                      <div class="flex flex-wrap items-center gap-2 mt-2 print:hidden">
+                          <select v-model="row.idResep" class="flex-1 min-w-[140px] outline-none text-xs font-bold text-slate-600 bg-slate-100 rounded-lg border border-slate-200 px-2 py-1.5 cursor-pointer focus:ring-2 focus:ring-amber-500">
                               <option value="">- Potong Resep Apa? -</option>
                               <option v-for="r in resepsMaster" :key="r.ID" :value="r.ID">{{ r.nama_resep }}</option>
                           </select>
-                          <input type="number" v-model.number="row.gramasi" placeholder="0" class="w-12 outline-none text-[10px] text-center text-gray-500 bg-gray-100 rounded border border-gray-300 hide-arrows py-0.5" />
-                          <span class="text-[9px] text-gray-400 font-bold">gr</span>
-                          <button @click="bukaModalKomposit(idx)" class="text-[9px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded border border-yellow-300 font-bold hover:bg-yellow-200 whitespace-nowrap shadow-sm ml-1">
-                            <span class="flex items-center justify-center gap-1"><Layers :size="10" /> {{ row.komposit_detail?.length || 0 }} Komposit</span>
+                          <div class="flex items-center bg-slate-100 border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-amber-500">
+                            <input type="number" v-model.number="row.gramasi" placeholder="0" class="w-14 outline-none text-xs font-bold text-center text-slate-700 bg-transparent py-1.5 hide-arrows" />
+                            <span class="text-[10px] text-slate-400 font-bold pr-2">gr</span>
+                          </div>
+                          
+                          <button @click="bukaModalKomposit(idx)" class="text-[10px] bg-amber-50 text-amber-700 px-2.5 py-1.5 rounded-lg border border-amber-200 font-bold hover:bg-amber-100 transition shadow-sm flex items-center gap-1">
+                            <Layers :size="12" /> {{ row.komposit_detail?.length || 0 }} Komposit
                           </button>
-                          <button @click="bukaModalKemasan(idx)" class="text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-300 font-bold hover:bg-blue-200 whitespace-nowrap shadow-sm ml-1">
-                            <span class="flex items-center justify-center gap-1"><PackageOpen :size="10" /> {{ row.kemasan_detail?.length || 0 }} Kemasan</span>
+                          <button @click="bukaModalKemasan(idx)" class="text-[10px] bg-sky-50 text-sky-700 px-2.5 py-1.5 rounded-lg border border-sky-200 font-bold hover:bg-sky-100 transition shadow-sm flex items-center gap-1">
+                            <PackageOpen :size="12" /> {{ row.kemasan_detail?.length || 0 }} Kemasan
                           </button>
                       </div>
                   </div>
                   <div v-else class="pt-1">
-                      <select v-model="row.idBarangM" @change="onPilihBarangMaster(idx)" class="w-full px-1 outline-none bg-transparent appearance-none font-bold cursor-pointer">
+                      <select v-model="row.idBarangM" @change="onPilihBarangMaster(idx)" class="w-full px-3 py-1.5 bg-white print:bg-transparent border border-slate-200 print:border-none rounded-lg outline-none font-bold text-slate-800 cursor-pointer focus:ring-2 focus:ring-amber-500 transition-shadow">
                           <option value="" disabled>Pilih Barang</option>
                           <option v-for="b in barangsMaster" :key="b.ID" :value="b.ID">{{ b.NamaBarang }}</option>
                       </select>
                   </div>
                 </td>
                 
-                <td class="border border-gray-400 p-1 align-top pt-2">
-                <input type="number" v-model.number="row.banyak" min="1" @wheel="$event.target.blur()" class="w-full text-center outline-none focus:bg-yellow-100 font-bold bg-transparent" />
+                <td class="p-2 align-top pt-3">
+                  <input type="number" v-model.number="row.banyak" min="1" @wheel="$event.target.blur()" class="w-full text-center outline-none bg-white border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1.5 font-black text-slate-800 focus:ring-2 focus:ring-amber-500 transition-shadow" />
                 </td>
                 
-                <td class="border border-gray-400 p-1 text-right align-top pt-2">
-                <input type="number" v-model.number="row.hargaJual" :disabled="!row.isKustom" @wheel="$event.target.blur()" class="w-full text-right outline-none bg-transparent font-bold" :class="{'text-gray-500': !row.isKustom}" />
+                <td class="p-2 align-top pt-3">
+                  <input type="number" v-model.number="row.hargaJual" :disabled="!row.isKustom" @wheel="$event.target.blur()" class="w-full text-right outline-none bg-white border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1.5 font-bold focus:ring-2 focus:ring-amber-500 transition-shadow disabled:bg-slate-50 disabled:text-slate-500" :class="{'text-slate-800': row.isKustom}" />
                 </td>
                 
-                <td class="border border-gray-400 p-2 text-right font-bold text-blue-800 align-top pt-2">
-                {{ formatRp(row.banyak * row.hargaJual) }}
+                <td class="p-3 text-right font-black text-amber-900 print:text-black align-top pt-4">
+                  {{ formatRp(row.banyak * row.hargaJual) }}
                 </td>
 
-                <td class="border border-gray-400 p-1 text-center print:hidden align-top pt-1">
-                <button @click="hapusBaris(idx)" class="text-red-500 hover:text-red-700 font-bold text-xl leading-none w-full flex justify-center"><X :size="18" /></button>
+                <td class="p-2 text-center print:hidden align-top pt-3">
+                  <button @click="hapusBaris(idx)" class="p-1.5 text-red-400 hover:text-white hover:bg-red-500 rounded-lg transition-colors flex justify-center w-full">
+                    <X :size="18" />
+                  </button>
                 </td>
-            </tr>
+              </tr>
             </tbody>
-        </table>
+          </table>
+        </div>
         
-        <button @click="tambahBaris" class="mt-2 text-xs font-bold text-yellow-600 hover:underline px-2 print:hidden">
-            + Tambah Baris Baru
+        <button @click="tambahBaris" class="mt-3 text-sm font-bold text-amber-600 hover:text-amber-800 transition flex items-center gap-1 print:hidden px-2">
+            <span class="bg-amber-100 rounded-full w-5 h-5 flex items-center justify-center">+</span> Tambah Baris
         </button>
-        </div>
-        <div v-if="showModalKemasan" class="fixed inset-0 bg-black/50 flex justify-center items-center z-60 p-4">
-          <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-t-8 border-blue-600">
-            <div class="p-6">
-              <h3 class="text-lg font-black text-gray-800 mb-1"><PackageOpen :size="20" class="inline align-text-bottom mr-1" /> Kemasan Kustom</h3>
-              <p class="text-xs font-bold text-gray-500 mb-4">
-                Rakit kemasan untuk: <span class="text-purple-600">{{ details[activeIdx].namaKustom || 'Item Baru' }}</span>
-              </p>
-              
-              <div class="space-y-3 max-h-60 overflow-y-auto pr-2 mb-6">
-                <div v-for="(k, kIdx) in details[activeIdx].kemasan_detail" :key="kIdx" class="flex gap-2 items-center bg-gray-50 p-2 rounded border border-gray-200 shadow-sm">
-                  <select v-model="k.bahan_id" class="flex-1 text-xs font-bold p-1 outline-none border rounded bg-white cursor-pointer">
-                    <option value="" disabled>-- Pilih Dus/Plastik/Pita --</option>
-                    <option v-for="b in bahansMaster" :key="b.ID" :value="b.ID">{{ b.nama_bahan }} ({{ b.satuan }})</option>
-                  </select>
-                  <input type="number" v-model.number="k.kebutuhan" class="w-14 text-xs font-bold p-1 border rounded text-center outline-none" min="0.1" step="any" placeholder="Qty">
-                  <button @click="hapusKemasanKustom(kIdx)" class="text-red-500 font-black px-2 hover:bg-red-100 rounded">×</button>
-                </div>
-                
-                <button @click="tambahKemasanKustom" class="w-full py-2 border-2 border-dashed border-blue-300 text-blue-600 text-xs font-bold rounded-lg hover:bg-blue-50 transition">+ Tambah Lapis Kemasan</button>
-              </div>
-
-              <button @click="showModalKemasan = false" class="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-3 rounded-lg font-black shadow-md">TUTUP & SIMPAN</button>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="showModalKomposit" class="fixed inset-0 bg-black/50 flex justify-center items-center z-60 p-4">
-          <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-t-8 border-yellow-500">
-            <div class="p-6">
-              <h3 class="text-lg font-black text-gray-800 mb-1"><Layers :size="20" class="inline align-text-bottom mr-1" /> Isian & Topping (Komposit)</h3>
-              <p class="text-xs font-bold text-gray-500 mb-4">
-                Pilih komposit untuk: <span class="text-purple-600">{{ details[activeIdx].namaKustom || 'Item Baru' }}</span>
-              </p>
-              
-              <div class="space-y-3 max-h-60 overflow-y-auto pr-2 mb-6">
-                <div v-for="(k, kIdx) in details[activeIdx].komposit_detail" :key="kIdx" class="flex gap-2 items-center bg-gray-50 p-2 rounded border border-gray-200 shadow-sm">
-                  <select v-model="k.resep_komposit_id" class="flex-1 text-xs font-bold p-1 outline-none border rounded bg-white cursor-pointer">
-                    <option value="" disabled>-- Pilih Butter/Isian --</option>
-                    <option v-for="c in kompositMaster" :key="c.id" :value="c.id">{{ c.nama_komposit }}</option>
-                  </select>
-                  <input type="number" v-model.number="k.kebutuhan" class="w-16 text-xs font-bold p-1 border rounded text-center outline-none" min="0.1" step="any" placeholder="Gram">
-                  <span class="text-xs font-bold text-gray-400">gr</span>
-                  <button @click="hapusKompositKustom(kIdx)" class="text-red-500 font-black px-2 hover:bg-red-100 rounded">×</button>
-                </div>
-                
-                <button @click="tambahKompositKustom" class="w-full py-2 border-2 border-dashed border-yellow-300 text-yellow-600 text-xs font-bold rounded-lg hover:bg-yellow-50 transition">+ Tambah Lapis Komposit</button>
-              </div>
-
-              <button @click="showModalKomposit = false" class="w-full bg-yellow-500 hover:bg-yellow-600 transition text-yellow-950 py-3 rounded-lg font-black shadow-md">TUTUP & SIMPAN</button>
-            </div>
-          </div>
-        </div>
-    </fieldset>
-
-    <div class="mt-4 print:mt-2 flex justify-between items-end">
-      <div class="signature-area hidden print:flex gap-12 text-xs">
-        <div class="text-center w-32">
-          <p>Tanda Terima,</p>
-          <div class="h-16"></div>
-          <p>( .................... )</p>
-        </div>
-        <div class="text-center w-32">
-          <p>Hormat Kami,</p>
-          <div class="h-16"></div>
-          <p>( .................... )</p>
-        </div>
       </div>
 
-      <div class="w-64 bg-yellow-50 print:bg-transparent p-2 rounded border border-gray-400 shadow-sm print:shadow-none ml-auto">
-        <div class="flex justify-between text-xs mb-1 text-gray-700 print:text-black">
-          <span>Total Pesanan:</span>
-          <span class="font-bold">Rp{{ formatRp(totalBayar) }}</span>
+      <!-- FOOTER RINGKASAN -->
+      <div class="p-6 bg-slate-50 border-t border-slate-200 print:bg-transparent print:border-none flex flex-col-reverse md:flex-row print:flex-row justify-between items-end gap-6 print:gap-0 print:mt-4">
+        <div class="w-full md:w-auto hidden print:flex gap-16 text-sm font-bold text-slate-800">
+          <div class="text-center w-32">
+            <p>Tanda Terima,</p>
+            <div class="h-20 border-b border-slate-400 border-dashed mt-8"></div>
+          </div>
+          <div class="text-center w-32">
+            <p>Hormat Kami,</p>
+            <div class="h-20 border-b border-slate-400 border-dashed mt-8"></div>
+          </div>
         </div>
 
-        <div class="flex justify-between items-center text-xs mb-1 text-gray-700 print:text-black" 
-             :class="{'print:hidden': !form.ongkir || form.ongkir === 0}">
-          <span>Ongkos Kirim:</span>
-          <input type="number" v-model.number="form.ongkir" @wheel="$event.target.blur()" class="w-24 text-right font-bold outline-none bg-white border border-gray-300 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
-        </div>
-        
-        <div class="flex justify-between items-center text-xs mb-1 text-gray-700 print:text-black" 
-             :class="{'print:hidden': !form.uang_muka || form.uang_muka === 0}">
-          <span>Uang Muka (DP):</span>
-          <input type="number" v-model.number="form.uang_muka" @wheel="$event.target.blur()" class="w-24 text-right font-bold outline-none bg-white border border-gray-300 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
-        </div>
-        
-        <div class="flex justify-between items-center text-xs mb-1.5 text-gray-700 print:text-black border-b border-gray-300 pb-1" 
-             :class="{'print:hidden': !form.total_voucher || form.total_voucher === 0}">
-          <span>Voucher (Rp):</span>
-          <input type="number" v-model.number="form.total_voucher" @wheel="$event.target.blur()" class="w-24 text-right font-bold outline-none bg-white border border-gray-300 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
-        </div>
+        <div class="w-full md:w-80 print:w-64 bg-white print:bg-transparent p-5 print:p-0 rounded-2xl border border-slate-200 shadow-sm print:shadow-none print:border-none ml-auto shrink-0">
+          <div class="flex justify-between text-sm mb-2 text-slate-600 font-medium">
+            <span>Total Pesanan:</span>
+            <span class="font-bold text-slate-800">Rp {{ formatRp(totalBayar) }}</span>
+          </div>
 
-        <div class="flex justify-between font-black text-sm text-yellow-900 print:text-black mt-1.5">
-          <span>SISA TAGIHAN:</span>
-          <span :class="{'text-red-600': sisaTagihan > 0, 'text-green-600': sisaTagihan <= 0}">Rp{{ formatRp(sisaTagihan) }}</span>
+          <div class="flex justify-between items-center text-sm mb-2 text-slate-600 font-medium" 
+               :class="{'print:hidden': !form.ongkir || form.ongkir === 0}">
+            <span>Ongkos Kirim:</span>
+            <input type="number" v-model.number="form.ongkir" @wheel="$event.target.blur()" class="w-28 print:w-20 text-right font-bold outline-none bg-slate-50 border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1 px-2 focus:ring-2 focus:ring-amber-500 hide-arrows text-slate-800" />
+          </div>
+          
+          <div class="flex justify-between items-center text-sm mb-2 text-slate-600 font-medium" 
+               :class="{'print:hidden': !form.uang_muka || form.uang_muka === 0}">
+            <span>Uang Muka (DP):</span>
+            <input type="number" v-model.number="form.uang_muka" @wheel="$event.target.blur()" class="w-28 print:w-20 text-right font-bold outline-none bg-slate-50 border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1 px-2 focus:ring-2 focus:ring-amber-500 hide-arrows text-slate-800" />
+          </div>
+          
+          <div class="flex justify-between items-center text-sm mb-4 pb-4 border-b border-slate-100 print:border-slate-800 text-slate-600 font-medium" 
+               :class="{'print:hidden': !form.total_voucher || form.total_voucher === 0}">
+            <span>Voucher (Rp):</span>
+            <input type="number" v-model.number="form.total_voucher" @wheel="$event.target.blur()" class="w-28 print:w-20 text-right font-bold outline-none bg-slate-50 border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1 px-2 focus:ring-2 focus:ring-amber-500 hide-arrows text-slate-800" />
+          </div>
+
+          <div class="p-4 bg-linear-to-br from-amber-500 to-amber-600 print:bg-transparent rounded-xl text-amber-50 print:text-black shadow-inner print:shadow-none print:p-0">
+            <div class="flex justify-between items-center">
+              <span class="font-black tracking-wide text-amber-100 print:text-slate-800">SISA TAGIHAN</span>
+              <span class="text-xl font-black drop-shadow-md print:drop-shadow-none" :class="{'text-emerald-200 print:text-emerald-700': sisaTagihan <= 0}">
+                Rp {{ formatRp(sisaTagihan) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </fieldset>
+    </div> <!-- End Card Container -->
+
+    <!-- ACTION BUTTONS -->
+    <div class="mt-6 flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 print:hidden">
+      <button v-if="!isSales" @click="simpanPesanan" class="flex-1 sm:flex-none justify-center bg-amber-500 hover:bg-amber-600 text-amber-950 px-8 py-3.5 rounded-xl shadow-lg shadow-amber-500/30 font-black tracking-wide transition-all active:scale-95 flex items-center gap-2">
+        <Save :size="20" /> {{ isEdit ? 'UPDATE PESANAN' : 'SIMPAN PESANAN' }}
+      </button>
+      <button @click="cetakPDF" class="flex-1 sm:flex-none justify-center bg-slate-800 hover:bg-slate-900 text-white px-8 py-3.5 rounded-xl shadow-lg shadow-slate-500/30 font-black tracking-wide transition-all active:scale-95 flex items-center gap-2">
+        <Printer :size="20" /> CETAK / PDF
+      </button>
+    </div>
+
+    <!-- MODAL KEMASAN -->
+    <div v-if="showModalKemasan" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in custom-scrollbar">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up border-t-8 border-sky-500">
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center">
+              <PackageOpen :size="20" />
+            </div>
+            <h3 class="text-xl font-black text-slate-800">Kemasan Kustom</h3>
+          </div>
+          <p class="text-sm font-medium text-slate-500 mb-6 pl-13">
+            Rakit kemasan untuk: <span class="text-sky-600 font-bold">{{ details[activeIdx].namaKustom || 'Item Baru' }}</span>
+          </p>
+          
+          <div class="space-y-3 max-h-[60vh] overflow-y-auto pr-2 mb-6 custom-scrollbar">
+            <div v-for="(k, kIdx) in details[activeIdx].kemasan_detail" :key="kIdx" class="flex gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <select v-model="k.bahan_id" class="flex-1 text-sm font-bold p-2 outline-none border border-slate-200 rounded-lg bg-white cursor-pointer focus:ring-2 focus:ring-sky-500 text-slate-700">
+                <option value="" disabled>-- Pilih Dus/Plastik/Pita --</option>
+                <option v-for="b in bahansMaster" :key="b.ID" :value="b.ID">{{ b.nama_bahan }} ({{ b.satuan }})</option>
+              </select>
+              <input type="number" v-model.number="k.kebutuhan" class="w-16 text-sm font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-sky-500 text-slate-700 hide-arrows" min="0.1" step="any" placeholder="Qty">
+              <button @click="hapusKemasanKustom(kIdx)" class="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors"><X :size="18"/></button>
+            </div>
+            
+            <button @click="tambahKemasanKustom" class="w-full py-3 border-2 border-dashed border-sky-200 text-sky-600 text-sm font-bold rounded-xl hover:bg-sky-50 transition-colors">+ Tambah Lapis Kemasan</button>
+          </div>
+
+          <button @click="showModalKemasan = false" class="w-full bg-slate-800 hover:bg-slate-900 transition-colors text-white py-3.5 rounded-xl font-black shadow-md active:scale-95">TUTUP & SIMPAN</button>
         </div>
       </div>
     </div>
 
-    <div class="mt-8 flex flex-col md:flex-row justify-end items-stretch md:items-center gap-3 print:hidden border-t-2 pt-4">
-      <button v-if="!isSales" @click="simpanPesanan" class="justify-center bg-yellow-500 hover:bg-yellow-600 text-yellow-950 px-6 py-3 md:py-2 rounded shadow font-bold transition flex items-center gap-2">
-        <Save :size="18" /> {{ isEdit ? 'UPDATE PESANAN' : 'SIMPAN PO' }}
-      </button>
-      <button @click="cetakPDF" class="justify-center bg-gray-800 hover:bg-black text-white px-6 py-3 md:py-2 rounded shadow font-bold transition flex items-center gap-2">
-        <Printer :size="18" /> EXPORT PDF
-      </button>
+    <!-- MODAL KOMPOSIT -->
+    <div v-if="showModalKomposit" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in custom-scrollbar">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up border-t-8 border-amber-500">
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+              <Layers :size="20" />
+            </div>
+            <h3 class="text-xl font-black text-slate-800">Isian & Topping</h3>
+          </div>
+          <p class="text-sm font-medium text-slate-500 mb-6 pl-13">
+            Pilih komposit untuk: <span class="text-amber-600 font-bold">{{ details[activeIdx].namaKustom || 'Item Baru' }}</span>
+          </p>
+          
+          <div class="space-y-3 max-h-[60vh] overflow-y-auto pr-2 mb-6 custom-scrollbar">
+            <div v-for="(k, kIdx) in details[activeIdx].komposit_detail" :key="kIdx" class="flex gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <select v-model="k.resep_komposit_id" class="flex-1 text-sm font-bold p-2 outline-none border border-slate-200 rounded-lg bg-white cursor-pointer focus:ring-2 focus:ring-amber-500 text-slate-700">
+                <option value="" disabled>-- Pilih Butter/Isian --</option>
+                <option v-for="c in kompositMaster" :key="c.id" :value="c.id">{{ c.nama_komposit }}</option>
+              </select>
+              <div class="flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-amber-500">
+                <input type="number" v-model.number="k.kebutuhan" class="w-16 text-sm font-bold py-2 text-center outline-none text-slate-700 hide-arrows" min="0.1" step="any" placeholder="Gram">
+                <span class="text-xs font-bold text-slate-400 pr-2">gr</span>
+              </div>
+              <button @click="hapusKompositKustom(kIdx)" class="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors"><X :size="18"/></button>
+            </div>
+            
+            <button @click="tambahKompositKustom" class="w-full py-3 border-2 border-dashed border-amber-200 text-amber-600 text-sm font-bold rounded-xl hover:bg-amber-50 transition-colors">+ Tambah Lapis Komposit</button>
+          </div>
+
+          <button @click="showModalKomposit = false" class="w-full bg-slate-800 hover:bg-slate-900 transition-colors text-white py-3.5 rounded-xl font-black shadow-md active:scale-95">TUTUP & SIMPAN</button>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -566,6 +605,7 @@ const cetakPDF = () => window.print()
   @page { margin: 5mm; }
   body { margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .overflow-x-auto { overflow: visible !important; }
+  .print\:overflow-visible { overflow: visible !important; }
   .nota-container { 
     box-shadow: none !important; 
     border: none !important; 
@@ -592,5 +632,4 @@ const cetakPDF = () => window.print()
 }
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .hide-arrows::-webkit-outer-spin-button, .hide-arrows::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-tbody tr:nth-child(even) { background-color: #f9fafb; }
 </style>

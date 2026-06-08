@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Save, Printer } from 'lucide-vue-next'
+import { Save, Printer, Receipt } from 'lucide-vue-next'
 import logoTiara from '../assets/logo_tiara.png'
 
 const route = useRoute()
@@ -310,154 +310,174 @@ const cetakPDF = () => { window.print() }
 </script>
 
 <template>
-  <div class="nota-container p-8 max-w-5xl mx-auto bg-white shadow-lg my-4 border border-gray-200 rounded">
-    
-    <div class="flex flex-col md:flex-row print:flex-row justify-between items-start mb-6 print:mb-2 border-b-2 pb-4 print:pb-2 gap-4 md:gap-0 print:gap-0">
-      <div class="flex flex-col items-start gap-1 flex-1">
-        <div class="shrink-0">
-          <img :src="logoTiara" alt="Logo" class="w-48 max-h-24 object-contain print:hidden" />
-          <img :src="logoTiara" alt="Logo" class="w-48 max-h-24 object-contain hidden print:block" style="filter: grayscale(100%);" />
-        </div>
-        <div class="profile-perusahaan mt-1">
-          <p class="text-[12px] md:text-sm text-gray-800 font-bold leading-tight">{{ profil.Alamat }}</p>
-          <p class="text-[11px] text-gray-600 font-medium mt-1 print:mt-0">
-            <span v-if="profil.NoTelp">Telp: {{ profil.NoTelp }}</span>
-            <span v-if="profil.NoTelp && profil.NoHP" class="mx-1">|</span>
-            <span v-if="profil.NoHP">HP/WA: {{ profil.NoHP }}</span>
-          </p>
-        </div>
-      </div>
-
-      <div class="info-nota shrink-0 w-full md:w-80 print:w-70">
-        <div class="text-left md:text-right print:text-right">
-          <h2 class="text-xl font-bold mb-2 print:mb-1 bg-blue-900 text-white px-2 inline-block">NOTA PENGIRIMAN</h2>
-        </div>
-        <div class="grid grid-cols-[90px_1fr] print:grid-cols-[75px_1fr] gap-x-2 gap-y-1 text-sm print:text-xs mt-1 items-center">
-          <span class="font-semibold text-left">Tanggal:</span>
-          <input type="date" v-model="form.tanggal_kirim" @change="generateNoNota" class="border rounded px-2 py-0.5 font-bold w-full print:hidden" />
-          <span class="hidden print:block font-bold">{{ form.tanggal_kirim.split('-').reverse().join('/') }}</span>
+  <div class="nota-container p-4 md:p-8 max-w-5xl mx-auto my-4">
+    <div class="bg-white shadow-sm border border-slate-200 rounded-2xl overflow-hidden print:shadow-none print:border-none print:rounded-none">
+      
+      <!-- HEADER COMPACT -->
+      <div class="bg-slate-50 p-3 md:p-4 border-b border-slate-200 print:bg-white print:p-0 print:border-b-2 print:border-slate-800 print:mb-4">
+        <div class="flex flex-col md:flex-row print:flex-row justify-between items-center print:items-start gap-4 print:gap-0">
           
-          <span class="font-semibold text-left">Mitra:</span>
-          <select v-model="form.toko_id" @change="generateNoNota" class="border rounded px-2 py-0.5 font-bold w-full bg-white outline-none print:hidden" :disabled="isEdit">
-            <option :value="null" disabled>Pilih Mitra</option>
-            <option v-for="t in daftarToko" :key="t.ID" :value="t.ID">{{ t.NamaToko }}</option>
-          </select>
-          <span class="hidden print:block font-bold">
-            {{ daftarToko.find(t => t.ID === form.toko_id)?.NamaToko || '' }}
-          </span>
+          <!-- PROFIL TENGAH -->
+          <div class="flex flex-col items-center print:items-start gap-1 flex-1 pr-4">
+            <div class="shrink-0 mb-1 print:mb-0">
+              <img :src="logoTiara" alt="Logo" class="w-40 max-h-16 object-contain print:w-48 print:max-h-24 print:hidden mx-auto print:mx-0" />
+              <img :src="logoTiara" alt="Logo" class="w-48 max-h-24 object-contain hidden print:block" style="filter: grayscale(100%);" />
+            </div>
+            <div class="mt-1 text-center print:text-left">
+              <p class="text-sm md:text-base print:text-[12px] text-slate-800 font-bold leading-tight">{{ profil.Alamat }}</p>
+              <p class="text-xs md:text-sm print:text-[11px] text-slate-500 font-medium mt-0.5">
+                <span v-if="profil.NoTelp">Telp: {{ profil.NoTelp }}</span>
+                <span v-if="profil.NoTelp && profil.NoHP" class="mx-1">|</span>
+                <span v-if="profil.NoHP">HP/WA: {{ profil.NoHP }}</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- FORM KANAN COMPACT -->
+          <div class="w-full md:w-[380px] print:w-72 print:flex-none bg-white print:bg-transparent rounded-xl border border-slate-200 print:border-none p-3 print:p-0 shadow-sm print:shadow-none shrink-0 mt-3 md:mt-0">
+            <div class="text-right mb-3 print:mb-2 border-b border-slate-100 print:border-none pb-2 print:pb-0">
+              <div class="inline-flex items-center gap-1.5 bg-blue-100 print:bg-slate-800 text-blue-800 print:text-white px-2.5 py-1 rounded-md">
+                <Receipt :size="16" class="print:hidden" />
+                <h2 class="text-sm font-black tracking-wide">NOTA PENGIRIMAN</h2>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-[90px_1fr] print:grid-cols-[75px_1fr] gap-x-2 gap-y-1.5 text-xs print:text-xs items-center">
+              <span class="font-bold text-slate-600">Tanggal:</span>
+              <input type="date" v-model="form.tanggal_kirim" @change="generateNoNota" class="bg-slate-50 border border-slate-200 rounded px-2 py-1 font-bold text-slate-800 w-full focus:ring-1 focus:ring-blue-500 outline-none transition-all print:hidden" />
+              <span class="hidden print:block font-bold text-slate-800">{{ form.tanggal_kirim.split('-').reverse().join('/') }}</span>
+              
+              <span class="font-bold text-slate-600">Mitra:</span>
+              <div class="flex min-w-0 print:hidden w-full">
+                <select v-model="form.toko_id" @change="generateNoNota" class="bg-slate-50 border border-slate-200 rounded px-2 py-1 font-bold text-slate-800 w-full focus:ring-1 focus:ring-blue-500 outline-none transition-all truncate" :disabled="isEdit">
+                  <option :value="null" disabled>Pilih Mitra</option>
+                  <option v-for="t in daftarToko" :key="t.ID" :value="t.ID">{{ t.NamaToko }}</option>
+                </select>
+              </div>
+              <span class="hidden print:block font-bold text-slate-800 truncate">
+                {{ daftarToko.find(t => t.ID === form.toko_id)?.NamaToko || '' }}
+              </span>
+              
+              <span class="font-bold text-slate-600">No. Nota:</span>
+              <input v-model="form.no_nota" class="bg-slate-100 border border-slate-200 rounded px-2 py-1 font-mono text-xs text-slate-600 print:bg-transparent w-full print:border-none print:p-0 font-bold" placeholder="Otomatis..." readonly />
+              
+              <template v-if="role === 'superadmin'">
+                <span class="font-bold text-orange-600 print:hidden mt-1">Tugaskan:</span>
+                <select v-model="penugasanDanStatus" class="bg-orange-50 border border-orange-200 rounded px-2 py-1 mt-1 font-bold text-orange-800 w-full outline-none focus:ring-1 focus:ring-orange-500 print:hidden">
+                  <option :value="0">-- Belum Ditugaskan--</option>
+                  <option v-for="s in daftarSales" :key="s.ID" :value="s.ID">Ke: {{ s.Username }}</option>
+                  <option value="SELESAI" class="bg-emerald-100 text-emerald-800">[SELESAI] FISIK SELESAI</option>
+                </select>
+
+                <span class="font-bold text-emerald-600 print:hidden mt-1">Pembayaran:</span>
+                <label class="flex items-center justify-start gap-2 font-bold text-emerald-700 bg-emerald-50 px-2 py-1 mt-1 rounded border border-emerald-200 w-full print:hidden cursor-pointer hover:bg-emerald-100 transition shadow-sm">
+                  <input type="checkbox" v-model="form.is_lunas" class="w-3.5 h-3.5 accent-emerald-600 cursor-pointer rounded" />
+                  Tandai Lunas
+                </label>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BODY: TABEL -->
+      <div class="p-6 print:p-0 w-full overflow-x-auto print:overflow-visible">
+        <div class="rounded-xl border border-slate-200 overflow-hidden print:border-none">
+          <table class="w-full text-sm border-collapse">
+            <thead class="bg-slate-800 text-white print:bg-transparent print:text-black print:border-b-2 print:border-slate-800">
+              <tr class="tracking-wide">
+                <th class="p-3 text-left font-bold">Nama Barang</th>
+                <th class="p-3 w-28 text-right font-bold">Harga</th>
+                <th class="p-3 w-20 text-center font-bold">Kirim</th>
+                <th class="p-3 w-32 text-right font-bold text-blue-200 print:text-blue-800">Kirim (Rp)</th>
+                <th class="p-3 w-20 text-center font-bold bg-slate-700 print:bg-transparent text-red-300 print:text-red-700 border-l border-slate-600 print:border-none">Retur</th>
+                <th class="p-3 w-32 text-right font-bold bg-slate-700 print:bg-transparent text-red-300 print:text-red-700">Retur (Rp)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 print:divide-slate-400">
+              <tr v-for="item in items" :key="item.barang_id" class="hover:bg-blue-50/50 even:bg-slate-50 transition-colors print:even:bg-transparent print-row" :class="{'print:hidden': item.banyak_kirim === 0 && item.banyak_retur === 0}">
+                <td class="p-3 font-bold text-slate-800">{{ item.nama_barang }}</td>
+                <td class="p-3 text-right text-slate-600 font-medium">Rp{{ item.harga_barang.toLocaleString() }}</td>
+                <td class="p-2">
+                  <input type="number" v-model.number="item.banyak_kirim" @wheel="$event.target.blur()" class="w-full text-center outline-none bg-white border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1.5 font-black text-blue-900 focus:ring-2 focus:ring-blue-500 transition-shadow" />
+                </td>
+                <td class="p-3 text-right font-black text-blue-900 print:text-black">{{ (item.banyak_kirim * item.harga_barang).toLocaleString() }}</td>
+                <td class="p-2 border-l border-slate-100 print:border-none">
+                  <input type="number" v-model.number="item.banyak_retur" :readonly="!isEdit" @wheel="$event.target.blur()" class="w-full text-center outline-none bg-white border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1.5 font-black text-red-600 focus:ring-2 focus:ring-red-500 transition-shadow" :class="{'print-transparent': isPrintPabrik}" />
+                </td>
+                <td class="p-3 text-right font-black text-red-600">
+                  <span :class="{'print-transparent': isPrintPabrik}">{{ (item.banyak_retur * item.harga_barang).toLocaleString() }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- FOOTER RINGKASAN -->
+      <div class="p-6 bg-slate-50 border-t border-slate-200 print:bg-transparent print:border-none flex flex-col-reverse md:flex-row print:flex-row justify-between items-end gap-6 print:gap-0 print:mt-4">
+        <div class="w-full md:w-auto hidden print:flex gap-16 text-sm font-bold text-slate-800">
+          <div class="text-center w-32">
+            <p>Tanda Terima,</p>
+            <div class="h-20 border-b border-slate-400 border-dashed mt-8"></div>
+          </div>
+          <div class="text-center w-32">
+            <p>Hormat Kami,</p>
+            <div class="h-20 border-b border-slate-400 border-dashed mt-8"></div>
+          </div>
+        </div>
+
+        <div class="w-full md:w-80 print:w-64 bg-white print:bg-transparent p-5 print:p-0 rounded-2xl border border-slate-200 shadow-sm print:shadow-none print:border-none ml-auto shrink-0">
+          <div class="flex justify-between text-sm mb-2 text-slate-600 font-medium">
+            <span>Total Kirim:</span>
+            <span class="font-bold text-slate-800">Rp {{ totalKirim.toLocaleString() }}</span>
+          </div>
+          <div class="flex justify-between text-sm mb-4 pb-4 text-red-600 font-medium border-b border-slate-100 print:border-slate-800">
+            <span>Total Retur:</span>
+            <span class="font-bold" :class="{'print-transparent': isPrintPabrik}">(Rp {{ totalRetur.toLocaleString() }})</span>
+          </div>
           
-          <span class="font-semibold text-left">No. Nota:</span>
-          <input v-model="form.no_nota" class="border rounded px-2 py-0.5 font-mono text-[10px] bg-gray-50 print:bg-transparent w-full print:border-none print:p-0 font-bold" placeholder="Otomatis..." readonly />
+          <div v-if="isEdit && (form.total_diskon > 0 || !isPrintPabrik)" class="flex justify-between items-center text-sm mb-2 text-orange-600 print:text-black font-medium" 
+               :class="{'print:hidden': !form.total_diskon || form.total_diskon === 0}">
+            <span>Diskon (Rp):</span>
+            <input type="number" v-model.number="form.total_diskon" @wheel="$event.target.blur()" class="w-28 print:w-20 text-right font-bold outline-none bg-slate-50 border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1 px-2 focus:ring-2 focus:ring-blue-500 hide-arrows text-slate-800" />
+          </div>
           
-          <template v-if="role === 'superadmin'">
-            <span class="font-semibold text-left text-orange-600 print:hidden mt-1">Tugaskan:</span>
-            <select v-model="penugasanDanStatus" class="border rounded px-2 py-0.5 mt-1 border-orange-400 bg-orange-50 print:hidden font-bold w-full outline-none">
-              <option :value="0">-- Belum Ditugaskan--</option>
-              <option v-for="s in daftarSales" :key="s.ID" :value="s.ID">Ke: {{ s.Username }}</option>
-              <option value="SELESAI" class="bg-green-100 text-green-800">[SELESAI] FISIK SELESAI</option>
-            </select>
+          <div v-if="isEdit && (form.total_voucher > 0 || !isPrintPabrik)" class="flex justify-between items-center text-sm mb-4 pb-4 border-b border-slate-100 print:border-slate-800 text-orange-600 print:text-black font-medium" 
+               :class="{'print:hidden': !form.total_voucher || form.total_voucher === 0}">
+            <span>Voucher (Rp):</span>
+            <input type="number" v-model.number="form.total_voucher" @wheel="$event.target.blur()" class="w-28 print:w-20 text-right font-bold outline-none bg-slate-50 border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1 px-2 focus:ring-2 focus:ring-blue-500 hide-arrows text-slate-800" />
+          </div>
 
-            <span class="font-semibold text-left text-green-600 print:hidden mt-1">Pembayaran:</span>
-            <label class="flex items-center justify-center gap-2 font-bold text-green-700 bg-green-50 px-2 py-0.5 mt-1 rounded border border-green-300 w-full print:hidden cursor-pointer hover:bg-green-100 transition shadow-sm">
-              <input type="checkbox" v-model="form.is_lunas" class="w-4 h-4 accent-green-600 cursor-pointer" />
-              Tandai Lunas
-            </label>
-          </template>
+          <div class="p-4 bg-linear-to-br from-blue-600 to-blue-800 print:bg-transparent rounded-xl text-white print:text-black shadow-inner print:shadow-none print:p-0">
+            <div class="flex justify-between items-center">
+              <span class="font-black tracking-wide text-blue-100 print:text-slate-800">TOTAL</span>
+              <span class="text-xl font-black drop-shadow-md print:drop-shadow-none" :class="{'print-transparent': isPrintPabrik}">
+                Rp {{ totalBayar.toLocaleString() }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </div> <!-- End Card Container -->
 
-    <div class="overflow-x-auto w-full mb-6">
-      <table class="w-full border-collapse border border-gray-400 text-sm">
-        <thead class="bg-gray-100">
-          <tr class="uppercase text-[11px]">
-            <th class="border border-gray-400 p-2 text-left">Nama Barang</th>
-            <th class="border border-gray-400 p-2 w-24">Harga</th>
-            <th class="border border-gray-400 p-2 w-16">Kirim</th>
-            <th class="border border-gray-400 p-2 w-28">Kirim (Rp)</th>
-            <th class="border border-gray-400 p-2 w-16 bg-red-50 text-red-700">Retur</th>
-            <th class="border border-gray-400 p-2 w-28 bg-red-50 text-red-700">Retur (Rp)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in items" :key="item.barang_id" class="hover:bg-gray-50 border-b border-gray-300 print-row" :class="{'print:hidden': item.banyak_kirim === 0 && item.banyak_retur === 0}">
-            <td class="border border-gray-400 p-2 font-medium">{{ item.nama_barang }}</td>
-            <td class="border border-gray-400 p-2 text-right">Rp{{ item.harga_barang.toLocaleString() }}</td>
-            <td class="border border-gray-400 p-2">
-              <input type="number" v-model.number="item.banyak_kirim" @wheel="$event.target.blur()" class="w-full text-center outline-none focus:bg-blue-100" />
-            </td>
-            <td class="border border-gray-400 p-2 text-right font-bold text-blue-800">{{ (item.banyak_kirim * item.harga_barang).toLocaleString() }}</td>
-            <td class="border border-gray-400 p-2 bg-red-50">
-              <input type="number" v-model.number="item.banyak_retur" :readonly="!isEdit" @wheel="$event.target.blur()" class="w-full text-center outline-none bg-transparent focus:bg-red-100 text-red-700 font-bold" :class="{'print-transparent': isPrintPabrik}" />
-            </td>
-            <td class="border border-gray-400 p-2 text-right font-bold bg-red-50 text-red-700">
-              <span :class="{'print-transparent': isPrintPabrik}">{{ (item.banyak_retur * item.harga_barang).toLocaleString() }}</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="mt-4 print:mt-2 flex justify-between items-end">
-      <div class="signature-area hidden print:flex gap-12 text-xs">
-        <div class="text-center w-32">
-          <p>Tanda Terima,</p>
-          <div class="h-16"></div>
-          <p>( .................... )</p>
-        </div>
-        <div class="text-center w-32">
-          <p>Hormat Kami,</p>
-          <div class="h-16"></div>
-          <p>( .................... )</p>
-        </div>
-      </div>
-
-      <div class="w-56 bg-gray-50 print:bg-transparent p-2 rounded border border-gray-400 shadow-sm print:shadow-none">
-        <div class="flex justify-between text-[10px] mb-1 text-gray-700 print:text-black">
-          <span>Total Kirim:</span>
-          <span class="font-bold">Rp{{ totalKirim.toLocaleString() }}</span>
-        </div>
-        <div class="flex justify-between text-[10px] mb-1.5 text-red-700 print:text-black border-b border-gray-300 pb-1">
-          <span>Total Retur:</span>
-          <span class="font-bold" :class="{'print-transparent': isPrintPabrik}">(Rp{{ totalRetur.toLocaleString() }})</span>
-        </div>
-        
-        <!-- ROW DISKON: Selalu tampil di layar, tapi sembunyi di kertas (print) jika nilainya 0 -->
-        <div v-if="isEdit && (form.total_diskon > 0 || !isPrintPabrik)" class="flex justify-between items-center text-[10px] mb-1 text-orange-600 print:text-black" 
-             :class="{'print:hidden': !form.total_diskon || form.total_diskon === 0}">
-          <span>Diskon (Rp):</span>
-          <input type="number" v-model.number="form.total_diskon" @wheel="$event.target.blur()" class="w-20 text-right font-bold outline-none bg-white border border-gray-200 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
-        </div>
-        
-        <!-- ROW VOUCHER: Selalu tampil di layar, tapi sembunyi di kertas (print) jika nilainya 0 -->
-        <div v-if="isEdit && (form.total_voucher > 0 || !isPrintPabrik)" class="flex justify-between items-center text-[10px] mb-1.5 text-orange-600 print:text-black border-b border-gray-300 pb-1" 
-             :class="{'print:hidden': !form.total_voucher || form.total_voucher === 0}">
-          <span>Voucher (Rp):</span>
-          <input type="number" v-model.number="form.total_voucher" @wheel="$event.target.blur()" class="w-20 text-right font-bold outline-none bg-white border border-gray-200 print:border-none print:bg-transparent rounded px-1 hide-arrows" />
-        </div>
-
-        <div class="flex justify-between font-black text-sm text-blue-900 print:text-black mt-1.5">
-          <span>TOTAL:</span>
-          <span :class="{'print-transparent': isPrintPabrik}">Rp{{ totalBayar.toLocaleString() }}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="mt-8 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 print:hidden">
-      <label v-if="role === 'superadmin'" class="flex items-center gap-2 font-bold text-gray-700 bg-gray-100 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-200 transition shadow-sm w-full md:w-auto mt-4 md:mt-0">
-        <input type="checkbox" v-model="isPrintPabrik" class="w-5 h-5 accent-blue-600 cursor-pointer" />
-        <Printer :size="16" class="inline" /> Mode Print Pabrik (Kosongkan Retur & Diskon)
+    <!-- ACTION BUTTONS -->
+    <div class="mt-6 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 print:hidden">
+      <label v-if="role === 'superadmin'" class="flex items-center gap-2 font-bold text-slate-700 bg-white border border-slate-200 px-4 py-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors shadow-sm w-full md:w-auto">
+        <input type="checkbox" v-model="isPrintPabrik" class="w-5 h-5 accent-blue-600 cursor-pointer rounded" />
+        <Printer :size="18" class="text-slate-500" /> Mode Print Pabrik (Kosongkan Retur & Diskon)
       </label>
 
-      <div class="flex flex-col md:flex-row gap-3">
-        <button @click="simpanData" class="justify-center bg-green-600 hover:bg-green-700 text-white px-6 py-3 md:py-2 rounded shadow font-bold transition flex items-center gap-2">
-          <Save :size="18" /> {{ isEdit ? 'UPDATE RETUR' : 'SIMPAN NOTA' }}
+      <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+        <button @click="simpanData" class="flex-1 sm:flex-none justify-center bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl shadow-lg shadow-blue-500/30 font-black tracking-wide transition-all active:scale-95 flex items-center gap-2">
+          <Save :size="20" /> {{ isEdit ? 'UPDATE RETUR' : 'SIMPAN NOTA' }}
         </button>
-        <button @click="cetakPDF" class="justify-center bg-gray-800 hover:bg-black text-white px-6 py-3 md:py-2 rounded shadow font-bold transition flex items-center gap-2">
-          <Printer :size="18" /> EXPORT PDF
+        <button @click="cetakPDF" class="flex-1 sm:flex-none justify-center bg-slate-800 hover:bg-slate-900 text-white px-8 py-3.5 rounded-xl shadow-lg shadow-slate-500/30 font-black tracking-wide transition-all active:scale-95 flex items-center gap-2">
+          <Printer :size="20" /> CETAK / PDF
         </button>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -466,6 +486,7 @@ const cetakPDF = () => { window.print() }
   @page { margin: 5mm; }
   body { margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .overflow-x-auto { overflow: visible !important; }
+  .print\:overflow-visible { overflow: visible !important; }
   .nota-container { 
     box-shadow: none !important; 
     border: none !important; 
@@ -495,5 +516,4 @@ const cetakPDF = () => { window.print() }
 }
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .hide-arrows::-webkit-outer-spin-button, .hide-arrows::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-tbody tr:nth-child(even) { background-color: #f9fafb; }
 </style>
