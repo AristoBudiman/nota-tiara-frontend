@@ -20,10 +20,18 @@ const fetchDashboardData = async () => {
     const token = localStorage.getItem('admin_token')
     const headers = { 'Authorization': `Bearer ${token}` }
     
-    // Default fetch all
-    const [resNota, resPesanan] = await Promise.all([
+    // Get last day of month
+    const now = new Date()
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+    const firstDayStr = getLocalDateString(firstDay)
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    const lastDayStr = getLocalDateString(lastDay)
+
+    const [resNota, resPesanan, resRangkumanBulan, resRangkumanHari] = await Promise.all([
       fetch(`${import.meta.env.VITE_API_URL}/api/notas`, { headers }),
-      fetch(`${import.meta.env.VITE_API_URL}/api/pesanan/riwayat`, { headers })
+      fetch(`${import.meta.env.VITE_API_URL}/api/pesanan/riwayat`, { headers }),
+      fetch(`${import.meta.env.VITE_API_URL}/api/rangkuman?start=${firstDayStr}&end=${lastDayStr}`, { headers }),
+      fetch(`${import.meta.env.VITE_API_URL}/api/rangkuman?start=${todayStr}&end=${todayStr}`, { headers })
     ])
     
     if (resNota.ok) {
@@ -32,8 +40,14 @@ const fetchDashboardData = async () => {
        const notaBulanIni = data.filter(n => n.TanggalKirim && n.TanggalKirim.startsWith(monthStr))
        const notaHariIni = data.filter(n => n.TanggalKirim && n.TanggalKirim.startsWith(todayStr))
        
-       totalPendapatanBulanIni.value = notaBulanIni.reduce((sum, n) => sum + n.TotalBayar, 0)
-       totalPendapatanHariIni.value = notaHariIni.reduce((sum, n) => sum + n.TotalBayar, 0)
+       if (resRangkumanBulan.ok) {
+         const dataBulan = await resRangkumanBulan.json()
+         totalPendapatanBulanIni.value = dataBulan.kirim || 0
+       }
+       if (resRangkumanHari.ok) {
+         const dataHari = await resRangkumanHari.json()
+         totalPendapatanHariIni.value = dataHari.kirim || 0
+       }
        jumlahNotaHariIni.value = notaHariIni.length
        
        // Sort descending by ID to get the newest
