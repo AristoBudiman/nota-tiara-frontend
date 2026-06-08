@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Package, Cake, Printer, Factory, Store, CheckCircle2, Bell, AlertTriangle, Plus, Clock, RefreshCw } from 'lucide-vue-next'
+import { Package, Cake, Printer, Factory, Store, CheckCircle2, Bell, AlertTriangle, Plus, Clock, RefreshCw, XCircle, SearchX, History } from 'lucide-vue-next'
 
 const router = useRouter()
 const role = ref(localStorage.getItem('admin_role') || 'superadmin')
@@ -102,9 +102,6 @@ const fetchSalesData = async (token) => {
     
     if (resToko.ok) {
       daftarToko.value = await resToko.json()
-      console.log("✅ SUKSES Tarik Data Toko:", daftarToko.value) // Sensor sukses
-    } else {
-      console.error("❌ GAGAL Tarik Toko. Status HTTP:", resToko.status) // Sensor gagal
     }
   } catch (err) {
     console.error("💥 ERROR Jaringan / Server Down:", err) // Sensor putus koneksi
@@ -133,8 +130,6 @@ const filteredUniqueTokos = computed(() => {
   const map = new Map()
 
   listNota.value.forEach(n => {
-    // Karena listNota sudah diurutkan dari terbaru (DESC) oleh Golang,
-    // data pertama yang ditemukan adalah status TERAKHIR dari toko tersebut.
     if (!map.has(n.TokoID)) {
       map.set(n.TokoID, {
         id: n.TokoID,
@@ -144,35 +139,25 @@ const filteredUniqueTokos = computed(() => {
     }
   })
 
-  // Ubah map jadi array
   let listToko = Array.from(map.values())
-
-  // Saring dropdown hanya untuk toko yang SIKLUS TERAKHIRNYA cocok
   if (filterSiklus.value !== 'semua') {
     listToko = listToko.filter(t => t.siklusTerbaru === filterSiklus.value)
   }
-
-  // Urutkan berdasarkan abjad agar rapi
   return listToko.sort((a, b) => a.nama.localeCompare(b.nama))
 })
 
 // Filter Riwayat Nota
 const filteredListNota = computed(() => {
   return listNota.value.filter(n => {
-    // Filter Siklus
     if (filterSiklus.value !== 'semua' && n.SiklusSnapshot !== filterSiklus.value) return false
-
-    // Filter Toko 
     const valToko = filterTokoSuperadmin.value
     if (valToko !== 'semua' && valToko !== '' && valToko !== null) {
       if (n.TokoID !== Number(valToko)) return false
     }
-
     return true
   })
 })
 
-// Filter khusus untuk Dashboard Sales: Sembunyikan yang sudah SELESAI
 const filteredNotaAktifSales = computed(() => {
   return notaAktif.value.filter(n => n.Status !== 'SELESAI')
 })
@@ -180,7 +165,6 @@ const filteredNotaAktifSales = computed(() => {
 // ----------------------------------------------------
 // LOGIKA FILTER PESANAN (PO)
 // ----------------------------------------------------
-// Ambil titik unik untuk Dropdown Filter Toko PO
 const filteredUniqueTokosPO = computed(() => {
   const map = new Map()
   listPesanan.value.forEach(p => {
@@ -191,47 +175,37 @@ const filteredUniqueTokosPO = computed(() => {
   return Array.from(map.values()).sort((a, b) => a.nama.localeCompare(b.nama))
 })
 
-// Fungsi memfilter List PO berdasarkan Toko dan Waktu
 const filteredListPesanan = computed(() => {
   return listPesanan.value.filter(po => {
-    // Filter Toko
     if (filterTokoPO.value !== 'semua') {
       const targetId = Number(filterTokoPO.value)
       const poId = po.TokoID || 0
       if (poId !== targetId) return false
     }
-
     return true
   })
 })
 
 // SIMPAN OTOMATIS KE SESSION STORAGE
 watch(activeTab, (val) => sessionStorage.setItem('tab_nota', val))
-// --- SATPAM VALIDASI TANGGAL REGULER ---
 watch([filterStartDate, filterEndDate], ([newStart, newEnd], [oldStart, oldEnd]) => {
   if (newStart > newEnd) {
     alert("⚠️ Tanggal Mulai tidak boleh lebih besar dari Tanggal Akhir!")
-    // Auto-koreksi dikembalikan ke tanggal sebelumnya
     filterStartDate.value = oldStart || newEnd
     filterEndDate.value = oldEnd || newStart
-    return // Stop, jangan nge-fetch ke backend
+    return 
   }
-  
   sessionStorage.setItem('filter_start', newStart)
   sessionStorage.setItem('filter_end', newEnd)
   if (role.value === 'superadmin') fetchSuperadminData(localStorage.getItem('admin_token'))
 })
-
-// --- SATPAM VALIDASI TANGGAL PO ---
 watch([filterStartDatePO, filterEndDatePO], ([newStart, newEnd], [oldStart, oldEnd]) => {
   if (newStart > newEnd) {
     alert("⚠️ Tanggal Mulai tidak boleh lebih besar dari Tanggal Akhir!")
-    // Auto-koreksi
     filterStartDatePO.value = oldStart || newEnd
     filterEndDatePO.value = oldEnd || newStart
-    return // Stop, jangan nge-fetch ke backend
+    return 
   }
-  
   sessionStorage.setItem('filter_start_po', newStart)
   sessionStorage.setItem('filter_end_po', newEnd)
   if (role.value === 'superadmin') fetchRiwayatPesanan()
@@ -309,7 +283,7 @@ const pulihkanNota = async (id, noNota) => {
     })
     if (checkAuthError(res)) return
     if (res.ok) {
-      alert("✅ Nota berhasil dipulihkan!")
+      alert("Nota berhasil dipulihkan!")
       fetchSuperadminData(token) // Refresh tabel
     }
   } catch (err) {
@@ -328,7 +302,7 @@ const pulihkanPO = async (id, noNota) => {
     })
     if (checkAuthError(res)) return
     if (res.ok) {
-      alert("✅ Pesanan berhasil dipulihkan!")
+      alert("Pesanan berhasil dipulihkan!")
       fetchRiwayatPesanan() // Refresh tabel
     }
   } catch (err) {
@@ -338,7 +312,7 @@ const pulihkanPO = async (id, noNota) => {
 
 const formatTanggal = (tgl) => {
   return new Date(tgl).toLocaleDateString('id-ID', {
-    timeZone: 'Asia/Jakarta', day: '2-digit', month: 'long', year: 'numeric'
+    timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric'
   })
 }
 
@@ -360,32 +334,42 @@ const namaTokoPOPrint = computed(() => {
 </script>
 
 <template>
-  <div class="p-8 max-w-6xl mx-auto print:p-0 print:max-w-full">
+  <div class="p-4 md:p-8 max-w-7xl mx-auto print:p-0 print:max-w-full">
     <!-- JUDUL HALAMAN -->
-    <h1 class="text-2xl font-bold mb-6 text-blue-900 border-b-2 pb-2 print:hidden">
-      {{ role === 'superadmin' ? 'Riwayat Nota Keseluruhan' : 'Dashboard Pengiriman' }}
-    </h1>
+    <div class="flex items-center gap-3 mb-6 print:hidden border-b pb-4 border-gray-200">
+      <div class="bg-blue-100 p-2 rounded-xl text-blue-700">
+        <Package :size="28" />
+      </div>
+      <div>
+        <h1 class="text-2xl font-black text-slate-800 tracking-tight">
+          {{ role === 'superadmin' ? 'Riwayat Keseluruhan' : 'Dashboard Pengiriman' }}
+        </h1>
+        <p class="text-sm font-medium text-slate-500">Pusat monitoring seluruh transaksi dan jadwal pengiriman.</p>
+      </div>
+    </div>
 
     <!-- TAB NAVIGASI KHUSUS SUPERADMIN -->
-    <div v-if="role === 'superadmin'" class="flex flex-col sm:flex-row mb-6 bg-gray-200 p-1 rounded-lg w-full md:w-max shadow-sm gap-1 print:hidden">
-      <button @click="activeTab = 'REGULER'" 
-              class="px-5 py-2.5 rounded-md font-bold text-sm transition flex items-center justify-center gap-2"
-              :class="activeTab === 'REGULER' ? 'bg-white shadow-md text-blue-800' : 'text-gray-500 hover:text-gray-800'">
-        <Package :size="18" /> RIWAYAT REGULER
-      </button>
-      <button @click="activeTab = 'PESANAN'" 
-              class="px-5 py-2.5 rounded-md font-bold text-sm transition flex items-center justify-center gap-2"
-              :class="activeTab === 'PESANAN' ? 'bg-yellow-400 shadow-md text-yellow-900' : 'text-gray-500 hover:text-gray-800'">
-        <Cake :size="18" /> RIWAYAT PESANAN (PO)
-      </button>
+    <div v-if="role === 'superadmin'" class="overflow-x-auto print:hidden mb-6">
+      <div class="flex bg-slate-100/80 p-1.5 rounded-2xl w-max shadow-inner ring-1 ring-slate-900/5">
+        <button @click="activeTab = 'REGULER'" 
+                class="px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                :class="activeTab === 'REGULER' ? 'bg-white shadow-sm text-blue-700 ring-1 ring-slate-900/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'">
+          <Package :size="18" /> REGULER
+        </button>
+        <button @click="activeTab = 'PESANAN'" 
+                class="px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                :class="activeTab === 'PESANAN' ? 'bg-white shadow-sm text-yellow-700 ring-1 ring-slate-900/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'">
+          <Cake :size="18" /> PESANAN (PO)
+        </button>
+      </div>
     </div>
     
-    <div v-if="role === 'superadmin'" class="bg-white shadow-md rounded-lg p-6 print:shadow-none print:p-0">
+    <div v-if="role === 'superadmin'" class="print:p-0">
       
       <!-- ============================================== -->
       <!-- TABEL RIWAYAT REGULER                          -->
       <!-- ============================================== -->
-      <div v-if="activeTab === 'REGULER'">
+      <div v-if="activeTab === 'REGULER'" class="animate-in fade-in slide-in-from-bottom-2 duration-500">
         
         <!-- HEADER KERTAS PRINT -->
         <div class="hidden print:block mb-6 text-center border-b-2 border-black pb-4">
@@ -395,97 +379,104 @@ const namaTokoPOPrint = computed(() => {
         </div>
 
         <!-- FILTER & TOMBOL PRINT (RESPONSIVE) -->
-        <div class="flex flex-col xl:flex-row items-stretch gap-4 mb-6 print:hidden">
-          <button @click="cetakLaporan" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-md font-bold transition flex items-center justify-center gap-2 shrink-0">
-            <Printer :size="20" /> Cetak Riwayat Reguler
-          </button>
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 border rounded-lg flex-1">
-            <div>
-              <label class="block text-xs font-bold text-gray-600 mb-1">Mulai Tanggal</label>
-              <input type="date" v-model="filterStartDate" class="w-full border rounded p-2 outline-none font-semibold text-blue-800">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6 print:hidden">
+          <div class="flex flex-col lg:flex-row gap-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 flex-1">
+              <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Mulai Tanggal</label>
+                <input type="date" v-model="filterStartDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Sampai Tanggal</label>
+                <input type="date" v-model="filterEndDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Filter Siklus</label>
+                <select v-model="filterSiklus" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer">
+                  <option value="semua">Semua Siklus</option>
+                  <option value="HARIAN">Harian</option>
+                  <option value="SiklusKamisSenin">Kamis - Senin</option>
+                  <option value="SiklusJumatSelasa">Jumat - Selasa</option>
+                  <option value="SiklusSabtuRabu">Sabtu - Rabu</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Pilih Toko</label>
+                <select v-model="filterTokoSuperadmin" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer">
+                  <option value="semua">Semua Toko</option>
+                  <option v-for="t in filteredUniqueTokos" :key="t.id" :value="t.id">{{ t.nama }}</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label class="block text-xs font-bold text-gray-600 mb-1">Sampai Tanggal</label>
-              <input type="date" v-model="filterEndDate" class="w-full border rounded p-2 outline-none font-semibold text-blue-800">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-gray-600 mb-1">Filter Siklus</label>
-              <select v-model="filterSiklus" class="w-full border rounded p-2 outline-none font-semibold text-gray-700">
-                <option value="semua">-- Semua Siklus --</option>
-                <option value="HARIAN">HARIAN</option>
-                <option value="SiklusKamisSenin">Kamis - Senin</option>
-                <option value="SiklusJumatSelasa">Jumat - Selasa</option>
-                <option value="SiklusSabtuRabu">Sabtu - Rabu</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-gray-600 mb-1">Pilih Toko</label>
-              <select v-model="filterTokoSuperadmin" class="w-full border rounded p-2 outline-none font-semibold cursor-pointer text-gray-700">
-                <option value="semua">-- Semua Toko --</option>
-                <option v-for="t in filteredUniqueTokos" :key="t.id" :value="t.id">{{ t.nama }}</option>
-              </select>
+            <div class="flex items-end">
+              <button @click="cetakLaporan" class="w-full lg:w-auto bg-slate-800 hover:bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold shadow-sm transition-all flex items-center justify-center gap-2 group">
+                <Printer :size="18" class="group-hover:-translate-y-0.5 transition-transform" /> Cetak Reguler
+              </button>
             </div>
           </div>
         </div>
 
-        <div class="overflow-x-auto rounded border border-gray-200 print:border-none">
-          <table class="w-full text-left border-collapse text-sm min-w-200 print:w-full print:text-black">
-            <thead class="bg-blue-600 text-white uppercase text-xs print:bg-gray-200 print:text-black">
+        <div class="bg-white overflow-x-auto rounded-2xl border border-slate-200 shadow-sm print:border-none print:shadow-none">
+          <table class="w-full text-left border-collapse text-sm print:w-full print:text-black">
+            <thead class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider font-bold print:bg-transparent print:text-black border-b border-slate-200 print:border-b-2 print:border-black">
               <tr>
-                <th class="p-3 border print:border-black">Tanggal</th>
-                <th class="p-3 border print:border-black">No. Nota</th>
-                <th class="p-3 border print:border-black">Nama Toko</th>
-                <th class="p-3 border text-right print:border-black">Total Kirim</th>
-                <th class="p-3 border text-right print:border-black print:bg-transparent">Total Bayar</th>
-                <th class="p-3 border text-center print:border-black">Status Bayar</th>
-                <th class="p-3 border text-center print:hidden">Aksi</th>
+                <th class="p-4 border-r border-slate-200 last:border-0 print:border-black">Tanggal</th>
+                <th class="p-4 border-r border-slate-200 last:border-0 print:border-black">No. Nota</th>
+                <th class="p-4 border-r border-slate-200 last:border-0 print:border-black">Nama Toko</th>
+                <th class="p-4 border-r border-slate-200 last:border-0 text-right print:border-black">Total Kirim</th>
+                <th class="p-4 border-r border-slate-200 last:border-0 text-right print:border-black">Total Bayar</th>
+                <th class="p-4 border-r border-slate-200 last:border-0 text-center print:border-black">Status Bayar</th>
+                <th class="p-4 text-center print:hidden">Aksi</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="nota in filteredListNota" :key="nota.ID" class="hover:bg-gray-50 print:hover:bg-transparent">
-                <td class="p-3 border print:border-black font-medium">{{ formatTanggal(nota.TanggalKirim) }}</td>
-                <td class="p-3 border print:border-black font-mono font-bold text-blue-800 print:text-black">{{ nota.NoNota }}</td>
-                <td class="p-3 border print:border-black">{{ nota.NamaTokoSnapshot || nota.Toko?.NamaToko }}</td>
-                <!-- KOLOM TOTAL KIRIM -->
-                <td class="p-3 border print:border-black text-right font-semibold text-gray-700">
+              <tr v-for="nota in filteredListNota" :key="nota.ID" class="hover:bg-blue-50/50 even:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-0 print:border-b print:border-black print:hover:bg-transparent print:even:bg-transparent">
+                <td class="p-4 border-r border-slate-200 print:border-black text-slate-600 font-medium whitespace-nowrap">{{ formatTanggal(nota.TanggalKirim) }}</td>
+                <td class="p-4 border-r border-slate-200 print:border-black font-mono font-bold text-blue-700 print:text-black whitespace-nowrap">{{ nota.NoNota }}</td>
+                <td class="p-4 border-r border-slate-200 print:border-black font-semibold text-slate-800">{{ nota.NamaTokoSnapshot || nota.Toko?.NamaToko }}</td>
+                <td class="p-4 border-r border-slate-200 print:border-black text-right text-slate-600 whitespace-nowrap">
                   Rp {{ (nota.JumlahKirim || 0).toLocaleString() }}
                 </td>
-                <!-- KOLOM TOTAL BAYAR -->
-                <td class="p-3 border print:border-black text-right font-black text-blue-800 print:text-black bg-blue-50/50 print:bg-transparent">
+                <td class="p-4 border-r border-slate-200 print:border-black text-right font-black text-slate-800 bg-slate-50 print:bg-transparent whitespace-nowrap">
                   Rp {{ (nota.TotalBayar || 0).toLocaleString() }}
                 </td>
-                <td class="p-3 border print:border-black text-center whitespace-nowrap">
-                  <span v-if="nota.Status === 'DIBATALKAN'" class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold print:border-none print:text-black">DIBATALKAN</span>
-                  <span v-else-if="nota.is_lunas" class="bg-green-100 text-green-800 px-2 py-1 rounded text-[11px] font-bold print:border-none print:text-black flex items-center gap-1 w-max mx-auto"><CheckCircle2 :size="12" /> LUNAS</span>
-                  <span v-else class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold print:border-none print:text-black flex items-center gap-1 w-max mx-auto"><Clock :size="12" /> PIUTANG</span>
+                <td class="p-4 border-r border-slate-200 print:border-black text-center whitespace-nowrap">
+                  <span v-if="nota.Status === 'DIBATALKAN'" class="inline-flex items-center gap-1.5 bg-rose-100 text-rose-700 px-2.5 py-1 rounded-full text-xs font-bold ring-1 ring-inset ring-rose-200/50 print:ring-0 print:text-black mx-auto"><XCircle :size="14" /> DIBATALKAN</span>
+                  <span v-else-if="nota.is_lunas" class="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-xs font-bold ring-1 ring-inset ring-emerald-200/50 print:ring-0 print:text-black mx-auto"><CheckCircle2 :size="14" /> LUNAS</span>
+                  <span v-else class="inline-flex items-center gap-1.5 bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold ring-1 ring-inset ring-amber-200/50 print:ring-0 print:text-black mx-auto"><Clock :size="14" /> PIUTANG</span>
                 </td>
-                <td class="p-3 border text-center whitespace-nowrap print:hidden">
+                <td class="p-4 text-center whitespace-nowrap print:hidden">
                   <div class="flex justify-center gap-1.5">
                     <template v-if="nota.Status !== 'DIBATALKAN'">
-                      <router-link :to="'/buat-nota?edit=' + nota.ID" title="Lihat / Edit Nota" class="bg-green-50 text-green-600 border border-green-200 w-7 h-7 flex items-center justify-center rounded hover:bg-green-500 hover:text-white transition-colors shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                      <router-link :to="'/buat-nota?edit=' + nota.ID" title="Lihat / Edit Nota" class="bg-slate-100 text-slate-600 border border-slate-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
                         </svg>
                       </router-link>
                       
-                      <button @click="batalkanNota(nota.ID, nota.NoNota)" title="Batalkan Nota" class="bg-red-50 text-red-600 border border-red-200 w-7 h-7 flex items-center justify-center rounded hover:bg-red-500 hover:text-white transition-colors shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                      <button @click="batalkanNota(nota.ID, nota.NoNota)" title="Batalkan Nota" class="bg-rose-50 text-rose-600 border border-rose-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
                     </template>
                     <template v-else>
-                      <button @click="pulihkanNota(nota.ID, nota.NoNota)" title="Pulihkan Nota" class="bg-blue-50 text-blue-600 border border-blue-200 w-7 h-7 flex items-center justify-center rounded hover:bg-blue-500 hover:text-white transition-colors shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                        </svg>
+                      <button @click="pulihkanNota(nota.ID, nota.NoNota)" title="Pulihkan Nota" class="bg-slate-100 text-slate-600 border border-slate-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-800 hover:text-white transition-all shadow-sm">
+                        <RefreshCw :size="16" />
                       </button>
                     </template>
                   </div>
                 </td>
               </tr>
               <tr v-if="filteredListNota.length === 0">
-                <td colspan="7" class="p-6 text-center text-gray-500 italic print:border-black">Tidak ada nota yang cocok dengan rentang tanggal ini.</td>
+                <td colspan="7" class="p-12 text-center text-slate-500 print:border-black">
+                  <div class="flex flex-col items-center justify-center print:hidden">
+                    <SearchX :size="48" class="text-slate-300 mb-4" />
+                    <p class="font-bold text-slate-600 text-lg">Nota Tidak Ditemukan</p>
+                    <p class="text-sm mt-1">Coba sesuaikan tanggal atau filter toko Anda.</p>
+                  </div>
+                  <span class="hidden print:inline font-bold">Tidak ada nota yang cocok dengan rentang tanggal ini.</span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -495,7 +486,7 @@ const namaTokoPOPrint = computed(() => {
       <!-- ============================================== -->
       <!-- TABEL RIWAYAT PESANAN (PO)                     -->
       <!-- ============================================== -->
-      <div v-if="activeTab === 'PESANAN'">
+      <div v-if="activeTab === 'PESANAN'" class="animate-in fade-in slide-in-from-bottom-2 duration-500">
         
         <!-- HEADER KERTAS PRINT (PO) -->
         <div class="hidden print:block mb-6 text-center border-b-2 border-black pb-4">
@@ -505,100 +496,106 @@ const namaTokoPOPrint = computed(() => {
         </div>
 
         <!-- FILTER & TOMBOL PRINT PO -->
-        <div class="flex flex-col lg:flex-row items-stretch gap-4 mb-6 print:hidden">
-          <!-- TOMBOL PRINT PO -->
-          <button @click="cetakLaporan" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-4 rounded-lg shadow-md font-bold transition flex items-center justify-center gap-2 shrink-0">
-            <Printer :size="20" /> Cetak Riwayat PO
-          </button>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-yellow-50 p-4 border border-yellow-200 rounded-lg flex-1">
-            <div>
-              <label class="block text-xs font-bold text-yellow-800 mb-1">Mulai Tanggal</label>
-              <input type="date" v-model="filterStartDatePO" class="w-full border border-yellow-300 rounded p-2 outline-none font-semibold bg-white text-yellow-900">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6 print:hidden">
+          <div class="flex flex-col lg:flex-row gap-5">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1">
+              <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Mulai Tanggal</label>
+                <input type="date" v-model="filterStartDatePO" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-800 focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Sampai Tanggal</label>
+                <input type="date" v-model="filterEndDatePO" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-800 focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Pilih Titik Ambil</label>
+                <select v-model="filterTokoPO" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-semibold text-slate-800 focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all cursor-pointer">
+                  <option value="semua">Semua Titik Ambil</option>
+                  <option v-for="t in filteredUniqueTokosPO" :key="t.id" :value="t.id">{{ t.nama }}</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label class="block text-xs font-bold text-yellow-800 mb-1">Sampai Tanggal</label>
-              <input type="date" v-model="filterEndDatePO" class="w-full border border-yellow-300 rounded p-2 outline-none font-semibold bg-white text-yellow-900">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-yellow-800 mb-1">Pilih Titik Ambil</label>
-              <select v-model="filterTokoPO" class="w-full border border-yellow-300 rounded p-2 outline-none font-semibold cursor-pointer bg-white text-yellow-900">
-                <option value="semua">-- Semua Titik --</option>
-                <option v-for="t in filteredUniqueTokosPO" :key="t.id" :value="t.id">{{ t.nama }}</option>
-              </select>
+            <div class="flex items-end">
+              <button @click="cetakLaporan" class="w-full lg:w-auto bg-slate-800 hover:bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold shadow-sm transition-all flex items-center justify-center gap-2 group">
+                <Printer :size="18" class="group-hover:-translate-y-0.5 transition-transform" /> Cetak PO
+              </button>
             </div>
           </div>
         </div>
 
-        <div class="overflow-x-auto rounded border border-yellow-200 print:border-none">
-          <table class="w-full text-left border-collapse text-sm min-w-225 print:w-full print:text-black">
-            <thead class="bg-yellow-500 text-yellow-950 uppercase text-xs print:bg-gray-200 print:text-black">
+        <div class="bg-white overflow-x-auto rounded-2xl border border-slate-200 shadow-sm print:border-none print:shadow-none">
+          <table class="w-full text-left border-collapse text-sm print:w-full print:text-black">
+            <thead class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider font-bold print:bg-transparent print:text-black border-b border-slate-200 print:border-b-2 print:border-black">
               <tr>
-                <th class="p-3 border-r border-yellow-600 print:border-black text-center">Jadwal Kirim</th>
-                <th class="p-3 border-r border-yellow-600 print:border-black">No. PO & Pemesan</th>
-                <th class="p-3 border-r border-yellow-600 print:border-black text-center">Titik Ambil</th>
-                <th class="p-3 border-r border-yellow-600 print:border-black text-right">Total Tagihan</th>
-                <th class="p-3 border-r border-yellow-600 print:border-black print:bg-transparent text-right print:text-black">Total Bayar</th>
-                <th class="p-3 border-r border-yellow-600 print:border-black text-center print:hidden">Status</th>
-                <th class="p-3 border print:border-black text-center">Status Bayar</th>
-                <th class="p-3 text-center print:hidden border">Aksi</th>
+                <th class="p-4 border-r border-slate-200 last:border-0 print:border-black text-center">Jadwal Kirim</th>
+                <th class="p-4 border-r border-slate-200 last:border-0 print:border-black">No. PO & Pemesan</th>
+                <th class="p-4 border-r border-slate-200 last:border-0 print:border-black text-center">Titik Ambil</th>
+                <th class="p-4 border-r border-slate-200 last:border-0 text-right print:border-black">Total Tagihan</th>
+                <th class="p-4 border-r border-slate-200 last:border-0 text-right print:border-black">Total Bayar</th>
+                <th class="p-4 border-r border-slate-200 last:border-0 text-center print:hidden">Status</th>
+                <th class="p-4 border-r border-slate-200 last:border-0 text-center print:border-black">Status Bayar</th>
+                <th class="p-4 text-center print:hidden">Aksi</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="po in filteredListPesanan" :key="po.ID" class="hover:bg-yellow-50 border-b print:hover:bg-transparent">
-                <td class="p-3 border-r print:border-black font-medium text-gray-800 text-center whitespace-nowrap">{{ formatTanggal(po.TanggalKirim) }}</td>
-                <td class="p-3 border-r print:border-black">
-                  <p class="font-mono font-bold text-yellow-700 print:text-black">{{ po.NoNota }}</p>
-                  <p class="text-xs font-bold text-gray-600 print:text-gray-800">👤 {{ po.NamaPemesan }}</p>
+              <tr v-for="po in filteredListPesanan" :key="po.ID" class="hover:bg-yellow-50/50 even:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-0 print:border-b print:border-black print:hover:bg-transparent print:even:bg-transparent">
+                <td class="p-4 border-r border-slate-200 print:border-black font-medium text-slate-600 text-center whitespace-nowrap">{{ formatTanggal(po.TanggalKirim) }}</td>
+                <td class="p-4 border-r border-slate-200 print:border-black">
+                  <p class="font-mono font-bold text-yellow-700 print:text-black whitespace-nowrap">{{ po.NoNota }}</p>
+                  <p class="text-xs font-bold text-slate-500 print:text-slate-800 flex items-center gap-1 mt-0.5"><CheckCircle2 :size="10" class="hidden print:inline" /> {{ po.NamaPemesan }}</p>
                 </td>
-                <td class="p-3 border-r print:border-black font-bold text-gray-700 text-center whitespace-nowrap">
-                  <span v-if="po.JenisPengambilan === 'PABRIK'" class="inline-flex items-center gap-1 bg-gray-200 px-2 py-1 rounded-md text-[11px] uppercase tracking-wider print:bg-transparent print:p-0"><Factory :size="12" /> PABRIK</span>
-                  <span v-else class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-[11px] uppercase tracking-wider print:bg-transparent print:p-0"><Store :size="12" /> {{ po.NamaTokoSnapshot }}</span>
+                <td class="p-4 border-r border-slate-200 print:border-black font-bold text-slate-700 text-center whitespace-nowrap">
+                  <span v-if="po.JenisPengambilan === 'PABRIK'" class="inline-flex items-center justify-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg text-xs uppercase tracking-wider print:bg-transparent print:p-0"><Factory :size="14" class="text-slate-500" /> PABRIK</span>
+                  <span v-else class="inline-flex items-center justify-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-lg text-xs text-blue-700 uppercase tracking-wider print:bg-transparent print:p-0"><Store :size="14" class="text-blue-500" /> {{ po.NamaTokoSnapshot }}</span>
                 </td>
                 
-                <!-- KOLOM TOTAL TAGIHAN PO -->
-                <td class="p-3 border-r print:border-black text-right font-semibold text-gray-700 whitespace-nowrap">
+                <td class="p-4 border-r border-slate-200 print:border-black text-right font-semibold text-slate-600 whitespace-nowrap">
                   Rp {{ (po.TotalHarga || po.TotalBayar || 0).toLocaleString() }}
                 </td>
-                <!-- KOLOM TOTAL BAYAR PO -->
-                <td class="p-3 border-r print:border-black text-right font-black text-yellow-700 print:text-black bg-yellow-50/50 print:bg-transparent whitespace-nowrap">
+                <td class="p-4 border-r border-slate-200 print:border-black text-right font-black text-slate-800 bg-slate-50 print:bg-transparent whitespace-nowrap">
                   Rp {{ ((po.TotalBayar || 0) + (po.Ongkir || po.ongkir || 0) - (po.TotalVoucher || po.total_voucher || 0)).toLocaleString() }}
                 </td>
 
-                <td class="p-3 border-r print:border-black text-center whitespace-nowrap print:hidden">
-                  <span v-if="po.Status === 'DIBATALKAN'" class="inline-block bg-red-100 text-red-700 px-2 py-1 rounded text-[11px] uppercase font-bold print:border-none print:text-black">BATAL</span>
-                  <span v-else class="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-[11px] uppercase font-bold print:border-none print:text-black">{{ po.Status }}</span>
+                <td class="p-4 border-r border-slate-200 print:border-black text-center whitespace-nowrap print:hidden">
+                  <span v-if="po.Status === 'DIBATALKAN'" class="inline-block bg-rose-100 text-rose-700 px-2.5 py-1 rounded-full text-[10px] uppercase font-bold ring-1 ring-inset ring-rose-200/50 print:ring-0 print:text-black">BATAL</span>
+                  <span v-else class="inline-block bg-yellow-100 text-yellow-800 px-2.5 py-1 rounded-full text-[10px] uppercase font-bold ring-1 ring-inset ring-yellow-200/50 print:ring-0 print:text-black">{{ po.Status }}</span>
                 </td>
-                <td class="p-3 border print:border-black text-center whitespace-nowrap">
-                  <span v-if="po.is_lunas" class="inline-flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 rounded text-[11px] font-bold print:border-none print:text-black mx-auto"><CheckCircle2 :size="12" /> LUNAS</span>
-                  <span v-else class="inline-flex items-center gap-1 bg-red-100 text-red-700 px-2 py-1 rounded text-[11px] font-bold print:border-none print:text-black mx-auto"><Clock :size="12" /> PIUTANG</span>
+                <td class="p-4 border-r border-slate-200 print:border-black text-center whitespace-nowrap">
+                  <span v-if="po.is_lunas" class="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-[11px] font-bold ring-1 ring-inset ring-emerald-200/50 print:ring-0 print:text-black mx-auto"><CheckCircle2 :size="12" /> LUNAS</span>
+                  <span v-else class="inline-flex items-center gap-1.5 bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-[11px] font-bold ring-1 ring-inset ring-amber-200/50 print:ring-0 print:text-black mx-auto"><Clock :size="12" /> PIUTANG</span>
                 </td>
-                <td class="p-3 border text-center whitespace-nowrap print:hidden">
+                <td class="p-4 text-center whitespace-nowrap print:hidden">
                   <div class="flex justify-center gap-1.5">
                     <template v-if="po.Status !== 'DIBATALKAN'">
-                      <router-link :to="'/buat-pesanan?edit=' + po.ID" title="Lihat / Edit Pesanan" class="bg-green-50 text-green-600 border border-green-200 w-7 h-7 flex items-center justify-center rounded hover:bg-green-500 hover:text-white transition-colors shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                      <router-link :to="'/buat-pesanan?edit=' + po.ID" title="Lihat / Edit Pesanan" class="bg-slate-100 text-slate-600 border border-slate-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-yellow-500 hover:text-white hover:border-yellow-500 transition-all shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
                         </svg>
                       </router-link>
                       
-                      <button @click="batalkanPO(po.ID, po.NoNota)" title="Batalkan Pesanan" class="bg-red-50 text-red-600 border border-red-200 w-7 h-7 flex items-center justify-center rounded hover:bg-red-500 hover:text-white transition-colors shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                      <button @click="batalkanPO(po.ID, po.NoNota)" title="Batalkan Pesanan" class="bg-rose-50 text-rose-600 border border-rose-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
                     </template>
                     <template v-else>
-                      <button @click="pulihkanPO(po.ID, po.NoNota)" title="Pulihkan Pesanan" class="bg-blue-50 text-blue-600 border border-blue-200 w-7 h-7 flex items-center justify-center rounded hover:bg-blue-500 hover:text-white transition-colors shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                        </svg>
+                      <button @click="pulihkanPO(po.ID, po.NoNota)" title="Pulihkan Pesanan" class="bg-slate-100 text-slate-600 border border-slate-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-800 hover:text-white transition-all shadow-sm">
+                        <RefreshCw :size="16" />
                       </button>
                     </template>
                   </div>
                 </td>
               </tr>
               <tr v-if="filteredListPesanan.length === 0">
-                <td colspan="8" class="p-6 text-center text-gray-500 italic print:border-black">Belum ada riwayat pesanan (PO) pada rentang tanggal ini.</td>
+                <td colspan="8" class="p-12 text-center text-slate-500 print:border-black">
+                  <div class="flex flex-col items-center justify-center print:hidden">
+                    <SearchX :size="48" class="text-slate-300 mb-4" />
+                    <p class="font-bold text-slate-600 text-lg">Pesanan Tidak Ditemukan</p>
+                    <p class="text-sm mt-1">Coba sesuaikan tanggal atau titik ambil.</p>
+                  </div>
+                  <span class="hidden print:inline font-bold">Belum ada riwayat pesanan (PO) pada rentang tanggal ini.</span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -609,57 +606,58 @@ const namaTokoPOPrint = computed(() => {
     <!-- ============================================== -->
     <!-- SALES DASHBOARD (Sembunyi saat print)          -->
     <!-- ============================================== -->
-    <div v-else class="space-y-8 max-w-2xl mx-auto print:hidden">
+    <div v-else class="max-w-2xl mx-auto print:hidden space-y-6">
       
       <!-- KOTAK KUNJUNGAN TOKO -->
-      <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-600">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><Store :size="24" class="text-blue-600" /> Mulai Kunjungan Toko</h2>
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-blue-500 transition-all hover:shadow-md">
+        <h2 class="text-lg font-black text-slate-800 mb-5 flex items-center gap-2.5"><Store :size="24" class="text-blue-500" /> Mulai Kunjungan Toko</h2>
         
-        <select v-model="selectedTokoID" @change="fetchKunjungan" class="w-full p-3 border-2 border-gray-300 rounded focus:border-blue-500 font-bold mb-4 outline-none">
+        <select v-model="selectedTokoID" @change="fetchKunjungan" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-bold mb-5 outline-none text-slate-700 transition-all cursor-pointer">
           <option value="" disabled>-- Pilih Toko Yang Sedang Dikunjungi --</option>
           <option v-for="t in daftarToko" :key="t.ID" :value="t.ID">{{ t.NamaToko }}</option>
         </select>
 
-        <div v-if="selectedTokoID">
-          <button @click="buatNotaBaru" class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded shadow transition mb-6">
+        <div v-if="selectedTokoID" class="animate-in fade-in duration-300">
+          <button @click="buatNotaBaru" class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-sm transition-all mb-5 hover:-translate-y-0.5">
             <Plus :size="20" /> BUAT NOTA KIRIMAN HARI INI
           </button>
 
-          <div v-if="notaKunjungan.length > 0" class="bg-red-50 p-4 rounded border border-red-200">
-            <p class="font-bold text-red-700 mb-3 text-sm flex items-center gap-2"><AlertTriangle :size="18" /> Ditemukan {{ notaKunjungan.length }} Nota Belum Diisi Retur:</p>
-            <div v-for="nota in notaKunjungan" :key="nota.ID" class="bg-white p-3 border border-red-300 rounded mb-2 flex justify-between items-center shadow-sm">
+          <div v-if="notaKunjungan.length > 0" class="bg-rose-50 p-5 rounded-xl border border-rose-100">
+            <p class="font-bold text-rose-700 mb-4 text-sm flex items-center gap-2"><AlertTriangle :size="18" /> Ditemukan {{ notaKunjungan.length }} Nota Belum Diisi Retur:</p>
+            <div v-for="nota in notaKunjungan" :key="nota.ID" class="bg-white p-4 border border-rose-100 rounded-xl mb-3 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow">
               <div>
-                <p class="font-bold font-mono">{{ nota.NoNota }}</p>
-                <p class="text-xs text-gray-600">{{ formatTanggal(nota.TanggalKirim) }}</p>
+                <p class="font-bold font-mono text-slate-800 text-lg">{{ nota.NoNota }}</p>
+                <p class="text-xs font-semibold text-slate-500 mt-0.5">{{ formatTanggal(nota.TanggalKirim) }}</p>
               </div>
-              <router-link :to="'/buat-nota?edit=' + nota.ID" class="bg-red-600 text-white px-4 py-2 rounded font-bold text-sm hover:bg-red-700 shadow-sm">
+              <router-link :to="'/buat-nota?edit=' + nota.ID" class="bg-rose-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-rose-700 shadow-sm transition-colors">
                 ISI RETUR
               </router-link>
             </div>
           </div>
-          <div v-else class="bg-green-50 p-4 rounded border border-green-200 text-center">
-            <p class="font-bold text-green-700 flex items-center justify-center gap-2"><CheckCircle2 :size="20" /> Retur Lunas! Tidak ada tagihan retur tertunda di toko ini.</p>
+          <div v-else class="bg-emerald-50 p-6 rounded-xl border border-emerald-100 text-center">
+            <p class="font-bold text-emerald-700 flex items-center justify-center gap-2"><CheckCircle2 :size="22" /> Retur Lunas! Tidak ada tagihan tertunda.</p>
           </div>
         </div>
       </div>
 
       <!-- KOTAK TUGAS REGULER / RETUR -->
-      <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-orange-500 mb-8">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><Bell :size="24" class="text-orange-500" /> Tugas Retur / Reguler</h2>
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-orange-500 transition-all hover:shadow-md">
+        <h2 class="text-lg font-black text-slate-800 mb-5 flex items-center gap-2.5"><Bell :size="24" class="text-orange-500" /> Tugas Retur / Reguler</h2>
         
-        <div v-if="notaTugas.length === 0" class="text-center p-4 text-gray-500 italic text-sm border border-dashed rounded">
-          Belum ada tugas retur khusus dari Superadmin.
+        <div v-if="notaTugas.length === 0" class="text-center p-8 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center gap-2">
+          <CheckCircle2 :size="32" class="text-emerald-400" />
+          <span class="font-medium text-sm">Belum ada tugas retur khusus.</span>
         </div>
 
-        <div v-for="nota in notaTugas" :key="'t-'+nota.ID" class="bg-orange-50 p-3 border border-orange-200 rounded mb-2 flex justify-between items-center">
+        <div v-for="nota in notaTugas" :key="'t-'+nota.ID" class="bg-white p-4 border border-slate-200 rounded-xl mb-3 flex justify-between items-center shadow-sm hover:border-orange-200 transition-colors">
           <div>
-            <p class="font-bold font-mono">{{ nota.NoNota }}</p>
-            <p class="text-xs text-gray-600">{{ nota.NamaTokoSnapshot }}</p>
+            <p class="font-bold font-mono text-slate-800">{{ nota.NoNota }}</p>
+            <p class="text-xs font-semibold text-slate-500 mt-0.5">{{ nota.NamaTokoSnapshot }}</p>
           </div>
           <router-link 
             :to="'/buat-nota?edit=' + nota.ID" 
-            :class="nota.JumlahRetur > 0 ? 'bg-blue-600' : 'bg-orange-600'"
-            class="text-white px-4 py-2 rounded font-bold text-sm shadow-sm transition"
+            :class="nota.JumlahRetur > 0 ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-500 hover:bg-orange-600'"
+            class="text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-sm transition-colors"
           >
             {{ nota.JumlahRetur > 0 ? 'Perbaiki Retur' : 'Selesaikan' }}
           </router-link>
@@ -667,41 +665,43 @@ const namaTokoPOPrint = computed(() => {
       </div>
 
       <!-- KOTAK TUGAS PO / PESANAN -->
-      <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-yellow-500">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><Cake :size="24" class="text-yellow-500" /> Tugas Antar Pesanan (PO)</h2>
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-yellow-400 transition-all hover:shadow-md">
+        <h2 class="text-lg font-black text-slate-800 mb-5 flex items-center gap-2.5"><Cake :size="24" class="text-yellow-500" /> Tugas Antar Pesanan (PO)</h2>
         
-        <div v-if="poTugas.length === 0" class="text-center p-4 text-gray-500 italic text-sm border border-dashed rounded">
-          Belum ada tugas antar PO dari Superadmin.
+        <div v-if="poTugas.length === 0" class="text-center p-8 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center gap-2">
+          <CheckCircle2 :size="32" class="text-emerald-400" />
+          <span class="font-medium text-sm">Belum ada tugas antar PO.</span>
         </div>
 
-        <div v-for="po in poTugas" :key="'po-'+po.ID" class="bg-yellow-50 p-3 border border-yellow-400 rounded mb-2 flex justify-between items-center shadow-sm">
+        <div v-for="po in poTugas" :key="'po-'+po.ID" class="bg-white p-4 border border-slate-200 rounded-xl mb-3 flex justify-between items-center shadow-sm hover:border-yellow-300 transition-colors">
           <div>
-            <p class="font-bold font-mono text-yellow-900">{{ po.NoNota }}</p>
-            <p class="text-xs text-yellow-800">👤 {{ po.NamaPemesan }} | 📍 {{ po.NamaTokoSnapshot }}</p>
+            <p class="font-bold font-mono text-yellow-700">{{ po.NoNota }}</p>
+            <p class="text-xs font-semibold text-slate-600 mt-1 flex items-center gap-1.5"><Store :size="12" class="text-slate-400"/> {{ po.NamaTokoSnapshot }}</p>
+            <p class="text-xs font-semibold text-slate-600 mt-0.5 flex items-center gap-1.5"><CheckCircle2 :size="12" class="text-slate-400"/> {{ po.NamaPemesan }}</p>
           </div>
           <router-link 
             :to="'/buat-pesanan?edit=' + po.ID" 
-            class="bg-yellow-600 text-white px-4 py-2 rounded font-bold text-sm shadow-sm transition hover:bg-yellow-700"
+            class="bg-yellow-500 text-yellow-950 px-5 py-2.5 rounded-lg font-bold text-sm shadow-sm transition-colors hover:bg-yellow-600"
           >
-            Lihat Detail PO
+            Lihat Detail
           </router-link>
         </div>
       </div>
 
       <!-- KOTAK NOTA BARU DIBUAT (8 JAM) -->
-      <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><span>⏱️</span> Nota Yang Baru Saja Anda Buat (8 Jam)</h2>
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-emerald-500 transition-all hover:shadow-md">
+        <h2 class="text-lg font-black text-slate-800 mb-5 flex items-center gap-2.5"><History :size="24" class="text-emerald-500" /> Riwayat Hari Ini (8 Jam)</h2>
         
-        <div v-if="notaAktif.length === 0" class="text-center p-4 text-gray-500 italic text-sm border border-dashed rounded">
-          Anda belum membuat nota kiriman hari ini.
+        <div v-if="notaAktif.length === 0" class="text-center p-6 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+          <span class="font-medium text-sm">Anda belum membuat nota kiriman hari ini.</span>
         </div>
 
-        <div v-for="nota in filteredNotaAktifSales" :key="'a-'+nota.ID" class="border p-3 rounded mb-2 flex justify-between items-center hover:bg-gray-50">
+        <div v-for="nota in filteredNotaAktifSales" :key="'a-'+nota.ID" class="border border-slate-200 p-4 rounded-xl mb-3 flex justify-between items-center hover:bg-slate-50 transition-colors">
           <div>
-            <p class="font-bold font-mono">{{ nota.NoNota }}</p>
-            <p class="text-xs text-gray-600">{{ nota.NamaTokoSnapshot }} ({{ formatTanggal(nota.TanggalKirim) }})</p>
+            <p class="font-bold font-mono text-slate-700">{{ nota.NoNota }}</p>
+            <p class="text-xs font-medium text-slate-500 mt-0.5">{{ nota.NamaTokoSnapshot }} &bull; {{ formatTanggal(nota.TanggalKirim) }}</p>
           </div>
-          <router-link :to="'/buat-nota?edit=' + nota.ID" class="text-blue-600 font-bold text-sm hover:underline">Perbaiki Typo</router-link>
+          <router-link :to="'/buat-nota?edit=' + nota.ID" class="text-blue-600 font-bold text-sm hover:underline bg-blue-50 px-3 py-1.5 rounded-lg">Perbaiki Typo</router-link>
         </div>
       </div>
 
@@ -713,11 +713,11 @@ const namaTokoPOPrint = computed(() => {
 @media print {
   @page { margin: 10mm; } 
   body { background-color: white !important; margin: 0; padding: 0; }
-  .shadow-md { box-shadow: none !important; }
+  .shadow-sm, .shadow-md { box-shadow: none !important; }
   .overflow-x-auto { overflow: visible !important; }
   table { border: 2px solid black !important; }
   th, td { border: 1px solid black !important; }
   /* Atur warna tinta teks untuk tabel print */
-  .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800 { color: black !important; }
+  .text-slate-500, .text-slate-600, .text-slate-700, .text-slate-800 { color: black !important; }
 }
 </style>
