@@ -175,7 +175,7 @@ onMounted(() => {
             <div class="mt-1.5">
               <span class="text-[9px] font-black bg-white/20 text-white inline-flex items-center px-2 py-1 rounded-md uppercase tracking-widest backdrop-blur-sm border border-white/10 shadow-inner">
                 <span class="w-1.5 h-1.5 rounded-full bg-white mr-1.5 animate-pulse"></span>
-                Belum Diambil
+                Masih Aktif
               </span>
             </div>
           </div>
