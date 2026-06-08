@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../pages/Login.vue'
+import DashboardNota from '../pages/DashboardNota.vue'
 import BuatNota from '../pages/buat-nota.vue'      
 import DaftarNota from '../pages/daftar-nota.vue'  
 import CatatanBesar from '../pages/catatan-besar.vue'
@@ -10,8 +11,11 @@ import Sampah from '../pages/Sampah.vue'
 import BuatPesanan from '../pages/buat-pesanan.vue'
 
 const routes = [
-  { path: '/', redirect: '/login' }, 
+  { path: '/', redirect: to => {
+      return localStorage.getItem('admin_role') === 'sales' ? '/daftar-nota' : '/dashboard'
+  }}, 
   { path: '/login', component: Login },
+  { path: '/dashboard', component: DashboardNota, meta: { allowedRoles: ['superadmin'] } },
   // AREA BERSAMA (SUPERADMIN & SALES)
   { path: '/buat-nota', component: BuatNota, meta: { allowedRoles: ['superadmin', 'sales'] } },
   { path: '/daftar-nota', component: DaftarNota, meta: { allowedRoles: ['superadmin', 'sales'] }},
@@ -40,23 +44,13 @@ router.beforeEach((to, from, next) => {
 
   // Arahkan saat baru login atau saat mengakses '/'
   if (to.path === '/login' && token) {
-    if (role === 'sales') return next('/daftar-nota')
-    if (role === 'superadmin') return next('/catatan-besar')
-    
-    window.$dialog?.alert("Aplikasi ini khusus untuk Sales dan Superadmin.")
-    localStorage.clear()
-    return next('/login')
+    return role === 'sales' ? next('/daftar-nota') : next('/dashboard')
   }
 
   if (to.meta.allowedRoles && token) {
     if (!to.meta.allowedRoles.includes(role)) {
       window.$dialog?.alert(`Akses Ditolak! Role '${role}' tidak diizinkan melihat halaman ini.`)
-      
-      if (role === 'sales') return next('/daftar-nota')
-      if (role === 'superadmin') return next('/catatan-besar')
-      
-      localStorage.clear()
-      return next('/login') 
+      return role === 'sales' ? next('/daftar-nota') : next('/dashboard')
     }
   }
 

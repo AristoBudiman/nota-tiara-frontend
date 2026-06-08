@@ -119,7 +119,7 @@ watch([() => form.value.tanggal_kirim, () => form.value.toko_id, () => form.valu
 })
 
 const generateNoNota = async () => {
-  if (isEdit.value || !form.value.tanggal_kirim) return
+  if (isEdit.value || !form.value.tanggal_kirim || isSales.value) return
   try {
     const token = localStorage.getItem('admin_token')
     const url = `${import.meta.env.VITE_API_URL}/api/pesanan/next-number?tanggal=${form.value.tanggal_kirim}&toko_id=${form.value.toko_id || ''}`

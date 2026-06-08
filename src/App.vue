@@ -61,14 +61,14 @@ const handleLogout = async () => {
             </button>
 
             <!-- Brand Text -->
-            <div v-if="!isSidebarMinimized" class="whitespace-nowrap overflow-hidden transition-all duration-300 opacity-100 flex flex-col justify-center">
+            <router-link to="/dashboard" v-if="!isSidebarMinimized" class="whitespace-nowrap overflow-hidden transition-all duration-300 opacity-100 flex flex-col justify-center hover:opacity-80">
                 <h1 class="font-black text-lg tracking-[0.2em] text-white leading-tight">
                     TIARA
                 </h1>
                 <p class="text-[10px] font-black tracking-[0.3em] text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-blue-200 uppercase">
                     Nota System
                 </p>
-            </div>
+            </router-link>
 
             <!-- Close button for mobile -->
             <button @click="isMenuOpen = false" class="md:hidden ml-auto text-slate-400 hover:text-white p-2">
