@@ -1,6 +1,10 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { 
+  Store, Package, Trash2, PieChart, BookOpen, 
+  History as HistoryIcon, MapPin, ShoppingCart, Receipt, Crown, LogOut, Menu, X
+} from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
@@ -8,6 +12,7 @@ const route = useRoute()
 const role = ref('')
 const token = ref('')
 const isMenuOpen = ref(false)
+const isSidebarMinimized = ref(false)
 
 // Fungsi untuk mengecek status login terbaru
 const updateAuthStatus = () => {
@@ -36,73 +41,173 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <nav v-if="token && route.path !== '/login'" class="bg-blue-900 text-white shadow-lg no-print sticky top-0 z-50">
-      <div class="max-w-6xl mx-auto px-4">
-        <div class="flex flex-col md:flex-row justify-between md:items-center py-3 md:py-0 md:h-16">
-          
-          <div class="flex items-center w-full md:w-auto mb-2 md:mb-0">
+  <div class="h-screen w-full bg-slate-50 flex font-sans selection:bg-blue-200 overflow-hidden">
+    
+    <!-- Sidebar -->
+    <aside v-if="token && route.path !== '/login'" 
+           :class="[
+             isMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+             isSidebarMinimized ? 'md:w-20' : 'md:w-64'
+           ]"
+           class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transition-all duration-300 ease-in-out md:static md:flex md:flex-col shadow-xl overflow-hidden shrink-0">
+        
+        <div class="h-16 flex items-center px-4 border-b border-slate-800 shrink-0 transition-all duration-300" :class="isSidebarMinimized ? 'justify-center' : 'gap-3'">
             
-            <button @click="isMenuOpen = !isMenuOpen" class="md:hidden p-1 mr-3 text-blue-200 hover:text-white focus:outline-none">
-              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path v-if="!isMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
+            <!-- Brand Icon / Toggle Button -->
+            <button @click="isSidebarMinimized = !isSidebarMinimized" class="bg-linear-to-br from-blue-400 to-blue-600 p-2 rounded-lg shadow-lg flex items-center justify-center shrink-0 hover:scale-105 active:scale-95 transition-transform" title="Toggle Menu">
+                <Crown :size="20" class="text-white" />
             </button>
 
-            <div class="flex items-center gap-2">
-              <span class="text-xl font-black tracking-tighter">TIARA</span>
-              <span class="text-[10px] bg-blue-700 px-2 py-0.5 rounded uppercase font-bold text-blue-200">
-                {{ role }}
-              </span>
+            <!-- Brand Text -->
+            <div v-if="!isSidebarMinimized" class="whitespace-nowrap overflow-hidden transition-all duration-300 opacity-100 flex flex-col justify-center">
+                <h1 class="font-black text-lg tracking-[0.2em] text-white leading-tight">
+                    TIARA
+                </h1>
+                <p class="text-[10px] font-black tracking-[0.3em] text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-blue-200 uppercase">
+                    Nota System
+                </p>
             </div>
-            
-          </div>
 
-          <div :class="isMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'" 
-               class="absolute md:static top-full left-0 w-64 md:w-auto h-[calc(100vh-4rem)] md:h-auto bg-blue-900 md:bg-transparent p-5 pb-24 md:p-0 transform md:transform-none transition-transform duration-300 ease-in-out flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-1 shadow-2xl md:shadow-none border-r border-blue-800 md:border-none overflow-y-auto md:overflow-visible">
+            <!-- Close button for mobile -->
+            <button @click="isMenuOpen = false" class="md:hidden ml-auto text-slate-400 hover:text-white p-2">
+                <X :size="24" />
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto overflow-x-hidden py-5 space-y-8 custom-scrollbar transition-all duration-300" :class="isSidebarMinimized ? 'px-2' : 'px-3'">
             
             <template v-if="role === 'superadmin'">
-              <div class="hidden md:block h-6 w-px bg-blue-800 mx-2"></div>
-              
-              <router-link to="/master-toko" class="px-3 py-3 md:py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">Master Toko</router-link>
-              <router-link to="/master-barang" class="px-3 py-3 md:py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">Master Barang</router-link>
-              <router-link to="/sampah" class="px-3 py-3 md:py-2 rounded-md text-sm text-red-200 hover:bg-red-700 hover:text-white transition-colors">🗑️ Sampah</router-link>
-              
-              <router-link to="/rangkuman" class="px-3 py-3 md:py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">Rangkuman</router-link>
-              <router-link to="/catatan-besar" class="px-3 py-3 md:py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">Catatan Besar</router-link>
+              <div class="space-y-1.5">
+                  <span v-if="!isSidebarMinimized" class="text-[10px] font-black text-slate-500 uppercase tracking-wider px-3 mb-2 block whitespace-nowrap overflow-hidden">Master Data</span>
+                  
+                  <router-link to="/master-toko" title="Master Toko" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                      <Store :size="20" class="shrink-0" />
+                      <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Master Toko</span>
+                  </router-link>
+                  
+                  <router-link to="/master-barang" title="Master Barang" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                      <Package :size="20" class="shrink-0" />
+                      <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Master Barang</span>
+                  </router-link>
+                  
+                  <router-link to="/sampah" title="Sampah" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" exact-active-class="!bg-rose-600 !text-white shadow-md">
+                      <Trash2 :size="20" class="shrink-0" />
+                      <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Sampah</span>
+                  </router-link>
+              </div>
+
+              <div class="space-y-1.5">
+                  <span v-if="!isSidebarMinimized" class="text-[10px] font-black text-slate-500 uppercase tracking-wider px-3 mb-2 block whitespace-nowrap overflow-hidden">Laporan</span>
+                  
+                  <router-link to="/rangkuman" title="Rangkuman" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                      <PieChart :size="20" class="shrink-0" />
+                      <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Rangkuman</span>
+                  </router-link>
+                  
+                  <router-link to="/catatan-besar" title="Catatan Besar" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                      <BookOpen :size="20" class="shrink-0" />
+                      <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Catatan Besar</span>
+                  </router-link>
+              </div>
             </template>
-            
-            <router-link to="/daftar-nota" class="px-3 py-3 md:py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">
-              {{ role === 'sales' ? 'Dashboard Kunjungan' : 'Riwayat Nota' }}
-            </router-link>
-            <router-link to="/buat-pesanan" class="px-3 py-3 md:py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">Buat Pesanan</router-link>
-            <router-link to="/buat-nota" class="px-3 py-3 md:py-2 rounded-md text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors">Buat Nota</router-link>
 
-            <button @click="handleLogout" class="mt-2 md:mt-0 text-left md:text-center md:ml-4 bg-red-600 hover:bg-red-700 px-4 py-3 md:py-1.5 rounded-lg text-sm font-bold transition">
-              Logout
-            </button>
-          </div>
-
+            <div class="space-y-1.5">
+                <span v-if="!isSidebarMinimized" class="text-[10px] font-black text-slate-500 uppercase tracking-wider px-3 mb-2 block whitespace-nowrap overflow-hidden">Operasional</span>
+                
+                <router-link to="/daftar-nota" :title="role === 'sales' ? 'Dashboard Kunjungan' : 'Riwayat Nota'" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                    <HistoryIcon v-if="role !== 'sales'" :size="20" class="shrink-0" />
+                    <MapPin v-else :size="20" class="shrink-0" />
+                    <span v-if="!isSidebarMinimized" class="whitespace-nowrap">{{ role === 'sales' ? 'Kunjungan' : 'Riwayat Nota' }}</span>
+                </router-link>
+                
+                <router-link to="/buat-pesanan" title="Buat Pesanan" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                    <ShoppingCart :size="20" class="shrink-0" />
+                    <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Buat Pesanan</span>
+                </router-link>
+                
+                <router-link to="/buat-nota" title="Buat Nota" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                    <Receipt :size="20" class="shrink-0" />
+                    <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Buat Nota</span>
+                </router-link>
+            </div>
         </div>
-      </div>
-    </nav>
 
-    <main class="py-4">
-      <router-view />
-    </main>
+        <div class="p-4 border-t border-slate-800 shrink-0 transition-all duration-300 flex flex-col gap-3" :class="isSidebarMinimized ? 'p-2' : 'p-4'">
+            <div v-if="!isSidebarMinimized" class="px-2 flex items-center gap-3">
+               <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-primary font-bold shadow-inner shrink-0">
+                 {{ role ? role.charAt(0).toUpperCase() : '?' }}
+               </div>
+               <div class="overflow-hidden">
+                 <p class="text-xs font-bold text-slate-200 capitalize truncate">{{ role }}</p>
+                 <p class="text-[10px] text-slate-500 font-medium">Logged In</p>
+               </div>
+            </div>
+            <button @click="handleLogout" title="Keluar Sistem" class="w-full flex items-center justify-center bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white rounded-xl text-sm font-bold transition-all shadow-sm group" :class="isSidebarMinimized ? 'py-3 px-0' : 'py-3 px-4 gap-2'">
+                <LogOut :size="20" class="group-hover:-translate-x-1 transition-transform shrink-0" />
+                <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Keluar Sistem</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Overlay for mobile when sidebar is open -->
+    <div v-if="token && route.path !== '/login' && isMenuOpen" 
+         @click="isMenuOpen = false" 
+         class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300">
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-slate-50">
+        <!-- Mobile Header (Visible only on small screens) -->
+        <header v-if="token && route.path !== '/login'" class="md:hidden h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 shrink-0 shadow-sm sticky top-0 z-30">
+            <div class="flex items-center gap-3">
+                <button @click="isMenuOpen = true" class="text-slate-700 hover:text-primary transition-colors p-1">
+                    <Menu :size="28" />
+                </button>
+                <div class="flex items-center gap-2">
+                    <Crown :size="20" class="text-primary" />
+                    <span class="font-black text-lg tracking-tight text-slate-800">TIARA <span class="text-xs text-primary bg-primary-light px-2 py-0.5 rounded uppercase font-bold ml-1">{{ role }}</span></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Scrollable Content -->
+        <main class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-4 md:p-8">
+            <router-view v-slot="{ Component }">
+                <transition name="fade" mode="out-in">
+                    <component :is="Component" />
+                </transition>
+            </router-view>
+        </main>
+    </div>
   </div>
 </template>
 
-<style scoped>
-.router-link-active {
-  font-weight: bold;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  color: white;
+<style>
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 @media print {
-  .no-print { display: none !important; }
+  aside, header { display: none !important; }
+  .overflow-hidden, .overflow-y-auto { overflow: visible !important; height: auto !important; }
 }
 </style>

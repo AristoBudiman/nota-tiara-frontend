@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { Package, Cake, ChevronLeft, ChevronRight, RefreshCw, FileSpreadsheet, Sun } from 'lucide-vue-next'
 
 const router = useRouter()
 const rawDataBesar = ref([]) // Data matang dari Backend
@@ -271,14 +272,14 @@ onMounted(fetchAll)
         <!-- SWITCH TAB NAVIGASI -->
         <div class="flex flex-col sm:flex-row mt-3 bg-gray-200 p-1 rounded-lg w-full md:w-max gap-1">
           <button @click="activeTab = 'REGULER'; fetchAll()" 
-                  class="px-4 py-2 rounded-md font-bold text-sm transition"
+                  class="px-4 py-2 rounded-md font-bold text-sm transition flex items-center justify-center gap-2"
                   :class="activeTab === 'REGULER' ? 'bg-white shadow text-blue-800' : 'text-gray-500 hover:text-gray-800'">
-            📦 PENGIRIMAN REGULER
+            <Package :size="16" /> PENGIRIMAN REGULER
           </button>
           <button @click="activeTab = 'PESANAN'; fetchAll()" 
-                  class="px-4 py-2 rounded-md font-bold text-sm transition"
+                  class="px-4 py-2 rounded-md font-bold text-sm transition flex items-center justify-center gap-2"
                   :class="activeTab === 'PESANAN' ? 'bg-yellow-400 shadow text-yellow-900' : 'text-gray-500 hover:text-gray-800'">
-            🎂 PESANAN KHUSUS (PO)
+            <Cake :size="16" /> PESANAN KHUSUS (PO)
           </button>
         </div>
       </div>
@@ -289,10 +290,10 @@ onMounted(fetchAll)
           <div class="flex items-center gap-1">
             <button 
               @click="geserHari(-1)" 
-              class="bg-gray-200 text-gray-700 px-3 py-2 rounded shadow-sm hover:bg-gray-300 transition font-black h-10 border border-gray-300"
+              class="bg-gray-200 text-gray-700 px-2 py-2 rounded shadow-sm hover:bg-gray-300 transition font-black h-10 border border-gray-300 flex items-center justify-center"
               title="Hari Sebelumnya"
             >
-              ◀
+              <ChevronLeft :size="20" />
             </button>
             
             <input 
@@ -304,34 +305,34 @@ onMounted(fetchAll)
 
             <button 
               @click="geserHari(1)" 
-              class="bg-gray-200 text-gray-700 px-3 py-2 rounded shadow-sm hover:bg-gray-300 transition font-black h-10 border border-gray-300"
+              class="bg-gray-200 text-gray-700 px-2 py-2 rounded shadow-sm hover:bg-gray-300 transition font-black h-10 border border-gray-300 flex items-center justify-center"
               title="Hari Berikutnya"
             >
-              ▶
+              <ChevronRight :size="20" />
             </button>
           </div>
         </div>
         
         <button 
           @click="fetchAll" 
-          class="bg-blue-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-blue-700 transition border-2 border-blue-600 flex items-center gap-2 h-10.5"
+          class="bg-blue-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-blue-700 transition border-2 border-blue-600 flex items-center gap-2 h-10"
           title="Tarik data terbaru dari database"
         >
-          🔄 Refresh
+          <RefreshCw :size="16" /> Refresh
         </button>
         <button 
           @click="exportToExcel" 
-          class="bg-green-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-green-700 transition border-2 border-green-600 flex items-center gap-2 h-10.5"
+          class="bg-green-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-green-700 transition border-2 border-green-600 flex items-center gap-2 h-10"
         >
-          📊 Export Excel
+          <FileSpreadsheet :size="16" /> Export Excel
         </button>
       </div>
     </div>
     
     <div v-if="activeTab === 'REGULER'">
       <!-- TAMPILAN KHUSUS HARI MINGGU -->
-      <div v-if="dayOfWeek === 0" class="bg-blue-100 text-blue-800 p-8 rounded-xl mb-4 text-center border border-blue-200 shadow-sm">
-         <h2 class="text-2xl font-black mb-2">🏖️ Hari Minggu Libur</h2>
+      <div v-if="dayOfWeek === 0" class="bg-blue-100 text-blue-800 p-8 rounded-xl mb-4 text-center border border-blue-200 shadow-sm flex flex-col items-center">
+         <h2 class="text-2xl font-black mb-2 flex items-center gap-3"><Sun class="text-yellow-500" :size="32" /> Hari Minggu Libur</h2>
          <p class="font-medium text-blue-700">Tidak ada jadwal pengiriman atau retur reguler pada hari Minggu. <br> Silakan cek tab <b>Pesanan Khusus (PO)</b> jika ada pesanan masuk.</p>
       </div>
 

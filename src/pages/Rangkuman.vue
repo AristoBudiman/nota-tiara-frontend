@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { Package, Cake, Calculator, Store, Search, MapPin, Factory } from 'lucide-vue-next'
 
 const router = useRouter()
 const summaryBulanIni = ref({ kirim: 0, retur: 0, diskon: 0, pendapatan: 0, persentase: 0, perToko: [], perBarang: [] })
@@ -164,14 +165,14 @@ onMounted(() => {
 
       <div class="flex flex-col sm:flex-row mb-8 bg-gray-200 p-1 rounded-lg w-full md:w-max shadow-sm gap-1">
         <button @click="activeTab = 'REGULER'" 
-                class="px-5 py-2.5 rounded-md font-bold text-sm transition"
+                class="px-5 py-2.5 rounded-md font-bold text-sm transition flex items-center justify-center gap-2"
                 :class="activeTab === 'REGULER' ? 'bg-white shadow-md text-blue-800' : 'text-gray-500 hover:text-gray-800'">
-          📦 OMZET REGULER
+          <Package :size="16" /> OMZET REGULER
         </button>
         <button @click="activeTab = 'PESANAN'" 
-                class="px-5 py-2.5 rounded-md font-bold text-sm transition"
+                class="px-5 py-2.5 rounded-md font-bold text-sm transition flex items-center justify-center gap-2"
                 :class="activeTab === 'PESANAN' ? 'bg-yellow-400 shadow-md text-yellow-900' : 'text-gray-500 hover:text-gray-800'">
-          🎂 OMZET PESANAN (PO)
+          <Cake :size="16" /> OMZET PESANAN (PO)
         </button>
       </div>
       
@@ -214,7 +215,7 @@ onMounted(() => {
               <input type="date" v-model="filter.end" class="border rounded-lg p-2 focus:border-blue-500 outline-none font-bold">
             </div>
             <button @click="fetchCustomSummary" class="bg-gray-800 text-white px-6 py-2 rounded-lg font-bold hover:bg-black transition flex items-center gap-2">
-              <span>⚙️</span> Kalkulasi Catatan Besar
+              <Calculator :size="18" /> Kalkulasi Catatan Besar
             </button>
           </div>
 
@@ -242,7 +243,7 @@ onMounted(() => {
 
           <div v-if="customSummary && customSummary.perToko.length > 0" class="border-t pt-6">
             <h3 class="text-md font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <span>🏪</span> Rincian Pendapatan Tiap Mitra
+              <Store :size="20" class="text-blue-600" /> Rincian Pendapatan Tiap Mitra
             </h3>
             <div class="overflow-x-auto border border-gray-200 rounded-lg">
               <table class="w-full text-sm text-left">
@@ -276,7 +277,7 @@ onMounted(() => {
           
           <div v-if="customSummary && customSummary.perBarang && customSummary.perBarang.length > 0" class="border-t pt-6 mt-8">
             <h3 class="text-md font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <span>📦</span> Rincian Penjualan Tiap Produk
+              <Package :size="20" class="text-blue-600" /> Rincian Penjualan Tiap Produk
             </h3>
             <div class="overflow-x-auto border border-gray-200 rounded-lg">
               <table class="w-full text-sm text-left">
@@ -308,7 +309,7 @@ onMounted(() => {
           
           <div class="border-t pt-8 mt-10">
             <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <span>🔍</span> Analisis Detail Produk per Toko
+              <Search :size="20" class="text-blue-600" /> Analisis Detail Produk per Toko
             </h3>
             
             <div class="flex gap-3 mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
@@ -415,7 +416,7 @@ onMounted(() => {
             </div>
 
             <h3 class="text-md font-bold text-gray-800 mb-4 flex items-center gap-2">
-              📍 Rincian Omzet Berdasarkan Titik Ambil / Mitra
+              <MapPin :size="20" class="text-yellow-600" /> Rincian Omzet Berdasarkan Titik Ambil / Mitra
             </h3>
             <div class="overflow-x-auto border border-yellow-200 rounded-lg">
               <table class="w-full text-sm text-left">
@@ -430,8 +431,8 @@ onMounted(() => {
                 <tbody>
                   <tr v-for="(titik, idx) in customSummaryPesanan.per_titik" :key="idx" class="hover:bg-yellow-50 border-b last:border-b-0 transition">
                     <td class="p-3 border-r font-bold text-gray-800">
-                      <span v-if="titik.nama_titik === 'PABRIK'">🏢 PABRIK (Direct)</span>
-                      <span v-else>🏪 {{ titik.nama_titik }}</span>
+                      <span v-if="titik.nama_titik === 'PABRIK'" class="flex items-center gap-2"><Factory :size="16" class="text-gray-500" /> PABRIK (Direct)</span>
+                      <span v-else class="flex items-center gap-2"><Store :size="16" class="text-blue-600" /> {{ titik.nama_titik }}</span>
                     </td>
                     <td class="p-3 border-r text-center font-medium">{{ titik.total_nota }}</td>
                     <td class="p-3 border-r text-right font-medium text-orange-600">{{ formatRp(titik.diskon) }}</td>
@@ -448,7 +449,7 @@ onMounted(() => {
             
             <div class="border-t border-yellow-300 pt-8 mt-10">
               <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <span>🔍</span> Analisis Roti Pesanan per Mitra / Titik
+                <Search :size="20" class="text-yellow-600" /> Analisis Roti Pesanan per Mitra / Titik
               </h3>
               
               <div class="flex gap-3 mb-6 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
@@ -457,8 +458,8 @@ onMounted(() => {
                   <select v-model="selectedTokoPO" class="w-full p-2 border border-yellow-300 rounded font-bold outline-none">
                     <option value="" disabled>-- Pilih Titik Ambil --</option>
                     <option v-for="t in customSummaryPesanan.per_titik" :key="t.nama_titik" :value="t.nama_titik">
-                      <span v-if="t.nama_titik === 'PABRIK'">🏢 PABRIK (Direct)</span>
-                      <span v-else>🏪 {{ t.nama_titik }}</span>
+                      <span v-if="t.nama_titik === 'PABRIK'">PABRIK (Direct)</span>
+                      <span v-else>{{ t.nama_titik }}</span>
                     </option>
                   </select>
                 </div>
