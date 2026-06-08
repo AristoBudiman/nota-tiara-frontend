@@ -15,7 +15,7 @@ const selectedTokoPO = ref('')
 
 const checkAuthError = (res) => {
   if (res.status === 401 || res.status === 403) {
-    alert("Sesi habis atau Akses Ditolak!")
+    window.$dialog?.alert("Sesi habis atau Akses Ditolak!")
     localStorage.clear()
     router.push('/login')
     return true
@@ -97,7 +97,7 @@ const loadDataBulanIni = async () => {
 }
 
 const fetchCustomSummary = async () => {
-  if (!filter.value.start || !filter.value.end) return alert("Pilih tanggal!")
+  if (!filter.value.start || !filter.value.end) return window.$dialog?.alert("Pilih tanggal!")
   
   if (activeTab.value === 'REGULER') {
     const dataReg = await fetchSummaryAPI(filter.value.start, filter.value.end)
@@ -121,7 +121,7 @@ const barangPerTokoSelected = ref([])
 const isLoadingDetail = ref(false)
 
 const fetchDetailBarangPerToko = async () => {
-  if (!selectedTokoDetail.value) return alert("Pilih toko terlebih dahulu!")
+  if (!selectedTokoDetail.value) return window.$dialog?.alert("Pilih toko terlebih dahulu!")
   
   isLoadingDetail.value = true
   
@@ -223,7 +223,7 @@ onMounted(() => {
             </div>
 
             <!-- Card Pendapatan Bersih (Premium) -->
-            <div class="p-5 rounded-2xl shadow-xl shadow-emerald-500/20 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white relative overflow-hidden group">
+            <div class="p-5 rounded-2xl shadow-xl shadow-emerald-500/20 bg-linear-to-br from-emerald-500 to-emerald-700 text-white relative overflow-hidden group">
               <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div class="relative z-10">
                 <p class="text-[10px] text-emerald-100 font-bold uppercase tracking-wider mb-1">Pendapatan Bersih</p>
@@ -434,7 +434,7 @@ onMounted(() => {
               </div>
             </div>
 
-            <div class="p-5 rounded-2xl shadow-xl shadow-yellow-500/20 bg-gradient-to-br from-yellow-500 to-amber-600 text-white relative overflow-hidden group">
+            <div class="p-5 rounded-2xl shadow-xl shadow-yellow-500/20 bg-linear-to-br from-yellow-500 to-amber-600 text-white relative overflow-hidden group">
               <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div class="relative z-10">
                 <p class="text-[10px] text-yellow-100 font-bold uppercase tracking-wider mb-1">Pendapatan Bersih (PO)</p>

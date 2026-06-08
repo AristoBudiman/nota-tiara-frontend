@@ -22,7 +22,7 @@ const activeTab = ref(sessionStorage.getItem('tab_nota') || 'REGULER') // Kontro
 
 const checkAuthError = (res) => {
   if (res.status === 401 || res.status === 403) {
-    alert("Sesi habis atau Akses Ditolak!")
+    window.$dialog?.alert("Sesi habis atau Akses Ditolak!")
     localStorage.clear()
     router.push('/login')
     return true
@@ -190,7 +190,7 @@ const filteredListPesanan = computed(() => {
 watch(activeTab, (val) => sessionStorage.setItem('tab_nota', val))
 watch([filterStartDate, filterEndDate], ([newStart, newEnd], [oldStart, oldEnd]) => {
   if (newStart > newEnd) {
-    alert("⚠️ Tanggal Mulai tidak boleh lebih besar dari Tanggal Akhir!")
+    window.$dialog?.alert("⚠️ Tanggal Mulai tidak boleh lebih besar dari Tanggal Akhir!")
     filterStartDate.value = oldStart || newEnd
     filterEndDate.value = oldEnd || newStart
     return 
@@ -234,7 +234,7 @@ onMounted(() => {
 
 // Fungsi membatalkan pesanan
 const batalkanPO = async (id, noNota) => {
-  if (!confirm(`Yakin ingin membatalkan pesanan ${noNota}?`)) return
+  if (!(window.$dialog && await window.$dialog.confirm(`Yakin ingin membatalkan pesanan ${noNota}?`))) return
   
   try {
     const token = localStorage.getItem('admin_token')
@@ -244,17 +244,17 @@ const batalkanPO = async (id, noNota) => {
     })
     if (checkAuthError(res)) return
     if (res.ok) {
-      alert("Pesanan dibatalkan!")
+      window.$dialog?.alert("Pesanan dibatalkan!")
       fetchRiwayatPesanan() // Refresh tabel
     }
   } catch (err) {
-    alert("Gagal membatalkan pesanan.")
+    window.$dialog?.alert("Gagal membatalkan pesanan.")
   }
 }
 
 // Fungsi membatalkan Nota Reguler
 const batalkanNota = async (id, noNota) => {
-  if (!confirm(`Yakin ingin membatalkan nota reguler ${noNota}? Uang di kasir akan otomatis ditarik kembali.`)) return
+  if (!(window.$dialog && await window.$dialog.confirm(`Yakin ingin membatalkan nota reguler ${noNota}? Uang di kasir akan otomatis ditarik kembali.`))) return
   
   try {
     const token = localStorage.getItem('admin_token')
@@ -264,16 +264,16 @@ const batalkanNota = async (id, noNota) => {
     })
     if (checkAuthError(res)) return
     if (res.ok) {
-      alert("Nota berhasil dibatalkan!")
+      window.$dialog?.alert("Nota berhasil dibatalkan!")
       fetchSuperadminData(token) // Refresh tabel
     }
   } catch (err) {
-    alert("Gagal membatalkan nota.")
+    window.$dialog?.alert("Gagal membatalkan nota.")
   }
 }
 
 const pulihkanNota = async (id, noNota) => {
-  if (!confirm(`Kembalikan nota reguler ${noNota} ke status aktif? Uang kas akan kembali tercatat otomatis.`)) return
+  if (!(window.$dialog && await window.$dialog.confirm(`Kembalikan nota reguler ${noNota} ke status aktif? Uang kas akan kembali tercatat otomatis.`))) return
   
   try {
     const token = localStorage.getItem('admin_token')
@@ -283,16 +283,16 @@ const pulihkanNota = async (id, noNota) => {
     })
     if (checkAuthError(res)) return
     if (res.ok) {
-      alert("Nota berhasil dipulihkan!")
+      window.$dialog?.alert("Nota berhasil dipulihkan!")
       fetchSuperadminData(token) // Refresh tabel
     }
   } catch (err) {
-    alert("Gagal memulihkan nota.")
+    window.$dialog?.alert("Gagal memulihkan nota.")
   }
 }
 
 const pulihkanPO = async (id, noNota) => {
-  if (!confirm(`Kembalikan pesanan ${noNota} ke status aktif? Uang kas (DP) akan kembali tercatat otomatis.`)) return
+  if (!(window.$dialog && await window.$dialog.confirm(`Kembalikan pesanan ${noNota} ke status aktif? Uang kas (DP) akan kembali tercatat otomatis.`))) return
   
   try {
     const token = localStorage.getItem('admin_token')
@@ -302,11 +302,11 @@ const pulihkanPO = async (id, noNota) => {
     })
     if (checkAuthError(res)) return
     if (res.ok) {
-      alert("Pesanan berhasil dipulihkan!")
+      window.$dialog?.alert("Pesanan berhasil dipulihkan!")
       fetchRiwayatPesanan() // Refresh tabel
     }
   } catch (err) {
-    alert("Gagal memulihkan pesanan.")
+    window.$dialog?.alert("Gagal memulihkan pesanan.")
   }
 }
 

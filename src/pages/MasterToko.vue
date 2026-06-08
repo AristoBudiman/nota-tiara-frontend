@@ -31,7 +31,7 @@ watch(selectedSiklus, (val) => {
 
 const checkAuthError = (res) => {
   if (res.status === 401 || res.status === 403) {
-    alert("Sesi habis atau Akses Ditolak!")
+    window.$dialog?.alert("Sesi habis atau Akses Ditolak!")
     localStorage.clear()
     router.push('/login')
     return true
@@ -91,7 +91,7 @@ const handleSubmit = async () => {
     fetchToko()
   } catch (err) {
     console.error("Gagal simpan toko:", err.message)
-    alert("Gagal simpan toko: " + err.message)
+    window.$dialog?.alert("Gagal simpan toko: " + err.message)
   }
 }
 
@@ -111,7 +111,7 @@ const editToko = (toko) => {
 }
 
 const hapusToko = async (id) => {
-  if (confirm('Hapus toko ini? Data nota terkait mungkin akan terpengaruh.')) {
+  if (window.$dialog && await window.$dialog.confirm('Hapus toko ini? Data nota terkait mungkin akan terpengaruh.')) {
     try {
       const token = localStorage.getItem('admin_token')
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tokos/${id}`, { 

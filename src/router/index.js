@@ -43,14 +43,14 @@ router.beforeEach((to, from, next) => {
     if (role === 'sales') return next('/daftar-nota')
     if (role === 'superadmin') return next('/catatan-besar')
     
-    alert("Aplikasi ini khusus untuk Sales dan Superadmin.")
+    window.$dialog?.alert("Aplikasi ini khusus untuk Sales dan Superadmin.")
     localStorage.clear()
     return next('/login')
   }
 
   if (to.meta.allowedRoles && token) {
     if (!to.meta.allowedRoles.includes(role)) {
-      alert(`Akses Ditolak! Role '${role}' tidak diizinkan melihat halaman ini.`)
+      window.$dialog?.alert(`Akses Ditolak! Role '${role}' tidak diizinkan melihat halaman ini.`)
       
       if (role === 'sales') return next('/daftar-nota')
       if (role === 'superadmin') return next('/catatan-besar')

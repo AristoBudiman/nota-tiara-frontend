@@ -10,7 +10,7 @@ const dataPesanan = ref([])
 
 const checkAuthError = (res) => {
   if (res.status === 401 || res.status === 403) {
-    alert("Sesi habis atau Akses Ditolak!")
+    window.$dialog?.alert("Sesi habis atau Akses Ditolak!")
     localStorage.clear()
     router.push('/login')
     return true
@@ -199,7 +199,7 @@ const rekapPesanan = computed(() => {
 const exportToExcel = () => {
   const targetId = activeTab.value === 'REGULER' ? 'table-catatan-besar' : 'table-pesanan'
   const originalTable = document.getElementById(targetId)
-  if (!originalTable) return alert('Tabel belum siap!')
+  if (!originalTable) return window.$dialog?.alert('Tabel belum siap!')
 
   const table = originalTable.cloneNode(true)
   table.setAttribute('border', '1')
@@ -337,7 +337,7 @@ onMounted(fetchAll)
         </h1>
         
         <!-- TAMPILAN KHUSUS HARI MINGGU -->
-        <div v-if="dayOfWeek === 0" class="bg-gradient-to-br from-amber-50 to-orange-50 p-10 rounded-2xl mb-4 text-center border-2 border-dashed border-amber-200 shadow-sm flex flex-col items-center">
+        <div v-if="dayOfWeek === 0" class="bg-linear-to-br from-amber-50 to-orange-50 p-10 rounded-2xl mb-4 text-center border-2 border-dashed border-amber-200 shadow-sm flex flex-col items-center">
            <Sun class="text-amber-500 mb-4 animate-spin-slow" :size="64" />
            <h2 class="text-2xl font-black text-amber-800 mb-2">Hari Minggu Libur Produksi</h2>
            <p class="font-medium text-amber-700 max-w-md">Tidak ada jadwal pengiriman atau retur reguler pada hari Minggu. Silakan periksa tab <b>Pesanan Khusus (PO)</b> jika ada nota pesanan masuk.</p>
@@ -351,7 +351,7 @@ onMounted(fetchAll)
         </div>
 
         <!-- TABEL DATA -->
-        <div v-else class="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm pb-2">
+        <div v-else class="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
           <table id="table-catatan-besar" class="w-full text-sm border-collapse">
             <thead class="text-white bg-slate-800">
               <tr>
@@ -424,7 +424,7 @@ onMounted(fetchAll)
         </div>
         
         <!-- TABEL PESANAN -->
-        <div v-else class="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm pb-2">
+        <div v-else class="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
           <table id="table-pesanan" class="w-full text-sm border-collapse">
             <thead class="bg-yellow-500 text-yellow-950">
               <tr>

@@ -5,6 +5,7 @@ import {
   Store, Package, Trash2, PieChart, BookOpen, 
   History as HistoryIcon, MapPin, ShoppingCart, Receipt, Crown, LogOut, Menu, X
 } from 'lucide-vue-next'
+import GlobalDialog from './components/GlobalDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -30,8 +31,8 @@ onMounted(() => {
   updateAuthStatus()
 })
 
-const handleLogout = () => {
-  if (confirm("Apakah Anda yakin ingin keluar?")) {
+const handleLogout = async () => {
+  if (window.$dialog && await window.$dialog.confirm("Apakah Anda yakin ingin keluar?")) {
     localStorage.clear()
     updateAuthStatus()
     isMenuOpen.value = false
@@ -42,6 +43,7 @@ const handleLogout = () => {
 
 <template>
   <div class="h-screen w-full bg-slate-50 flex font-sans selection:bg-blue-200 overflow-hidden">
+    <GlobalDialog />
     
     <!-- Sidebar -->
     <aside v-if="token && route.path !== '/login'" 

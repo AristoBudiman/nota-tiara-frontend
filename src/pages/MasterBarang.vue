@@ -17,7 +17,7 @@ const form = ref({
 
 const checkAuthError = (res) => {
   if (res.status === 401 || res.status === 403) {
-    alert("Sesi habis atau Akses Ditolak (Bukan Superadmin)!")
+    window.$dialog?.alert("Sesi habis atau Akses Ditolak (Bukan Superadmin)!")
     localStorage.clear()
     router.push('/login')
     return true
@@ -76,7 +76,7 @@ const handleSubmit = async () => {
     fetchBarang()
   } catch (err) {
     console.error("Gagal simpan barang:", err.message)
-    alert("Gagal simpan barang: " + err.message)
+    window.$dialog?.alert("Gagal simpan barang: " + err.message)
   }
 }
 
@@ -87,7 +87,7 @@ const editBarang = (barang) => {
 }
 
 const hapusBarang = async (id) => {
-  if (confirm('Yakin ingin menghapus produk ini?')) {
+  if (window.$dialog && await window.$dialog.confirm('Yakin ingin menghapus produk ini?')) {
     try {
       const token = localStorage.getItem('admin_token')
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/barangs/${id}`, { 

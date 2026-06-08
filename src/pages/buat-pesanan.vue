@@ -43,7 +43,7 @@ const daftarSales = ref([])
 
 const checkAuthError = (res) => {
   if (res.status === 401 || res.status === 403) {
-    alert("Sesi habis atau Akses Ditolak!")
+    window.$dialog?.alert("Sesi habis atau Akses Ditolak!")
     localStorage.clear()
     router.push('/login')
     return true
@@ -227,8 +227,8 @@ const totalBayar = computed(() => details.value.reduce((sum, row) => sum + (row.
 const sisaTagihan = computed(() => totalBayar.value + (form.value.ongkir || 0) - (form.value.uang_muka || 0) - (form.value.total_voucher || 0))
 
 const simpanPesanan = async () => {
-  if (!form.value.nama_pemesan) return alert("Nama pemesan wajib diisi!")
-  if (form.value.jenis_pengambilan === 'MITRA' && !form.value.toko_id) return alert("Pilih toko penitipan!")
+  if (!form.value.nama_pemesan) return window.$dialog?.alert("Nama pemesan wajib diisi!")
+  if (form.value.jenis_pengambilan === 'MITRA' && !form.value.toko_id) return window.$dialog?.alert("Pilih toko penitipan!")
 
   const payloadDetails = []
   for (const d of details.value) {
@@ -236,10 +236,10 @@ const simpanPesanan = async () => {
     let bID = null; let namaBebas = ""
 
     if (d.isKustom) {
-      if (!d.namaKustom) return alert("Nama barang kustom tidak boleh kosong!")
+      if (!d.namaKustom) return window.$dialog?.alert("Nama barang kustom tidak boleh kosong!")
       namaBebas = d.namaKustom
     } else {
-      if (!d.idBarangM) return alert("Pilih barang master terlebih dahulu!")
+      if (!d.idBarangM) return window.$dialog?.alert("Pilih barang master terlebih dahulu!")
       const brg = barangsMaster.value.find(b => b.ID === d.idBarangM)
       bID = d.idBarangM
       namaBebas = brg.NamaBarang
@@ -257,7 +257,7 @@ const simpanPesanan = async () => {
     })
   }
 
-  if (payloadDetails.length === 0) return alert("Tambahkan minimal 1 pesanan!")
+  if (payloadDetails.length === 0) return window.$dialog?.alert("Tambahkan minimal 1 pesanan!")
 
   const payload = {
     no_nota: String(form.value.no_nota),
@@ -286,13 +286,13 @@ const simpanPesanan = async () => {
     if (checkAuthError(res)) return
     if (!res.ok) throw new Error(await res.text())
     
-    alert(isEdit.value ? "Pesanan berhasil diupdate!" : "Pesanan berhasil dibuat!")
+    window.$dialog?.alert(isEdit.value ? "Pesanan berhasil diupdate!" : "Pesanan berhasil dibuat!")
     if (isEdit.value) {
       router.push('/daftar-nota')
     } else {
       resetForm()
     }
-  } catch (err) { alert("Gagal: " + err.message) }
+  } catch (err) { window.$dialog?.alert("Gagal: " + err.message) }
 }
 
 const bukaModalKemasan = (idx) => { activeIdx.value = idx; showModalKemasan.value = true }

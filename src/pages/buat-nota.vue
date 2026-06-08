@@ -15,7 +15,7 @@ const isPrintPabrik = ref(true)
 
 const checkAuthError = (res) => {
   if (res.status === 401 || res.status === 403) {
-    alert("Sesi habis atau Akses Ditolak!")
+    window.$dialog?.alert("Sesi habis atau Akses Ditolak!")
     localStorage.clear()
     router.push('/login')
     return true
@@ -224,12 +224,12 @@ const totalBayar = computed(() => totalKirim.value - totalRetur.value - (form.va
 
 const simpanData = async () => {
   if (!form.value.toko_id) {
-    alert("Pilih Mitra terlebih dahulu!");
+    window.$dialog?.alert("Pilih Mitra terlebih dahulu!");
     return;
   }
   
   if (!form.value.no_nota || form.value.no_nota === "") {
-    alert("Nomor nota kosong! Coba ganti pilihan Mitra untuk generate ulang.");
+    window.$dialog?.alert("Nomor nota kosong! Coba ganti pilihan Mitra untuk generate ulang.");
     return;
   }
 
@@ -272,7 +272,7 @@ const simpanData = async () => {
     if (checkAuthError(res)) return
 
     if (res.ok) {
-      alert(isEdit.value ? "Retur Berhasil Diupdate!" : "Nota Berhasil Disimpan!");
+      window.$dialog?.alert(isEdit.value ? "Retur Berhasil Diupdate!" : "Nota Berhasil Disimpan!");
       if (isEdit.value) {
         router.push('/daftar-nota');
       } else {
@@ -280,10 +280,10 @@ const simpanData = async () => {
       }
     } else {
       const err = await res.json();
-      alert("Gagal simpan: " + (err.error || "Cek terminal Go kamu!"));
+      window.$dialog?.alert("Gagal simpan: " + (err.error || "Cek terminal Go kamu!"));
     }
   } catch (e) {
-    alert("Server Backend (Go) tidak merespons!");
+    window.$dialog?.alert("Server Backend (Go) tidak merespons!");
   }
 }
 
