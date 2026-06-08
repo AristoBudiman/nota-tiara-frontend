@@ -312,16 +312,18 @@ const cetakPDF = () => window.print()
     <fieldset :disabled="isSales" class="border-0 p-0 m-0 w-full min-w-0">
       
       <!-- HEADER COMPACT -->
-      <div class="bg-slate-50 p-3 md:p-4 border-b border-slate-200 print:bg-white print:p-0 print:border-b-2 print:border-slate-800 print:mb-4">
-        <div class="flex flex-col md:flex-row print:flex-row justify-between items-center print:items-start gap-4 print:gap-0">
+      <div class="bg-slate-50 p-4 md:p-6 border-b border-slate-200 print:bg-white print:p-0 print:border-none print:mb-4">
+        <!-- flex-col on screen, flex-row on print -->
+        <div class="flex flex-col print:flex-row justify-between items-stretch print:items-start gap-5 print:gap-0">
           
-          <!-- PROFIL TENGAH -->
-          <div class="flex flex-col items-center print:items-start gap-1 flex-1 pr-4">
-            <div class="shrink-0 mb-1 print:mb-0">
-              <img :src="logoTiara" alt="Logo" class="w-40 max-h-16 object-contain print:w-48 print:max-h-24 print:hidden mx-auto print:mx-0" />
+          <!-- PROFIL -->
+          <!-- On screen: flex-row, center aligned items. On print: flex-col, items-start -->
+          <div class="flex flex-col sm:flex-row print:flex-col items-center print:items-start gap-4 print:gap-1 print:pr-4">
+            <div class="shrink-0">
+              <img :src="logoTiara" alt="Logo" class="w-32 sm:w-40 max-h-16 object-contain print:hidden mx-auto sm:mx-0" />
               <img :src="logoTiara" alt="Logo" class="w-48 max-h-24 object-contain hidden print:block" style="filter: grayscale(100%);" />
             </div>
-            <div class="mt-1 text-center print:text-left">
+            <div class="text-center sm:text-left print:text-left mt-2 sm:mt-0">
               <p class="text-sm md:text-base print:text-[12px] text-slate-800 font-bold leading-tight">{{ profil.Alamat }}</p>
               <p class="text-xs md:text-sm print:text-[11px] text-slate-500 font-medium mt-0.5">
                 <span v-if="profil.NoTelp">Telp: {{ profil.NoTelp }}</span>
@@ -331,31 +333,32 @@ const cetakPDF = () => window.print()
             </div>
           </div>
 
-          <!-- FORM KANAN COMPACT -->
-          <div class="w-full md:w-[380px] print:w-72 print:flex-none bg-white print:bg-transparent rounded-xl border border-slate-200 print:border-none p-3 print:p-0 shadow-sm print:shadow-none shrink-0 mt-3 md:mt-0">
-            <div class="text-right mb-3 print:mb-2 border-b border-slate-100 print:border-none pb-2 print:pb-0">
-              <div class="inline-flex items-center gap-1.5 bg-amber-100 print:bg-slate-800 text-amber-800 print:text-white px-2.5 py-1 rounded-md">
-                <ShoppingCart :size="16" class="print:hidden" />
+          <!-- FORM INPUTS -->
+          <!-- On screen: w-full, stretches to fill. On print: w-72 fixed width -->
+          <div class="w-full print:w-72 print:flex-none bg-white print:bg-transparent rounded-xl border border-slate-200 print:border-none p-4 print:p-0 shadow-sm print:shadow-none shrink-0 mt-2 print:mt-0">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center text-left mb-4 print:mb-2 border-b border-slate-100 print:border-none pb-3 print:pb-0 gap-2">
+              <div class="hidden md:block print:hidden text-slate-400 text-xs font-medium">Rincian Nota Pesanan</div>
+              <div class="inline-flex items-center bg-amber-100 print:bg-slate-800 text-amber-800 print:text-white px-3 py-1.5 print:px-2.5 print:py-1 rounded-md ml-auto">
                 <h2 class="text-sm font-black tracking-wide">NOTA PESANAN (PO)</h2>
               </div>
             </div>
             
-            <div class="grid grid-cols-[90px_1fr] print:grid-cols-[80px_1fr] gap-x-2 gap-y-1.5 text-xs print:text-xs items-center">
+            <div class="grid grid-cols-[90px_1fr] md:grid-cols-[90px_1fr_90px_1fr] lg:grid-cols-[90px_1fr_90px_1fr_90px_1fr] print:grid-cols-[80px_1fr] gap-x-4 print:gap-x-2 gap-y-3 print:gap-y-1.5 text-xs print:text-xs items-center">
               
               <span class="font-bold text-slate-600">Pemesan:</span>
-              <input type="text" v-model="form.nama_pemesan" class="bg-slate-50 print:bg-transparent border border-slate-200 rounded px-2 py-1 print:border-none print:p-0 font-bold text-slate-800 w-full focus:ring-1 focus:ring-amber-500 outline-none transition-all" placeholder="Nama Pemesan" />
+              <input type="text" v-model="form.nama_pemesan" class="bg-slate-50 print:bg-transparent border border-slate-200 rounded px-2.5 py-1.5 print:border-none print:p-0 font-bold text-slate-800 w-full focus:ring-1 focus:ring-amber-500 outline-none transition-all" placeholder="Nama Pemesan" />
               
               <span class="font-bold text-slate-600">Tgl Selesai:</span>
-              <input type="date" v-model="form.tanggal_kirim" class="bg-slate-50 border border-slate-200 rounded px-2 py-1 font-bold text-slate-800 w-full focus:ring-1 focus:ring-amber-500 outline-none transition-all print:hidden" />
+              <input type="date" v-model="form.tanggal_kirim" class="bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 font-bold text-slate-800 w-full focus:ring-1 focus:ring-amber-500 outline-none transition-all print:hidden" />
               <span class="hidden print:block font-bold text-slate-800">{{ form.tanggal_kirim.split('-').reverse().join('/') }}</span>
               
               <span class="font-bold text-slate-600 whitespace-nowrap">Titik Ambil:</span>
-              <div class="flex gap-1 w-full min-w-0 print:hidden">
-                <select v-model="form.jenis_pengambilan" class="bg-slate-50 border border-slate-200 rounded px-1.5 py-1 font-bold text-slate-800 outline-none focus:ring-1 focus:ring-amber-500 flex-1 min-w-0 truncate">
+              <div class="flex gap-1.5 w-full min-w-0 print:hidden">
+                <select v-model="form.jenis_pengambilan" class="bg-slate-50 border border-slate-200 rounded px-2 py-1.5 font-bold text-slate-800 outline-none focus:ring-1 focus:ring-amber-500 flex-1 min-w-0 truncate">
                   <option value="PABRIK">PABRIK</option>
                   <option value="MITRA">MITRA</option>
                 </select>
-                <select v-if="form.jenis_pengambilan === 'MITRA'" v-model="form.toko_id" class="bg-slate-50 border border-slate-200 rounded px-1.5 py-1 font-bold text-slate-800 outline-none focus:ring-1 focus:ring-amber-500 flex-1 min-w-0 truncate">
+                <select v-if="form.jenis_pengambilan === 'MITRA'" v-model="form.toko_id" class="bg-slate-50 border border-slate-200 rounded px-2 py-1.5 font-bold text-slate-800 outline-none focus:ring-1 focus:ring-amber-500 flex-1 min-w-0 truncate">
                   <option value="" disabled>Pilih</option>
                   <option v-for="t in tokosMaster" :key="t.ID" :value="t.ID">{{ t.NamaToko }}</option>
                 </select>
@@ -366,19 +369,19 @@ const cetakPDF = () => window.print()
               </div>
               
               <span class="font-bold text-slate-600">No. PO:</span>
-              <input v-model="form.no_nota" class="bg-slate-100 border border-slate-200 rounded px-2 py-1 font-mono text-xs text-slate-600 print:bg-transparent w-full print:border-none print:p-0 font-bold" readonly />
+              <input v-model="form.no_nota" class="bg-slate-100 border border-slate-200 rounded px-2.5 py-1.5 font-mono text-xs text-slate-600 print:bg-transparent w-full print:border-none print:p-0 font-bold" readonly />
               
               <template v-if="role === 'superadmin'">
-                <span class="font-bold text-orange-600 print:hidden mt-1">Tugaskan:</span>
-                <select v-model="penugasanDanStatus" class="bg-orange-50 border border-orange-200 rounded px-2 py-1 mt-1 font-bold text-orange-800 w-full outline-none focus:ring-1 focus:ring-orange-500 print:hidden">
+                <span class="font-bold text-orange-600 print:hidden whitespace-nowrap">Tugaskan:</span>
+                <select v-model="penugasanDanStatus" class="bg-orange-50 border border-orange-200 rounded px-2.5 py-1.5 font-bold text-orange-800 w-full outline-none focus:ring-1 focus:ring-orange-500 print:hidden">
                   <option :value="0">-- Belum Ditugaskan--</option>
                   <option v-for="s in daftarSales" :key="s.ID" :value="s.ID">Ke: {{ s.Username }}</option>
                   <option value="DIAMBIL" class="bg-emerald-100 text-emerald-800">[SELESAI] DIAMBIL</option>
                 </select>
 
-                <span class="font-bold text-emerald-600 print:hidden mt-1">Pembayaran:</span>
-                <label class="flex items-center justify-start gap-2 font-bold text-emerald-700 bg-emerald-50 px-2 py-1 mt-1 rounded border border-emerald-200 w-full print:hidden cursor-pointer hover:bg-emerald-100 transition shadow-sm">
-                  <input type="checkbox" v-model="form.is_lunas" class="w-3.5 h-3.5 accent-emerald-600 cursor-pointer rounded" />
+                <span class="font-bold text-emerald-600 print:hidden whitespace-nowrap">Pembayaran:</span>
+                <label class="flex items-center justify-start gap-2 font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded border border-emerald-200 w-full print:hidden cursor-pointer hover:bg-emerald-100 transition shadow-sm">
+                  <input type="checkbox" v-model="form.is_lunas" class="w-4 h-4 accent-emerald-600 cursor-pointer rounded" />
                   Tandai Lunas
                 </label>
               </template>
@@ -389,9 +392,9 @@ const cetakPDF = () => window.print()
 
       <!-- BODY: TABEL -->
       <div class="p-6 print:p-0 w-full overflow-x-auto print:overflow-visible">
-        <div class="rounded-xl border border-slate-200 overflow-hidden print:border-none">
+        <div class="rounded-xl border border-slate-200 overflow-hidden print:border-none min-w-[800px] md:min-w-full">
           <table class="w-full text-sm border-collapse">
-            <thead class="bg-slate-800 text-white print:bg-transparent print:text-black print:border-b-2 print:border-slate-800">
+            <thead class="bg-slate-800 text-white print:bg-transparent print:text-black print:border-y-2 print:border-slate-800">
               <tr class="tracking-wide">
                 <th class="p-3 text-center w-12 print:hidden font-bold">Mode</th>
                 <th class="p-3 text-left font-bold">Barang Pesanan</th>

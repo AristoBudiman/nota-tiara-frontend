@@ -51,7 +51,7 @@ const handleLogout = async () => {
              isMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
              isSidebarMinimized ? 'md:w-20' : 'md:w-64'
            ]"
-           class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transition-all duration-300 ease-in-out md:static md:flex md:flex-col shadow-xl overflow-hidden shrink-0">
+           class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transition-all duration-300 ease-in-out flex flex-col md:static shadow-xl overflow-hidden shrink-0">
         
         <div class="h-16 flex items-center px-4 border-b border-slate-800 shrink-0 transition-all duration-300" :class="isSidebarMinimized ? 'justify-center' : 'gap-3'">
             
