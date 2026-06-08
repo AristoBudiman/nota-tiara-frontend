@@ -37,7 +37,7 @@ const handleLogin = async () => {
     if (data.role === 'sales') {
       router.push('/daftar-nota')
     } else {
-      router.push('/catatan-besar')
+      router.push('/dashboard')
     }
   } catch (err) {
     errorMsg.value = "Gagal terhubung. Pastikan server aktif atau periksa internet Anda."
