@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Package, Cake, ChevronLeft, ChevronRight, RefreshCw, FileSpreadsheet, Sun } from 'lucide-vue-next'
+import { Package, Cake, ChevronLeft, ChevronRight, RefreshCw, FileSpreadsheet, Sun, SearchX, ClipboardList } from 'lucide-vue-next'
 
 const router = useRouter()
 const rawDataBesar = ref([]) // Data matang dari Backend
@@ -265,189 +265,221 @@ onMounted(fetchAll)
 </script>
 
 <template>
-  <div class="p-8 bg-gray-50 min-h-screen">
-    <div class="flex flex-col lg:flex-row justify-between items-start mb-6 gap-6 lg:gap-0">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Catatan Besar Harian</h1>
-        <!-- SWITCH TAB NAVIGASI -->
-        <div class="flex flex-col sm:flex-row mt-3 bg-gray-200 p-1 rounded-lg w-full md:w-max gap-1">
+  <div class="bg-slate-50 min-h-screen">
+    
+    <!-- Sticky Action Bar (Mengambang di atas layar saat discroll) -->
+    <div class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm px-6 py-4 animate-fade-in">
+      <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+        
+        <!-- Tab Navigation (Segmented Control) -->
+        <div class="inline-flex bg-slate-200/80 p-1 rounded-xl shadow-inner w-full lg:w-max overflow-x-auto">
           <button @click="activeTab = 'REGULER'; fetchAll()" 
-                  class="px-4 py-2 rounded-md font-bold text-sm transition flex items-center justify-center gap-2"
-                  :class="activeTab === 'REGULER' ? 'bg-white shadow text-blue-800' : 'text-gray-500 hover:text-gray-800'">
-            <Package :size="16" /> PENGIRIMAN REGULER
+                  class="flex-1 px-5 py-2 rounded-lg font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap"
+                  :class="activeTab === 'REGULER' ? 'bg-white text-blue-700 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-300/50'">
+            <Package :size="16" /> Pengiriman Reguler
           </button>
           <button @click="activeTab = 'PESANAN'; fetchAll()" 
-                  class="px-4 py-2 rounded-md font-bold text-sm transition flex items-center justify-center gap-2"
-                  :class="activeTab === 'PESANAN' ? 'bg-yellow-400 shadow text-yellow-900' : 'text-gray-500 hover:text-gray-800'">
-            <Cake :size="16" /> PESANAN KHUSUS (PO)
+                  class="flex-1 px-5 py-2 rounded-lg font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap"
+                  :class="activeTab === 'PESANAN' ? 'bg-yellow-400 text-yellow-950 shadow-sm ring-1 ring-yellow-500' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-300/50'">
+            <Cake :size="16" /> Pesanan Khusus (PO)
           </button>
         </div>
-      </div>
-      
-      <div class="flex flex-wrap lg:flex-nowrap items-end gap-3 w-full lg:w-auto">
-        <div class="flex flex-col">
-          <label class="text-xs font-bold text-gray-500 mb-1">Pilih Tanggal Harian</label>
-          <div class="flex items-center gap-1">
+
+        <!-- Filter & Actions -->
+        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
             <button 
               @click="geserHari(-1)" 
-              class="bg-gray-200 text-gray-700 px-2 py-2 rounded shadow-sm hover:bg-gray-300 transition font-black h-10 border border-gray-300 flex items-center justify-center"
+              class="bg-white text-slate-700 px-3 py-1.5 rounded-md shadow-sm hover:bg-slate-50 transition font-black flex items-center justify-center"
               title="Hari Sebelumnya"
             >
-              <ChevronLeft :size="20" />
+              <ChevronLeft :size="18" />
             </button>
-            
             <input 
               type="date" 
               v-model="selectedTanggal" 
               @change="fetchAll" 
-              class="border-2 border-gray-300 rounded px-4 py-2 font-bold bg-white focus:outline-none focus:border-blue-500 h-10"
+              class="border-none rounded-md px-3 py-1.5 font-bold bg-transparent focus:ring-0 outline-none text-slate-700 text-sm"
             />
-
             <button 
               @click="geserHari(1)" 
-              class="bg-gray-200 text-gray-700 px-2 py-2 rounded shadow-sm hover:bg-gray-300 transition font-black h-10 border border-gray-300 flex items-center justify-center"
+              class="bg-white text-slate-700 px-3 py-1.5 rounded-md shadow-sm hover:bg-slate-50 transition font-black flex items-center justify-center"
               title="Hari Berikutnya"
             >
-              <ChevronRight :size="20" />
+              <ChevronRight :size="18" />
             </button>
           </div>
+          
+          <button 
+            @click="fetchAll" 
+            class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm"
+          >
+            <RefreshCw :size="16" /> Refresh
+          </button>
+          <button 
+            @click="exportToExcel" 
+            class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-emerald-700 transition-colors flex items-center gap-2 text-sm"
+          >
+            <FileSpreadsheet :size="16" /> Export
+          </button>
         </div>
-        
-        <button 
-          @click="fetchAll" 
-          class="bg-blue-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-blue-700 transition border-2 border-blue-600 flex items-center gap-2 h-10"
-          title="Tarik data terbaru dari database"
-        >
-          <RefreshCw :size="16" /> Refresh
-        </button>
-        <button 
-          @click="exportToExcel" 
-          class="bg-green-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-green-700 transition border-2 border-green-600 flex items-center gap-2 h-10"
-        >
-          <FileSpreadsheet :size="16" /> Export Excel
-        </button>
+
       </div>
     </div>
     
-    <div v-if="activeTab === 'REGULER'">
-      <!-- TAMPILAN KHUSUS HARI MINGGU -->
-      <div v-if="dayOfWeek === 0" class="bg-blue-100 text-blue-800 p-8 rounded-xl mb-4 text-center border border-blue-200 shadow-sm flex flex-col items-center">
-         <h2 class="text-2xl font-black mb-2 flex items-center gap-3"><Sun class="text-yellow-500" :size="32" /> Hari Minggu Libur</h2>
-         <p class="font-medium text-blue-700">Tidak ada jadwal pengiriman atau retur reguler pada hari Minggu. <br> Silakan cek tab <b>Pesanan Khusus (PO)</b> jika ada pesanan masuk.</p>
-      </div>
-
-      <div v-else-if="filteredTokos.length === 0" class="bg-yellow-100 text-yellow-800 p-4 rounded mb-4">
-        Tidak ada data atau siklus toko yang beroperasi di tanggal ini.
-      </div>
-
-      <div v-else class="bg-white rounded border overflow-x-auto shadow-sm">
-        <table id="table-catatan-besar" class="w-full text-sm border-collapse">
-          <thead class="bg-gray-800 text-white">
-            <tr>
-              <th class="p-3 border border-gray-700 text-left sticky left-0 bg-gray-800 z-10" rowspan="2">
-                Nama Barang
-              </th>
-              <th v-for="toko in filteredTokos" :key="toko.NamaToko" colspan="2" class="p-2 border border-gray-700 text-center">
-                {{ toko.NamaToko }}
-              </th>
-            </tr>
-            <tr class="bg-gray-700 text-[10px] uppercase tracking-widest">
-              <template v-for="toko in filteredTokos" :key="'sub-'+toko.NamaToko">
-                <th class="p-2 border border-gray-600 text-center w-16">Kirim</th>
-                <th class="p-2 border border-gray-600 text-center w-16">Retur</th>
-              </template>
-            </tr>
-          </thead>
-          
-          <tbody>
-            <tr v-for="barang in uniqueBarangs" :key="barang.nama" class="hover:bg-gray-50 border-b">
-              
-              <td class="p-3 border-r font-bold sticky left-0 bg-white shadow-sm">{{ barang.nama }}</td>
-              
-              <template v-for="toko in filteredTokos" :key="toko.NamaToko + '-' + barang.nama">
-                <td class="p-2 border-r text-center font-semibold text-blue-700">
-                  {{ getCellData(toko.NamaToko, barang.nama).kirim }}
-                </td>
-
-                <td class="p-2 border-r text-center font-semibold text-red-600">
-                  {{ getCellData(toko.NamaToko, barang.nama).retur }}
-                </td>
-              </template>
-            </tr>
-          </tbody>
-
-          <tfoot class="bg-gray-100 font-bold border-t-2 border-gray-300">
-            <tr>
-              <td class="p-3 border-r sticky left-0 bg-gray-100 text-gray-700">Total Kirim (Rp)</td>
-              <template v-for="toko in filteredTokos" :key="'totK-'+toko.NamaToko">
-                <td colspan="2" class="p-2 border-r text-center text-blue-800">
-                  {{ formatRp(getTotals(toko.NamaToko).kirim) }}
-                </td>
-              </template>
-            </tr>
-            <tr>
-              <td class="p-3 border-r sticky left-0 bg-gray-100 text-gray-700">Total Retur (Rp)</td>
-              <template v-for="toko in filteredTokos" :key="'totR-'+toko.NamaToko">
-                <td colspan="2" class="p-2 border-r text-center text-red-800">
-                  {{ formatRp(getTotals(toko.NamaToko).retur) }}
-                </td>
-              </template>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-
-    <!-- TAMPILAN TAB PESANAN -->
-    <div v-if="activeTab === 'PESANAN'">
-      <div v-if="dataPesanan.length === 0" class="bg-gray-100 p-4 rounded text-center font-bold text-gray-500">
-        Tidak ada pesanan masuk untuk dikirim/diambil pada tanggal ini.
-      </div>
+    <!-- Konten Utama -->
+    <div class="p-6">
       
-      <div v-else class="bg-white rounded border overflow-x-auto shadow-sm">
-        <table id="table-pesanan" class="w-full text-sm border-collapse">
-          <thead class="bg-yellow-500 text-yellow-950">
-            <tr>
-              <th class="p-3 border-r border-yellow-600 text-left sticky left-0 bg-yellow-500">Roti Pesanan</th>
-              <th v-for="toko in rekapPesanan.kolomToko" :key="toko" class="p-3 border-r border-yellow-600 text-center font-black">
-                {{ toko }}
-              </th>
-              <th class="p-3 border-l-4 border-yellow-700 text-center bg-yellow-600 text-white">Total Produksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="[namaBarang, dataToko] in rekapPesanan.barisBarang" :key="namaBarang" class="border-b hover:bg-yellow-50">
-              <td class="p-3 border-r font-bold sticky left-0 bg-white">{{ namaBarang }}</td>
-              
-              <td v-for="toko in rekapPesanan.kolomToko" :key="toko" class="p-3 border-r text-center font-medium">
-                {{ dataToko[toko] || '-' }}
-              </td>
+      <!-- TAB REGULER -->
+      <div v-if="activeTab === 'REGULER'" class="animate-slide-up">
+        <h1 class="text-2xl font-black text-slate-800 mb-6 flex items-center gap-3">
+          <ClipboardList :size="28" class="text-blue-600" /> Catatan Besar (Pengiriman Reguler)
+        </h1>
+        
+        <!-- TAMPILAN KHUSUS HARI MINGGU -->
+        <div v-if="dayOfWeek === 0" class="bg-gradient-to-br from-amber-50 to-orange-50 p-10 rounded-2xl mb-4 text-center border-2 border-dashed border-amber-200 shadow-sm flex flex-col items-center">
+           <Sun class="text-amber-500 mb-4 animate-spin-slow" :size="64" />
+           <h2 class="text-2xl font-black text-amber-800 mb-2">Hari Minggu Libur Produksi</h2>
+           <p class="font-medium text-amber-700 max-w-md">Tidak ada jadwal pengiriman atau retur reguler pada hari Minggu. Silakan periksa tab <b>Pesanan Khusus (PO)</b> jika ada nota pesanan masuk.</p>
+        </div>
 
-              <!-- Total Per Baris -->
-              <td class="p-3 border-l-4 border-gray-300 text-center font-black text-lg bg-gray-50 text-blue-800">
-                {{ rekapPesanan.kolomToko.reduce((sum, t) => sum + (dataToko[t] || 0), 0) }}
-              </td>
-            </tr>
-          </tbody>
-          <!-- FOOTER TOTAL OMZET RUPIAH -->
-          <tfoot class="bg-yellow-100 font-bold border-t-4 border-yellow-500">
-            <tr>
-              <td class="p-3 border-r border-yellow-300 sticky left-0 bg-yellow-100 text-yellow-900 uppercase">
-                TOTAL OMZET (Rp)
-              </td>
-              
-              <td v-for="toko in rekapPesanan.kolomToko" :key="'tot-'+toko" class="p-3 border-r border-yellow-300 text-right text-yellow-800 text-sm">
-                {{ formatRp(dataPesanan.filter(d => d.nama_toko === toko).reduce((sum, d) => sum + d.total_rupiah, 0)) }}
-              </td>
-              
-              <td class="p-3 border-l-4 border-yellow-500 text-right text-lg text-yellow-950 bg-yellow-200 font-black">
-                {{ formatRp(dataPesanan.reduce((sum, d) => sum + d.total_rupiah, 0)) }}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
+        <!-- TAMPILAN KOSONG -->
+        <div v-else-if="filteredTokos.length === 0" class="bg-white p-10 rounded-2xl mb-4 text-center border border-slate-200 shadow-sm flex flex-col items-center">
+          <SearchX class="text-slate-300 mb-4" :size="64" />
+          <h2 class="text-xl font-black text-slate-600 mb-2">Tidak Ada Data</h2>
+          <p class="font-medium text-slate-500">Tidak ada siklus pengiriman toko yang beroperasi pada tanggal ini.</p>
+        </div>
+
+        <!-- TABEL DATA -->
+        <div v-else class="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm pb-2">
+          <table id="table-catatan-besar" class="w-full text-sm border-collapse">
+            <thead class="text-white bg-slate-800">
+              <tr>
+                <th class="p-4 border-b border-r border-slate-700 text-left sticky left-0 bg-slate-900 z-10 font-black tracking-wide" rowspan="2">
+                  Nama Produk Barang
+                </th>
+                <th v-for="toko in filteredTokos" :key="toko.NamaToko" colspan="2" class="p-3 border-b border-r border-slate-700 text-center font-bold">
+                  {{ toko.NamaToko }}
+                </th>
+              </tr>
+              <tr class="bg-slate-700 text-[10px] uppercase tracking-widest text-slate-300">
+                <template v-for="toko in filteredTokos" :key="'sub-'+toko.NamaToko">
+                  <th class="p-2 border-b border-r border-slate-600 text-center w-16 bg-slate-700/80">Kirim</th>
+                  <th class="p-2 border-b border-r border-slate-600 text-center w-16 bg-slate-700/80">Retur</th>
+                </template>
+              </tr>
+            </thead>
+            
+            <tbody>
+              <tr v-for="barang in uniqueBarangs" :key="barang.nama" class="hover:bg-blue-50/50 even:bg-slate-50 transition-colors">
+                
+                <td class="p-4 border-r border-b border-slate-100 font-bold sticky left-0 bg-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-slate-800 z-0">
+                  {{ barang.nama }}
+                </td>
+                
+                <template v-for="toko in filteredTokos" :key="toko.NamaToko + '-' + barang.nama">
+                  <td class="p-2 border-r border-b border-slate-100 text-center font-bold text-blue-700">
+                    {{ getCellData(toko.NamaToko, barang.nama).kirim || '-' }}
+                  </td>
+                  <td class="p-2 border-r border-b border-slate-100 text-center font-bold text-red-600">
+                    {{ getCellData(toko.NamaToko, barang.nama).retur || '-' }}
+                  </td>
+                </template>
+              </tr>
+            </tbody>
+
+            <tfoot class="font-bold border-t-2 border-slate-300 bg-slate-100">
+              <tr>
+                <td class="p-4 border-r border-b border-slate-200 sticky left-0 bg-slate-200/80 text-slate-800 backdrop-blur uppercase tracking-widest text-xs z-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Total Kirim (Rp)</td>
+                <template v-for="toko in filteredTokos" :key="'totK-'+toko.NamaToko">
+                  <td colspan="2" class="p-3 border-r border-b border-slate-200 text-center text-blue-800 text-xs font-black">
+                    {{ formatRp(getTotals(toko.NamaToko).kirim) }}
+                  </td>
+                </template>
+              </tr>
+              <tr>
+                <td class="p-4 border-r border-b border-slate-200 sticky left-0 bg-slate-200/80 text-slate-800 backdrop-blur uppercase tracking-widest text-xs z-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Total Retur (Rp)</td>
+                <template v-for="toko in filteredTokos" :key="'totR-'+toko.NamaToko">
+                  <td colspan="2" class="p-3 border-r border-b border-slate-200 text-center text-red-800 text-xs font-black">
+                    {{ formatRp(getTotals(toko.NamaToko).retur) }}
+                  </td>
+                </template>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
-    </div>
 
+      <!-- TAB PESANAN -->
+      <div v-if="activeTab === 'PESANAN'" class="animate-slide-up">
+        <h1 class="text-2xl font-black text-slate-800 mb-6 flex items-center gap-3">
+          <ClipboardList :size="28" class="text-yellow-600" /> Catatan Pesanan Khusus (PO)
+        </h1>
+
+        <!-- TAMPILAN KOSONG -->
+        <div v-if="dataPesanan.length === 0" class="bg-white p-10 rounded-2xl text-center border border-slate-200 shadow-sm flex flex-col items-center">
+          <Cake class="text-slate-300 mb-4 opacity-50" :size="64" />
+          <h2 class="text-xl font-black text-slate-600 mb-2">Tidak Ada Pesanan</h2>
+          <p class="font-medium text-slate-500">Belum ada nota pesanan yang dicetak untuk dikirim atau diambil pada tanggal ini.</p>
+        </div>
+        
+        <!-- TABEL PESANAN -->
+        <div v-else class="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm pb-2">
+          <table id="table-pesanan" class="w-full text-sm border-collapse">
+            <thead class="bg-yellow-500 text-yellow-950">
+              <tr>
+                <th class="p-4 border-b border-r border-yellow-600 text-left sticky left-0 bg-yellow-600 text-white z-10 font-black tracking-wide">Roti Pesanan</th>
+                <th v-for="toko in rekapPesanan.kolomToko" :key="toko" class="p-4 border-b border-r border-yellow-600 text-center font-bold">
+                  {{ toko }}
+                </th>
+                <th class="p-4 border-b border-l-4 border-yellow-700 text-center bg-yellow-700 text-yellow-100 font-black tracking-widest uppercase text-xs">Total Produksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr v-for="[namaBarang, dataToko] in rekapPesanan.barisBarang" :key="namaBarang" class="hover:bg-yellow-50/50 even:bg-slate-50 transition-colors">
+                <td class="p-4 border-r border-slate-100 font-bold sticky left-0 bg-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-slate-800 z-0">
+                  {{ namaBarang }}
+                </td>
+                
+                <td v-for="toko in rekapPesanan.kolomToko" :key="toko" class="p-4 border-r border-slate-100 text-center font-bold text-slate-600">
+                  {{ dataToko[toko] || '-' }}
+                </td>
+
+                <!-- Total Per Baris -->
+                <td class="p-4 border-l-4 border-slate-200 text-center font-black text-lg bg-slate-100/50 text-blue-800">
+                  {{ rekapPesanan.kolomToko.reduce((sum, t) => sum + (dataToko[t] || 0), 0) }}
+                </td>
+              </tr>
+            </tbody>
+            <!-- FOOTER TOTAL OMZET RUPIAH -->
+            <tfoot class="bg-amber-50 font-bold border-t-4 border-yellow-400">
+              <tr>
+                <td class="p-4 border-r border-amber-200 sticky left-0 bg-amber-100 text-amber-900 uppercase tracking-widest text-xs z-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                  Total Omzet (Rp)
+                </td>
+                
+                <td v-for="toko in rekapPesanan.kolomToko" :key="'tot-'+toko" class="p-4 border-r border-amber-200 text-center text-amber-800 font-black text-sm">
+                  {{ formatRp(dataPesanan.filter(d => d.nama_toko === toko).reduce((sum, d) => sum + d.total_rupiah, 0)) }}
+                </td>
+                
+                <td class="p-4 border-l-4 border-yellow-500 text-center text-xl text-yellow-900 bg-yellow-200 font-black tracking-tight">
+                  {{ formatRp(dataPesanan.reduce((sum, d) => sum + d.total_rupiah, 0)) }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div>
   </div>
 </template>
+
+<style scoped>
+.animate-fade-in { animation: fadeIn 0.4s ease-out; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+.animate-spin-slow { animation: spin 8s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { Package, Cake, Printer, Factory, Store, CheckCircle2, Bell, AlertTriangle, Plus, Clock, RefreshCw } from 'lucide-vue-next'
 
 const router = useRouter()
 const role = ref(localStorage.getItem('admin_role') || 'superadmin')
@@ -368,14 +369,14 @@ const namaTokoPOPrint = computed(() => {
     <!-- TAB NAVIGASI KHUSUS SUPERADMIN -->
     <div v-if="role === 'superadmin'" class="flex flex-col sm:flex-row mb-6 bg-gray-200 p-1 rounded-lg w-full md:w-max shadow-sm gap-1 print:hidden">
       <button @click="activeTab = 'REGULER'" 
-              class="px-5 py-2.5 rounded-md font-bold text-sm transition"
+              class="px-5 py-2.5 rounded-md font-bold text-sm transition flex items-center justify-center gap-2"
               :class="activeTab === 'REGULER' ? 'bg-white shadow-md text-blue-800' : 'text-gray-500 hover:text-gray-800'">
-        📦 RIWAYAT REGULER
+        <Package :size="18" /> RIWAYAT REGULER
       </button>
       <button @click="activeTab = 'PESANAN'" 
-              class="px-5 py-2.5 rounded-md font-bold text-sm transition"
+              class="px-5 py-2.5 rounded-md font-bold text-sm transition flex items-center justify-center gap-2"
               :class="activeTab === 'PESANAN' ? 'bg-yellow-400 shadow-md text-yellow-900' : 'text-gray-500 hover:text-gray-800'">
-        🎂 RIWAYAT PESANAN (PO)
+        <Cake :size="18" /> RIWAYAT PESANAN (PO)
       </button>
     </div>
     
@@ -396,7 +397,7 @@ const namaTokoPOPrint = computed(() => {
         <!-- FILTER & TOMBOL PRINT (RESPONSIVE) -->
         <div class="flex flex-col xl:flex-row items-stretch gap-4 mb-6 print:hidden">
           <button @click="cetakLaporan" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-md font-bold transition flex items-center justify-center gap-2 shrink-0">
-            🖨️ Cetak Riwayat Reguler
+            <Printer :size="20" /> Cetak Riwayat Reguler
           </button>
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 border rounded-lg flex-1">
             <div>
@@ -455,22 +456,29 @@ const namaTokoPOPrint = computed(() => {
                 </td>
                 <td class="p-3 border print:border-black text-center whitespace-nowrap">
                   <span v-if="nota.Status === 'DIBATALKAN'" class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold print:border-none print:text-black">DIBATALKAN</span>
-                  <span v-else-if="nota.is_lunas" class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold print:border-none print:text-black">✅ LUNAS</span>
-                  <span v-else class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold print:border-none print:text-black">⏳ PIUTANG</span>
+                  <span v-else-if="nota.is_lunas" class="bg-green-100 text-green-800 px-2 py-1 rounded text-[11px] font-bold print:border-none print:text-black flex items-center gap-1 w-max mx-auto"><CheckCircle2 :size="12" /> LUNAS</span>
+                  <span v-else class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold print:border-none print:text-black flex items-center gap-1 w-max mx-auto"><Clock :size="12" /> PIUTANG</span>
                 </td>
                 <td class="p-3 border text-center whitespace-nowrap print:hidden">
-                  <div class="flex justify-center gap-2">
+                  <div class="flex justify-center gap-1.5">
                     <template v-if="nota.Status !== 'DIBATALKAN'">
-                      <button @click="batalkanNota(nota.ID, nota.NoNota)" class="bg-red-500 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-red-600 transition shadow-sm">
-                          Batal
-                      </button>
-                      <router-link :to="'/buat-nota?edit=' + nota.ID" class="bg-green-500 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-600 transition shadow-sm">
-                          Lihat / Edit
+                      <router-link :to="'/buat-nota?edit=' + nota.ID" title="Lihat / Edit Nota" class="bg-green-50 text-green-600 border border-green-200 w-7 h-7 flex items-center justify-center rounded hover:bg-green-500 hover:text-white transition-colors shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                        </svg>
                       </router-link>
+                      
+                      <button @click="batalkanNota(nota.ID, nota.NoNota)" title="Batalkan Nota" class="bg-red-50 text-red-600 border border-red-200 w-7 h-7 flex items-center justify-center rounded hover:bg-red-500 hover:text-white transition-colors shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </template>
                     <template v-else>
-                      <button @click="pulihkanNota(nota.ID, nota.NoNota)" class="bg-blue-600 text-white px-4 py-1.5 rounded text-xs font-bold hover:bg-blue-700 transition shadow-md flex items-center gap-1">
-                        🔄 Pulihkan
+                      <button @click="pulihkanNota(nota.ID, nota.NoNota)" title="Pulihkan Nota" class="bg-blue-50 text-blue-600 border border-blue-200 w-7 h-7 flex items-center justify-center rounded hover:bg-blue-500 hover:text-white transition-colors shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                        </svg>
                       </button>
                     </template>
                   </div>
@@ -500,7 +508,7 @@ const namaTokoPOPrint = computed(() => {
         <div class="flex flex-col lg:flex-row items-stretch gap-4 mb-6 print:hidden">
           <!-- TOMBOL PRINT PO -->
           <button @click="cetakLaporan" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-4 rounded-lg shadow-md font-bold transition flex items-center justify-center gap-2 shrink-0">
-            🖨️ Cetak Riwayat PO
+            <Printer :size="20" /> Cetak Riwayat PO
           </button>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-yellow-50 p-4 border border-yellow-200 rounded-lg flex-1">
             <div>
@@ -543,8 +551,8 @@ const namaTokoPOPrint = computed(() => {
                   <p class="text-xs font-bold text-gray-600 print:text-gray-800">👤 {{ po.NamaPemesan }}</p>
                 </td>
                 <td class="p-3 border-r print:border-black font-bold text-gray-700 text-center whitespace-nowrap">
-                  <span v-if="po.JenisPengambilan === 'PABRIK'" class="inline-block bg-gray-200 px-2 py-1 rounded-md text-[11px] uppercase tracking-wider print:bg-transparent print:p-0">🏢 PABRIK</span>
-                  <span v-else class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-[11px] uppercase tracking-wider print:bg-transparent print:p-0">🏪 {{ po.NamaTokoSnapshot }}</span>
+                  <span v-if="po.JenisPengambilan === 'PABRIK'" class="inline-flex items-center gap-1 bg-gray-200 px-2 py-1 rounded-md text-[11px] uppercase tracking-wider print:bg-transparent print:p-0"><Factory :size="12" /> PABRIK</span>
+                  <span v-else class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-[11px] uppercase tracking-wider print:bg-transparent print:p-0"><Store :size="12" /> {{ po.NamaTokoSnapshot }}</span>
                 </td>
                 
                 <!-- KOLOM TOTAL TAGIHAN PO -->
@@ -561,8 +569,8 @@ const namaTokoPOPrint = computed(() => {
                   <span v-else class="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-[11px] uppercase font-bold print:border-none print:text-black">{{ po.Status }}</span>
                 </td>
                 <td class="p-3 border print:border-black text-center whitespace-nowrap">
-                  <span v-if="po.is_lunas" class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-[11px] font-bold print:border-none print:text-black">✅ LUNAS</span>
-                  <span v-else class="inline-block bg-red-100 text-red-700 px-2 py-1 rounded text-[11px] font-bold print:border-none print:text-black">⏳ PIUTANG</span>
+                  <span v-if="po.is_lunas" class="inline-flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 rounded text-[11px] font-bold print:border-none print:text-black mx-auto"><CheckCircle2 :size="12" /> LUNAS</span>
+                  <span v-else class="inline-flex items-center gap-1 bg-red-100 text-red-700 px-2 py-1 rounded text-[11px] font-bold print:border-none print:text-black mx-auto"><Clock :size="12" /> PIUTANG</span>
                 </td>
                 <td class="p-3 border text-center whitespace-nowrap print:hidden">
                   <div class="flex justify-center gap-1.5">
@@ -605,7 +613,7 @@ const namaTokoPOPrint = computed(() => {
       
       <!-- KOTAK KUNJUNGAN TOKO -->
       <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-600">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><span>🏪</span> Mulai Kunjungan Toko</h2>
+        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><Store :size="24" class="text-blue-600" /> Mulai Kunjungan Toko</h2>
         
         <select v-model="selectedTokoID" @change="fetchKunjungan" class="w-full p-3 border-2 border-gray-300 rounded focus:border-blue-500 font-bold mb-4 outline-none">
           <option value="" disabled>-- Pilih Toko Yang Sedang Dikunjungi --</option>
@@ -613,12 +621,12 @@ const namaTokoPOPrint = computed(() => {
         </select>
 
         <div v-if="selectedTokoID">
-          <button @click="buatNotaBaru" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded shadow transition mb-6">
-            ➕ BUAT NOTA KIRIMAN HARI INI
+          <button @click="buatNotaBaru" class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded shadow transition mb-6">
+            <Plus :size="20" /> BUAT NOTA KIRIMAN HARI INI
           </button>
 
           <div v-if="notaKunjungan.length > 0" class="bg-red-50 p-4 rounded border border-red-200">
-            <p class="font-bold text-red-700 mb-3 text-sm">⚠️ Ditemukan {{ notaKunjungan.length }} Nota Belum Diisi Retur:</p>
+            <p class="font-bold text-red-700 mb-3 text-sm flex items-center gap-2"><AlertTriangle :size="18" /> Ditemukan {{ notaKunjungan.length }} Nota Belum Diisi Retur:</p>
             <div v-for="nota in notaKunjungan" :key="nota.ID" class="bg-white p-3 border border-red-300 rounded mb-2 flex justify-between items-center shadow-sm">
               <div>
                 <p class="font-bold font-mono">{{ nota.NoNota }}</p>
@@ -630,14 +638,14 @@ const namaTokoPOPrint = computed(() => {
             </div>
           </div>
           <div v-else class="bg-green-50 p-4 rounded border border-green-200 text-center">
-            <p class="font-bold text-green-700">✅ Retur Lunas! Tidak ada tagihan retur tertunda di toko ini.</p>
+            <p class="font-bold text-green-700 flex items-center justify-center gap-2"><CheckCircle2 :size="20" /> Retur Lunas! Tidak ada tagihan retur tertunda di toko ini.</p>
           </div>
         </div>
       </div>
 
       <!-- KOTAK TUGAS REGULER / RETUR -->
       <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-orange-500 mb-8">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><span>🔔</span> Tugas Retur / Reguler</h2>
+        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><Bell :size="24" class="text-orange-500" /> Tugas Retur / Reguler</h2>
         
         <div v-if="notaTugas.length === 0" class="text-center p-4 text-gray-500 italic text-sm border border-dashed rounded">
           Belum ada tugas retur khusus dari Superadmin.
@@ -660,7 +668,7 @@ const namaTokoPOPrint = computed(() => {
 
       <!-- KOTAK TUGAS PO / PESANAN -->
       <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-yellow-500">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><span>🎂</span> Tugas Antar Pesanan (PO)</h2>
+        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><Cake :size="24" class="text-yellow-500" /> Tugas Antar Pesanan (PO)</h2>
         
         <div v-if="poTugas.length === 0" class="text-center p-4 text-gray-500 italic text-sm border border-dashed rounded">
           Belum ada tugas antar PO dari Superadmin.

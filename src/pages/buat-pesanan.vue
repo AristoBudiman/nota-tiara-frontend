@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { XCircle, PenTool, Package, Layers, PackageOpen, X, Save, Printer } from 'lucide-vue-next'
 import logoTiara from '../assets/logo_tiara.png'
 
 const route = useRoute()
@@ -363,7 +364,7 @@ const cetakPDF = () => window.print()
                 <select v-model="penugasanDanStatus" class="border rounded px-2 py-0.5 mt-1 border-orange-400 bg-orange-50 print:hidden font-bold w-full outline-none">
                 <option :value="0">-- Belum Ditugaskan--</option>
                 <option v-for="s in daftarSales" :key="s.ID" :value="s.ID">Ke: {{ s.Username }}</option>
-                <option value="DIAMBIL" class="bg-green-100 text-green-800">✅ DIAMBIL (Selesai)</option>
+                <option value="DIAMBIL" class="bg-green-100 text-green-800">[SELESAI] DIAMBIL</option>
                 </select>
 
                 <span class="font-semibold text-left text-green-600 print:hidden mt-1">Pembayaran:</span>
@@ -385,7 +386,7 @@ const cetakPDF = () => window.print()
                 <th class="border border-gray-400 p-2 w-16">Qty</th>
                 <th class="border border-gray-400 p-2 w-24">Harga/Pcs</th>
                 <th class="border border-gray-400 p-2 w-28">Subtotal (Rp)</th>
-                <th class="border border-gray-400 p-2 w-8 print:hidden text-red-500">❌</th>
+                <th class="border border-gray-400 p-2 w-8 print:hidden text-red-500 text-center"><XCircle :size="16" class="inline" /></th>
             </tr>
             </thead>
             <tbody>
@@ -394,7 +395,8 @@ const cetakPDF = () => window.print()
                 <td class="border border-gray-400 p-1 text-center print:hidden align-top pt-2">
                   <button @click="gantiMode(idx)" class="px-1 py-1 text-[10px] font-bold rounded shadow-sm border w-full"
                           :class="row.isKustom ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-blue-100 text-blue-700 border-blue-300'">
-                      {{ row.isKustom ? '✍️' : '📦' }}
+                      <PenTool v-if="row.isKustom" :size="14" class="mx-auto" />
+                      <Package v-else :size="14" class="mx-auto" />
                   </button>
                 </td>
 
@@ -410,10 +412,10 @@ const cetakPDF = () => window.print()
                           <input type="number" v-model.number="row.gramasi" placeholder="0" class="w-12 outline-none text-[10px] text-center text-gray-500 bg-gray-100 rounded border border-gray-300 hide-arrows py-0.5" />
                           <span class="text-[9px] text-gray-400 font-bold">gr</span>
                           <button @click="bukaModalKomposit(idx)" class="text-[9px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded border border-yellow-300 font-bold hover:bg-yellow-200 whitespace-nowrap shadow-sm ml-1">
-                            🧈 {{ row.komposit_detail?.length || 0 }} Komposit
+                            <span class="flex items-center justify-center gap-1"><Layers :size="10" /> {{ row.komposit_detail?.length || 0 }} Komposit</span>
                           </button>
                           <button @click="bukaModalKemasan(idx)" class="text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-300 font-bold hover:bg-blue-200 whitespace-nowrap shadow-sm ml-1">
-                            📦 {{ row.kemasan_detail?.length || 0 }} Kemasan
+                            <span class="flex items-center justify-center gap-1"><PackageOpen :size="10" /> {{ row.kemasan_detail?.length || 0 }} Kemasan</span>
                           </button>
                       </div>
                   </div>
@@ -438,7 +440,7 @@ const cetakPDF = () => window.print()
                 </td>
 
                 <td class="border border-gray-400 p-1 text-center print:hidden align-top pt-1">
-                <button @click="hapusBaris(idx)" class="text-red-500 hover:text-red-700 font-bold text-xl leading-none">×</button>
+                <button @click="hapusBaris(idx)" class="text-red-500 hover:text-red-700 font-bold text-xl leading-none w-full flex justify-center"><X :size="18" /></button>
                 </td>
             </tr>
             </tbody>
@@ -451,7 +453,7 @@ const cetakPDF = () => window.print()
         <div v-if="showModalKemasan" class="fixed inset-0 bg-black/50 flex justify-center items-center z-60 p-4">
           <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-t-8 border-blue-600">
             <div class="p-6">
-              <h3 class="text-lg font-black text-gray-800 mb-1">📦 Kemasan Kustom</h3>
+              <h3 class="text-lg font-black text-gray-800 mb-1"><PackageOpen :size="20" class="inline align-text-bottom mr-1" /> Kemasan Kustom</h3>
               <p class="text-xs font-bold text-gray-500 mb-4">
                 Rakit kemasan untuk: <span class="text-purple-600">{{ details[activeIdx].namaKustom || 'Item Baru' }}</span>
               </p>
@@ -477,7 +479,7 @@ const cetakPDF = () => window.print()
         <div v-if="showModalKomposit" class="fixed inset-0 bg-black/50 flex justify-center items-center z-60 p-4">
           <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-t-8 border-yellow-500">
             <div class="p-6">
-              <h3 class="text-lg font-black text-gray-800 mb-1">🧈 Isian & Topping (Komposit)</h3>
+              <h3 class="text-lg font-black text-gray-800 mb-1"><Layers :size="20" class="inline align-text-bottom mr-1" /> Isian & Topping (Komposit)</h3>
               <p class="text-xs font-bold text-gray-500 mb-4">
                 Pilih komposit untuk: <span class="text-purple-600">{{ details[activeIdx].namaKustom || 'Item Baru' }}</span>
               </p>
@@ -549,10 +551,10 @@ const cetakPDF = () => window.print()
 
     <div class="mt-8 flex flex-col md:flex-row justify-end items-stretch md:items-center gap-3 print:hidden border-t-2 pt-4">
       <button v-if="!isSales" @click="simpanPesanan" class="justify-center bg-yellow-500 hover:bg-yellow-600 text-yellow-950 px-6 py-3 md:py-2 rounded shadow font-bold transition flex items-center gap-2">
-        <span>💾</span> {{ isEdit ? 'UPDATE PESANAN' : 'SIMPAN PO' }}
+        <Save :size="18" /> {{ isEdit ? 'UPDATE PESANAN' : 'SIMPAN PO' }}
       </button>
       <button @click="cetakPDF" class="justify-center bg-gray-800 hover:bg-black text-white px-6 py-3 md:py-2 rounded shadow font-bold transition flex items-center gap-2">
-        <span>🖨️</span> EXPORT PDF
+        <Printer :size="18" /> EXPORT PDF
       </button>
     </div>
 

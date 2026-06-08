@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Save, Printer } from 'lucide-vue-next'
 import logoTiara from '../assets/logo_tiara.png'
 
 const route = useRoute()
@@ -353,7 +354,7 @@ const cetakPDF = () => { window.print() }
             <select v-model="penugasanDanStatus" class="border rounded px-2 py-0.5 mt-1 border-orange-400 bg-orange-50 print:hidden font-bold w-full outline-none">
               <option :value="0">-- Belum Ditugaskan--</option>
               <option v-for="s in daftarSales" :key="s.ID" :value="s.ID">Ke: {{ s.Username }}</option>
-              <option value="SELESAI" class="bg-green-100 text-green-800">✅ FISIK SELESAI</option>
+              <option value="SELESAI" class="bg-green-100 text-green-800">[SELESAI] FISIK SELESAI</option>
             </select>
 
             <span class="font-semibold text-left text-green-600 print:hidden mt-1">Pembayaran:</span>
@@ -443,17 +444,17 @@ const cetakPDF = () => { window.print() }
     </div>
 
     <div class="mt-8 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 print:hidden">
-      <label class="flex items-center gap-2 cursor-pointer bg-blue-50 text-blue-800 px-4 py-3 md:py-2 rounded border border-blue-200 font-bold text-sm shadow-sm hover:bg-blue-100 transition">
+      <label v-if="role === 'superadmin'" class="flex items-center gap-2 font-bold text-gray-700 bg-gray-100 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-200 transition shadow-sm w-full md:w-auto mt-4 md:mt-0">
         <input type="checkbox" v-model="isPrintPabrik" class="w-5 h-5 accent-blue-600 cursor-pointer" />
-        🖨️ Mode Print Pabrik (Kosongkan Retur & Diskon)
+        <Printer :size="16" class="inline" /> Mode Print Pabrik (Kosongkan Retur & Diskon)
       </label>
 
       <div class="flex flex-col md:flex-row gap-3">
         <button @click="simpanData" class="justify-center bg-green-600 hover:bg-green-700 text-white px-6 py-3 md:py-2 rounded shadow font-bold transition flex items-center gap-2">
-          <span>💾</span> {{ isEdit ? 'UPDATE RETUR' : 'SIMPAN NOTA' }}
+          <Save :size="18" /> {{ isEdit ? 'UPDATE RETUR' : 'SIMPAN NOTA' }}
         </button>
         <button @click="cetakPDF" class="justify-center bg-gray-800 hover:bg-black text-white px-6 py-3 md:py-2 rounded shadow font-bold transition flex items-center gap-2">
-          <span>🖨️</span> EXPORT PDF
+          <Printer :size="18" /> EXPORT PDF
         </button>
       </div>
     </div>
