@@ -2,6 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { XCircle, PenTool, Package, Layers, PackageOpen, X, Save, Printer } from 'lucide-vue-next'
+import { hasPermission } from '../utils/permission'
 import logoTiara from '../assets/logo_tiara.png'
 
 const route = useRoute()
@@ -9,7 +10,7 @@ const router = useRouter()
 
 const profil = ref({ Alamat: '', NoTelp: '', NoHP: '' })
 const role = ref(localStorage.getItem('admin_role') || '')
-const isSales = computed(() => role.value === 'sales')
+const canManagePO = computed(() => hasPermission('manage_nota_pesanan'))
 
 const barangsMaster = ref([])
 const tokosMaster = ref([])
@@ -59,7 +60,7 @@ const fetchSales = async () => {
   if (checkAuthError(res)) return
   if (res.ok) {
     const admins = await res.json()
-    daftarSales.value = admins.filter(a => a.Role === 'sales')
+    daftarSales.value = admins.filter(a => a.role?.nama_role === 'Sales' || a.Role === 'Sales')
   }
 }
 
@@ -77,15 +78,16 @@ const fetchData = async () => {
     const token = localStorage.getItem('admin_token')
     const headers = { 'Authorization': `Bearer ${token}` }
 
-    const resB = await fetch(`${import.meta.env.VITE_API_URL}/api/barangs`, { headers })
-    if (resB.ok) barangsMaster.value = await resB.json()
+    if (canManagePO.value) {
+      const resB = await fetch(`${import.meta.env.VITE_API_URL}/api/barangs`, { headers })
+      if (resB.ok) barangsMaster.value = await resB.json()
+
+      const resR = await fetch(`${import.meta.env.VITE_API_URL}/api/resep`, { headers })
+      if (resR.ok) resepsMaster.value = await resR.json()
+    }
 
     const resT = await fetch(`${import.meta.env.VITE_API_URL}/api/tokos`, { headers })
     if (resT.ok) tokosMaster.value = await resT.json()
-
-    // Ambil Data Resep untuk PO Kustom
-    const resR = await fetch(`${import.meta.env.VITE_API_URL}/api/resep`, { headers })
-    if (resR.ok) resepsMaster.value = await resR.json()
 
     const resBhn = await fetch(`${import.meta.env.VITE_API_URL}/api/bahan`, { headers })
     if (resBhn.ok) bahansMaster.value = await resBhn.json()
@@ -119,7 +121,7 @@ watch([() => form.value.tanggal_kirim, () => form.value.toko_id, () => form.valu
 })
 
 const generateNoNota = async () => {
-  if (isEdit.value || !form.value.tanggal_kirim || isSales.value) return
+  if (isEdit.value || !form.value.tanggal_kirim || !canManagePO.value) return
   try {
     const token = localStorage.getItem('admin_token')
     const url = `${import.meta.env.VITE_API_URL}/api/pesanan/next-number?tanggal=${form.value.tanggal_kirim}&toko_id=${form.value.toko_id || ''}`
@@ -189,7 +191,7 @@ onMounted(async () => {
       details.value = poLama.Details.map(d => ({
         isKustom: d.BarangID === null,
         idBarangM: d.BarangID || '',
-        namaKustom: d.BarangID === null ? d.NamaBarangBebas : '',
+        namaKustom: d.BarangID === null ? d.NamaBarangBebas : (d.Barang?.NamaBarang || d.Barang?.nama_barang || ''),
         banyak: d.Banyak,
         hargaJual: d.HargaJual,
         idResep: d.ResepID || d.resep_id || '', // Adaptasi aman dari JSON Golang
@@ -309,7 +311,7 @@ const cetakPDF = () => window.print()
 <template>
   <div class="nota-container p-4 md:p-8 max-w-5xl mx-auto my-4">
     <div class="bg-white shadow-sm border border-slate-200 rounded-2xl overflow-hidden print:shadow-none print:border-none print:rounded-none">
-    <fieldset :disabled="isSales" class="border-0 p-0 m-0 w-full min-w-0">
+    <fieldset :disabled="!canManagePO" class="border-0 p-0 m-0 w-full min-w-0">
       
       <!-- HEADER COMPACT -->
       <div class="bg-slate-50 p-4 md:p-6 border-b border-slate-200 print:bg-white print:p-0 print:border-none print:mb-4">
@@ -371,11 +373,11 @@ const cetakPDF = () => window.print()
               <span class="font-bold text-slate-600">No. PO:</span>
               <input v-model="form.no_nota" class="bg-slate-100 border border-slate-200 rounded px-2.5 py-1.5 font-mono text-xs text-slate-600 print:bg-transparent w-full print:border-none print:p-0 font-bold" readonly />
               
-              <template v-if="role === 'superadmin'">
+              <template v-if="role === 'Superadmin'">
                 <span class="font-bold text-orange-600 print:hidden whitespace-nowrap">Tugaskan:</span>
                 <select v-model="penugasanDanStatus" class="bg-orange-50 border border-orange-200 rounded px-2.5 py-1.5 font-bold text-orange-800 w-full outline-none focus:ring-1 focus:ring-orange-500 print:hidden">
                   <option :value="0">-- Belum Ditugaskan--</option>
-                  <option v-for="s in daftarSales" :key="s.ID" :value="s.ID">Ke: {{ s.Username }}</option>
+                  <option v-for="s in daftarSales" :key="s.id || s.ID" :value="s.id || s.ID">Ke: {{ s.username || s.Username }}</option>
                   <option value="DIAMBIL" class="bg-emerald-100 text-emerald-800">[SELESAI] DIAMBIL</option>
                 </select>
 
@@ -396,7 +398,7 @@ const cetakPDF = () => window.print()
           <table class="w-full text-sm border-collapse">
             <thead class="bg-slate-800 text-white print:bg-transparent print:text-black print:border-y-2 print:border-slate-800">
               <tr class="tracking-wide">
-                <th class="p-3 text-center w-12 print:hidden font-bold">Mode</th>
+                <th v-if="canManagePO" class="p-3 text-center w-12 print:hidden font-bold">Mode</th>
                 <th class="p-3 text-left font-bold">Barang Pesanan</th>
                 <th class="p-3 w-20 text-center font-bold">Qty</th>
                 <th class="p-3 w-32 text-right font-bold">Harga/Pcs</th>
@@ -407,7 +409,7 @@ const cetakPDF = () => window.print()
             <tbody class="divide-y divide-slate-100 print:divide-slate-400">
               <tr v-for="(row, idx) in details" :key="idx" class="hover:bg-amber-50/50 even:bg-slate-50 transition-colors print:even:bg-transparent">
                 
-                <td class="p-2 text-center print:hidden align-top pt-3">
+                <td v-if="canManagePO" class="p-2 text-center print:hidden align-top pt-3">
                   <button @click="gantiMode(idx)" class="p-1.5 rounded-lg shadow-sm border transition-all hover:scale-105 active:scale-95"
                           :class="row.isKustom ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-amber-100 text-amber-700 border-amber-200'">
                       <PenTool v-if="row.isKustom" :size="16" />
@@ -416,41 +418,46 @@ const cetakPDF = () => window.print()
                 </td>
 
                 <td class="p-2 align-top pt-3">
-                  <div v-if="row.isKustom">
-                      <input type="text" v-model="row.namaKustom" placeholder="Ketik kue kustom..." class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg outline-none font-bold text-slate-800 focus:ring-2 focus:ring-amber-500 transition-shadow print:border-none print:p-0 print:bg-transparent" />
-                      
-                      <div class="flex flex-wrap items-center gap-2 mt-2 print:hidden">
-                          <select v-model="row.idResep" class="flex-1 min-w-[140px] outline-none text-xs font-bold text-slate-600 bg-slate-100 rounded-lg border border-slate-200 px-2 py-1.5 cursor-pointer focus:ring-2 focus:ring-amber-500">
-                              <option value="">- Potong Resep Apa? -</option>
-                              <option v-for="r in resepsMaster" :key="r.ID" :value="r.ID">{{ r.nama_resep }}</option>
-                          </select>
-                          <div class="flex items-center bg-slate-100 border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-amber-500">
-                            <input type="number" v-model.number="row.gramasi" placeholder="0" class="w-14 outline-none text-xs font-bold text-center text-slate-700 bg-transparent py-1.5 hide-arrows" />
-                            <span class="text-[10px] text-slate-400 font-bold pr-2">gr</span>
-                          </div>
-                          
-                          <button @click="bukaModalKomposit(idx)" class="text-[10px] bg-amber-50 text-amber-700 px-2.5 py-1.5 rounded-lg border border-amber-200 font-bold hover:bg-amber-100 transition shadow-sm flex items-center gap-1">
-                            <Layers :size="12" /> {{ row.komposit_detail?.length || 0 }} Komposit
-                          </button>
-                          <button @click="bukaModalKemasan(idx)" class="text-[10px] bg-sky-50 text-sky-700 px-2.5 py-1.5 rounded-lg border border-sky-200 font-bold hover:bg-sky-100 transition shadow-sm flex items-center gap-1">
-                            <PackageOpen :size="12" /> {{ row.kemasan_detail?.length || 0 }} Kemasan
-                          </button>
-                      </div>
-                  </div>
-                  <div v-else class="pt-1">
-                      <select v-model="row.idBarangM" @change="onPilihBarangMaster(idx)" class="w-full px-3 py-1.5 bg-white print:bg-transparent border border-slate-200 print:border-none rounded-lg outline-none font-bold text-slate-800 cursor-pointer focus:ring-2 focus:ring-amber-500 transition-shadow">
-                          <option value="" disabled>Pilih Barang</option>
-                          <option v-for="b in barangsMaster" :key="b.ID" :value="b.ID">{{ b.NamaBarang }}</option>
-                      </select>
-                  </div>
+                  <template v-if="canManagePO">
+                    <div v-if="row.isKustom">
+                        <input type="text" v-model="row.namaKustom" placeholder="Ketik kue kustom..." class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg outline-none font-bold text-slate-800 focus:ring-2 focus:ring-amber-500 transition-shadow print:border-none print:p-0 print:bg-transparent" />
+                        
+                        <div class="flex flex-wrap items-center gap-2 mt-2 print:hidden">
+                            <select v-model="row.idResep" class="flex-1 min-w-[140px] outline-none text-xs font-bold text-slate-600 bg-slate-100 rounded-lg border border-slate-200 px-2 py-1.5 cursor-pointer focus:ring-2 focus:ring-amber-500">
+                                <option value="">- Potong Resep Apa? -</option>
+                                <option v-for="r in resepsMaster" :key="r.ID" :value="r.ID">{{ r.nama_resep }}</option>
+                            </select>
+                            <div class="flex items-center bg-slate-100 border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-amber-500">
+                              <input type="number" v-model.number="row.gramasi" placeholder="0" class="w-14 outline-none text-xs font-bold text-center text-slate-700 bg-transparent py-1.5 hide-arrows" />
+                              <span class="text-[10px] text-slate-400 font-bold pr-2">gr</span>
+                            </div>
+                            
+                            <button @click="bukaModalKomposit(idx)" class="text-[10px] bg-amber-50 text-amber-700 px-2.5 py-1.5 rounded-lg border border-amber-200 font-bold hover:bg-amber-100 transition shadow-sm flex items-center gap-1">
+                              <Layers :size="12" /> {{ row.komposit_detail?.length || 0 }} Komposit
+                            </button>
+                            <button @click="bukaModalKemasan(idx)" class="text-[10px] bg-sky-50 text-sky-700 px-2.5 py-1.5 rounded-lg border border-sky-200 font-bold hover:bg-sky-100 transition shadow-sm flex items-center gap-1">
+                              <PackageOpen :size="12" /> {{ row.kemasan_detail?.length || 0 }} Kemasan
+                            </button>
+                        </div>
+                    </div>
+                    <div v-else class="pt-1">
+                        <select v-model="row.idBarangM" @change="onPilihBarangMaster(idx)" class="w-full px-3 py-1.5 bg-white print:bg-transparent border border-slate-200 print:border-none rounded-lg outline-none font-bold text-slate-800 cursor-pointer focus:ring-2 focus:ring-amber-500 transition-shadow">
+                            <option value="" disabled>Pilih Barang</option>
+                            <option v-for="b in barangsMaster" :key="b.ID" :value="b.ID">{{ b.NamaBarang }}</option>
+                        </select>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <div class="font-bold text-slate-800 pt-1.5">{{ row.namaKustom }}</div>
+                  </template>
                 </td>
                 
                 <td class="p-2 align-top pt-3">
-                  <input type="number" v-model.number="row.banyak" min="1" @wheel="$event.target.blur()" class="w-full text-center outline-none bg-white border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1.5 font-black text-slate-800 focus:ring-2 focus:ring-amber-500 transition-shadow" />
+                  <input type="number" v-model.number="row.banyak" min="1" @wheel="$event.target.blur()" class="w-full px-2 text-center outline-none bg-white border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1.5 font-black text-slate-800 focus:ring-2 focus:ring-amber-500 transition-shadow" />
                 </td>
                 
                 <td class="p-2 align-top pt-3">
-                  <input type="number" v-model.number="row.hargaJual" :disabled="!row.isKustom" @wheel="$event.target.blur()" class="w-full text-right outline-none bg-white border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1.5 font-bold focus:ring-2 focus:ring-amber-500 transition-shadow disabled:bg-slate-50 disabled:text-slate-500" :class="{'text-slate-800': row.isKustom}" />
+                  <input type="number" v-model.number="row.hargaJual" :disabled="!row.isKustom" @wheel="$event.target.blur()" class="w-full px-3 text-right outline-none bg-white border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1.5 font-bold focus:ring-2 focus:ring-amber-500 transition-shadow disabled:bg-slate-50 disabled:text-slate-500 hide-arrows" :class="{'text-slate-800': row.isKustom}" />
                 </td>
                 
                 <td class="p-3 text-right font-black text-amber-900 print:text-black align-top pt-4">
@@ -525,7 +532,7 @@ const cetakPDF = () => window.print()
 
     <!-- ACTION BUTTONS -->
     <div class="mt-6 flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 print:hidden">
-      <button v-if="!isSales" @click="simpanPesanan" class="flex-1 sm:flex-none justify-center bg-amber-500 hover:bg-amber-600 text-amber-950 px-8 py-3.5 rounded-xl shadow-lg shadow-amber-500/30 font-black tracking-wide transition-all active:scale-95 flex items-center gap-2">
+      <button v-if="canManagePO" @click="simpanPesanan" class="flex-1 sm:flex-none justify-center bg-amber-500 hover:bg-amber-600 text-amber-950 px-8 py-3.5 rounded-xl shadow-lg shadow-amber-500/30 font-black tracking-wide transition-all active:scale-95 flex items-center gap-2">
         <Save :size="20" /> {{ isEdit ? 'UPDATE PESANAN' : 'SIMPAN PESANAN' }}
       </button>
       <button @click="cetakPDF" class="flex-1 sm:flex-none justify-center bg-slate-800 hover:bg-slate-900 text-white px-8 py-3.5 rounded-xl shadow-lg shadow-slate-500/30 font-black tracking-wide transition-all active:scale-95 flex items-center gap-2">

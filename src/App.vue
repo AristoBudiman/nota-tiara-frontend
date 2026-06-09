@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { hasPermission } from './utils/permission'
 import { 
   Store, Package, Trash2, PieChart, BookOpen, 
   History as HistoryIcon, MapPin, ShoppingCart, Receipt, Crown, LogOut, Menu, X, UserCog
@@ -118,56 +119,62 @@ const saveProfile = async () => {
 
         <div class="flex-1 overflow-y-auto overflow-x-hidden py-5 space-y-8 custom-scrollbar transition-all duration-300" :class="isSidebarMinimized ? 'px-2' : 'px-3'">
             
-            <template v-if="role === 'superadmin'">
+            <template v-if="hasPermission('manage_master_toko') || hasPermission('manage_master_barang') || hasPermission('manage_sampah')">
               <div class="space-y-1.5">
                   <span v-if="!isSidebarMinimized" class="text-[10px] font-black text-slate-500 uppercase tracking-wider px-3 mb-2 block whitespace-nowrap overflow-hidden">Master Data</span>
                   
-                  <router-link to="/master-toko" title="Master Toko" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                  <router-link v-if="hasPermission('manage_master_toko')" to="/master-toko" title="Master Toko" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
                       <Store :size="20" class="shrink-0" />
                       <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Master Toko</span>
                   </router-link>
                   
-                  <router-link to="/master-barang" title="Master Barang" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                  <router-link v-if="hasPermission('manage_master_barang')" to="/master-barang" title="Master Barang" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
                       <Package :size="20" class="shrink-0" />
                       <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Master Barang</span>
                   </router-link>
                   
-                  <router-link to="/sampah" title="Sampah" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" exact-active-class="!bg-rose-600 !text-white shadow-md">
+                  <router-link v-if="hasPermission('manage_sampah')" to="/sampah" title="Sampah" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" exact-active-class="!bg-rose-600 !text-white shadow-md">
                       <Trash2 :size="20" class="shrink-0" />
                       <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Sampah</span>
                   </router-link>
               </div>
-
-              <div class="space-y-1.5">
-                  <span v-if="!isSidebarMinimized" class="text-[10px] font-black text-slate-500 uppercase tracking-wider px-3 mb-2 block whitespace-nowrap overflow-hidden">Laporan</span>
-                  
-                  <router-link to="/rangkuman" title="Rangkuman" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
-                      <PieChart :size="20" class="shrink-0" />
-                      <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Rangkuman</span>
-                  </router-link>
-                  
-                  <router-link to="/catatan-besar" title="Catatan Besar" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
-                      <BookOpen :size="20" class="shrink-0" />
-                      <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Catatan Besar</span>
-                  </router-link>
-              </div>
             </template>
+
+              <template v-if="hasPermission('view_rangkuman_penjualan') || hasPermission('view_catatan_besar')">
+                <div class="space-y-1.5">
+                    <span v-if="!isSidebarMinimized" class="text-[10px] font-black text-slate-500 uppercase tracking-wider px-3 mb-2 block whitespace-nowrap overflow-hidden">Laporan</span>
+                    
+                    <router-link v-if="hasPermission('view_rangkuman_penjualan')" to="/rangkuman" title="Rangkuman" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                        <PieChart :size="20" class="shrink-0" />
+                        <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Rangkuman</span>
+                    </router-link>
+                    
+                    <router-link v-if="hasPermission('view_catatan_besar')" to="/catatan-besar" title="Catatan Besar" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                        <BookOpen :size="20" class="shrink-0" />
+                        <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Catatan Besar</span>
+                    </router-link>
+                </div>
+              </template>
 
             <div class="space-y-1.5">
                 <span v-if="!isSidebarMinimized" class="text-[10px] font-black text-slate-500 uppercase tracking-wider px-3 mb-2 block whitespace-nowrap overflow-hidden">Operasional</span>
                 
-                <router-link to="/daftar-nota" :title="role === 'sales' ? 'Dashboard Kunjungan' : 'Riwayat Nota'" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
-                    <HistoryIcon v-if="role !== 'sales'" :size="20" class="shrink-0" />
-                    <MapPin v-else :size="20" class="shrink-0" />
-                    <span v-if="!isSidebarMinimized" class="whitespace-nowrap">{{ role === 'sales' ? 'Kunjungan' : 'Riwayat Nota' }}</span>
+                <router-link v-if="role === 'Sales' && hasPermission('view_dashboard_sales')" to="/dashboard-sales" title="Dashboard Kunjungan" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                    <MapPin :size="20" class="shrink-0" />
+                    <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Kunjungan</span>
+                </router-link>
+
+                <router-link v-if="role !== 'Sales' && hasPermission('view_riwayat_nota')" to="/daftar-nota" title="Riwayat Nota" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                    <HistoryIcon :size="20" class="shrink-0" />
+                    <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Riwayat Nota</span>
                 </router-link>
                 
-                <router-link to="/buat-pesanan" title="Buat Pesanan" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                <router-link v-if="hasPermission('manage_nota_pesanan') || hasPermission('view_riwayat_pesanan')" to="/buat-pesanan" title="Buat Pesanan" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
                     <ShoppingCart :size="20" class="shrink-0" />
                     <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Buat Pesanan</span>
                 </router-link>
                 
-                <router-link to="/buat-nota" title="Buat Nota" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
+                <router-link v-if="hasPermission('manage_nota_jual')" to="/buat-nota" title="Buat Nota" class="py-2.5 rounded-xl text-sm font-bold flex items-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" :class="isSidebarMinimized ? 'justify-center px-0' : 'px-3 gap-3'" active-class="!bg-blue-600 !text-white shadow-lg">
                     <Receipt :size="20" class="shrink-0" />
                     <span v-if="!isSidebarMinimized" class="whitespace-nowrap">Buat Nota</span>
                 </router-link>

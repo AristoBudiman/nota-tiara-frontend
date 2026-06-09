@@ -102,6 +102,9 @@ const resetForm = () => {
     no_nota: '',
     toko_id: null,
     tanggal_kirim: getTanggalWIB(),
+    assigned_to: 0,
+    status: 'KIRIM',
+    is_lunas: false,
     total_diskon: 0,
     total_voucher: 0
   }
@@ -302,7 +305,7 @@ const fetchSales = async () => {
   if (checkAuthError(res)) return
   if (res.ok) {
     const admins = await res.json()
-    daftarSales.value = admins.filter(a => a.Role === 'sales')
+    daftarSales.value = admins.filter(a => a.role?.nama_role === 'Sales' || a.Role === 'Sales')
   }
 }
 
@@ -364,11 +367,11 @@ const cetakPDF = () => { window.print() }
               <span class="font-bold text-slate-600">No. Nota:</span>
               <input v-model="form.no_nota" class="bg-slate-100 border border-slate-200 rounded px-2.5 py-1.5 font-mono text-xs text-slate-600 print:bg-transparent w-full print:border-none print:p-0 font-bold" placeholder="Otomatis..." readonly />
               
-              <template v-if="role === 'superadmin'">
+              <template v-if="role === 'Superadmin'">
                 <span class="font-bold text-orange-600 print:hidden whitespace-nowrap">Tugaskan:</span>
                 <select v-model="penugasanDanStatus" class="bg-orange-50 border border-orange-200 rounded px-2.5 py-1.5 font-bold text-orange-800 w-full outline-none focus:ring-1 focus:ring-orange-500 print:hidden">
                   <option :value="0">-- Belum Ditugaskan--</option>
-                  <option v-for="s in daftarSales" :key="s.ID" :value="s.ID">Ke: {{ s.Username }}</option>
+                  <option v-for="s in daftarSales" :key="s.id || s.ID" :value="s.id || s.ID">Ke: {{ s.username || s.Username }}</option>
                   <option value="SELESAI" class="bg-emerald-100 text-emerald-800">[SELESAI] FISIK SELESAI</option>
                 </select>
 
@@ -402,11 +405,11 @@ const cetakPDF = () => { window.print() }
                 <td class="p-3 font-bold text-slate-800">{{ item.nama_barang }}</td>
                 <td class="p-3 text-right text-slate-600 font-medium">Rp{{ item.harga_barang.toLocaleString() }}</td>
                 <td class="p-2">
-                  <input type="number" v-model.number="item.banyak_kirim" @wheel="$event.target.blur()" class="w-full text-center outline-none bg-white border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1.5 font-black text-blue-900 focus:ring-2 focus:ring-blue-500 transition-shadow" />
+                  <input type="number" v-model.number="item.banyak_kirim" @wheel="$event.target.blur()" class="w-full px-2 text-center outline-none bg-white border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1.5 font-black text-blue-900 focus:ring-2 focus:ring-blue-500 transition-shadow" />
                 </td>
                 <td class="p-3 text-right font-black text-blue-900 print:text-black">{{ (item.banyak_kirim * item.harga_barang).toLocaleString() }}</td>
                 <td class="p-2 border-l border-slate-100 print:border-none">
-                  <input type="number" v-model.number="item.banyak_retur" :readonly="!isEdit" @wheel="$event.target.blur()" class="w-full text-center outline-none bg-white border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1.5 font-black text-red-600 focus:ring-2 focus:ring-red-500 transition-shadow" :class="{'print-transparent': isPrintPabrik}" />
+                  <input type="number" v-model.number="item.banyak_retur" :readonly="!isEdit" @wheel="$event.target.blur()" class="w-full px-2 text-center outline-none bg-white border border-slate-200 print:border-none print:bg-transparent rounded-lg py-1.5 font-black text-red-600 focus:ring-2 focus:ring-red-500 transition-shadow" :class="{'print-transparent': isPrintPabrik}" />
                 </td>
                 <td class="p-3 text-right font-black text-red-600">
                   <span :class="{'print-transparent': isPrintPabrik}">{{ (item.banyak_retur * item.harga_barang).toLocaleString() }}</span>
@@ -466,7 +469,7 @@ const cetakPDF = () => { window.print() }
 
     <!-- ACTION BUTTONS -->
     <div class="mt-6 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 print:hidden">
-      <label v-if="role === 'superadmin'" class="flex items-center gap-2 font-bold text-slate-700 bg-white border border-slate-200 px-4 py-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors shadow-sm w-full md:w-auto">
+      <label v-if="role === 'Superadmin'" class="flex items-center gap-2 font-bold text-slate-700 bg-white border border-slate-200 px-4 py-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors shadow-sm w-full md:w-auto">
         <input type="checkbox" v-model="isPrintPabrik" class="w-5 h-5 accent-blue-600 cursor-pointer rounded" />
         <Printer :size="18" class="text-slate-500" /> Mode Print Pabrik (Kosongkan Retur & Diskon)
       </label>

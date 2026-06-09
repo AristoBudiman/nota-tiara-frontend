@@ -25,20 +25,25 @@ const handleLogin = async () => {
       body: JSON.stringify({ username: username.value, password: password.value })
     })
     const data = await res.json()
-    if (!res.ok) throw new Error(data.error)
 
-    if (data.role !== 'superadmin' && data.role !== 'sales') {
-      throw new Error(`Akses Ditolak! Kasta '${data.role}' tidak memiliki akses ke Sistem Nota.`)
-    }
-    
-    localStorage.setItem('admin_token', data.token)
-    localStorage.setItem('admin_role', data.role)
-    
-    // Arahkan sesuai jabatan
-    if (data.role === 'sales') {
-      router.push('/daftar-nota')
+    if (res.ok) {
+      if (data.role !== 'Superadmin' && (!data.permissions || !data.permissions.includes('app_nota'))) {
+        errorMsg.value = "Akses Ditolak! Anda tidak memiliki izin ke Sistem Nota."
+        return
+      }
+      
+      localStorage.setItem('admin_token', data.token)
+      localStorage.setItem('admin_role', data.role)
+      localStorage.setItem('admin_permissions', JSON.stringify(data.permissions || []))
+      
+      // Arahkan sesuai jabatan
+      if (data.role === 'Sales') {
+        router.push('/dashboard-sales')
+      } else {
+        router.push('/dashboard')
+      }
     } else {
-      router.push('/dashboard')
+      errorMsg.value = data.error || 'Username atau Password salah!'
     }
   } catch (err) {
     errorMsg.value = "Gagal terhubung. Pastikan server aktif atau periksa internet Anda."
