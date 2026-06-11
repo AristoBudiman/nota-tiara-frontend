@@ -144,7 +144,7 @@ watch([filterStartDate, filterEndDate], ([newStart, newEnd], [oldStart, oldEnd])
   }
   sessionStorage.setItem('filter_start', newStart)
   sessionStorage.setItem('filter_end', newEnd)
-  if (role.value === 'superadmin') fetchSuperadminData(localStorage.getItem('admin_token'))
+  if (role.value.toLowerCase() === 'superadmin') fetchSuperadminData(localStorage.getItem('admin_token'))
 })
 watch([filterStartDatePO, filterEndDatePO], ([newStart, newEnd], [oldStart, oldEnd]) => {
   if (newStart > newEnd) {
@@ -155,17 +155,17 @@ watch([filterStartDatePO, filterEndDatePO], ([newStart, newEnd], [oldStart, oldE
   }
   sessionStorage.setItem('filter_start_po', newStart)
   sessionStorage.setItem('filter_end_po', newEnd)
-  if (role.value === 'superadmin') fetchRiwayatPesanan()
+  if (role.value.toLowerCase() === 'superadmin') fetchRiwayatPesanan()
 })
 watch(filterSiklus, (val) => sessionStorage.setItem('filter_siklus', val))
 watch(filterTokoSuperadmin, (val) => sessionStorage.setItem('filter_toko', val))
 watch(filterStartDatePO, (val) => { 
   sessionStorage.setItem('filter_start_po', val); 
-  if (role.value === 'superadmin') fetchRiwayatPesanan() 
+  if (role.value.toLowerCase() === 'superadmin') fetchRiwayatPesanan() 
 })
 watch(filterEndDatePO, (val) => { 
   sessionStorage.setItem('filter_end_po', val); 
-  if (role.value === 'superadmin') fetchRiwayatPesanan() 
+  if (role.value.toLowerCase() === 'superadmin') fetchRiwayatPesanan() 
 })
 watch(filterTokoPO, (val) => sessionStorage.setItem('filter_toko_po', val))
 
