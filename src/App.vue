@@ -43,7 +43,7 @@ const handleLogout = async () => {
 
 // PROFILE LOGIC
 const showProfileModal = ref(false)
-const formProfile = ref({ username: '', password: '' })
+const formProfile = ref({ username: '', password: '', email: '' })
 
 const openProfileModal = async () => {
   const t = localStorage.getItem('admin_token')
@@ -54,6 +54,7 @@ const openProfileModal = async () => {
   if (res.ok) {
     const data = await res.json()
     formProfile.value.username = data.username
+    formProfile.value.email = data.email
     formProfile.value.password = ''
     showProfileModal.value = true
   }
@@ -240,18 +241,25 @@ const saveProfile = async () => {
         </button>
       </div>
       <div class="p-6 space-y-4">
-        <div>
-          <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Username Baru</label>
-          <input type="text" v-model="formProfile.username" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none font-medium text-gray-700">
+        <div v-if="formProfile.email" class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-center">
+          <p class="text-[11px] text-indigo-500 font-bold uppercase tracking-wider mb-1">Metode Login Saat Ini</p>
+          <p class="font-bold text-indigo-900 mb-0.5">Akun Google</p>
+          <p class="text-sm font-medium text-indigo-700">{{ formProfile.email }}</p>
         </div>
-        <div>
-          <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Password Baru <span class="text-[9px] text-red-400 normal-case">(Kosongkan jika tak diubah)</span></label>
-          <input type="password" v-model="formProfile.password" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none font-medium text-gray-700" placeholder="Minimal 6 karakter">
-        </div>
+        <template v-else>
+          <div>
+            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Username Baru</label>
+            <input type="text" v-model="formProfile.username" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-sky-500 outline-none font-medium text-gray-700">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Password Baru <span class="text-[9px] text-red-400 normal-case">(Kosongkan jika tak diubah)</span></label>
+            <input type="password" v-model="formProfile.password" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-sky-500 outline-none font-medium text-gray-700" placeholder="Minimal 6 karakter">
+          </div>
+        </template>
       </div>
       <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-100">
-        <button @click="showProfileModal = false" class="px-5 py-2 rounded-xl font-bold text-gray-600 hover:bg-gray-200 transition-colors">Batal</button>
-        <button @click="saveProfile" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-bold shadow-md transition-colors active:scale-95">Simpan Profil</button>
+        <button @click="showProfileModal = false" class="px-5 py-2 rounded-xl font-bold text-gray-600 hover:bg-gray-200 transition-colors">{{ formProfile.email ? 'Tutup' : 'Batal' }}</button>
+        <button v-if="!formProfile.email" @click="saveProfile" class="bg-sky-600 hover:bg-sky-700 text-white px-6 py-2 rounded-xl font-bold shadow-md transition-colors active:scale-95">Simpan Profil</button>
       </div>
     </div>
   </div>
