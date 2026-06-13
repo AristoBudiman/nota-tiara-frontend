@@ -223,6 +223,38 @@ const onPilihBarangMaster = (index) => {
   if (brg) row.hargaJual = brg.HargaDefault
 }
 
+const applyTemplate = (idx, event) => {
+  const barangId = Number(event.target.value)
+  const brg = barangsMaster.value.find(b => b.ID === barangId)
+  if (!brg) return
+  
+  const row = details.value[idx]
+  row.namaKustom = brg.NamaBarang
+  row.hargaJual = brg.HargaDefault
+  row.idResep = brg.resep_id || brg.ResepID || ''
+  row.gramasi = brg.kebutuhan_adonan || brg.KebutuhanAdonan || 0
+  
+  if (brg.kemasan_detail) {
+    row.kemasan_detail = brg.kemasan_detail.map(k => ({
+      bahan_id: k.bahan_id || k.BahanID,
+      kebutuhan: k.kebutuhan || k.Kebutuhan
+    }))
+  } else {
+    row.kemasan_detail = []
+  }
+
+  if (brg.komposit_detail) {
+    row.komposit_detail = brg.komposit_detail.map(k => ({
+      resep_komposit_id: k.resep_komposit_id || k.ResepKompositID,
+      kebutuhan: k.kebutuhan || k.Kebutuhan
+    }))
+  } else {
+    row.komposit_detail = []
+  }
+
+  event.target.value = ""
+}
+
 const formatRp = (val) => new Intl.NumberFormat('id-ID').format(val || 0)
 
 const totalBayar = computed(() => details.value.reduce((sum, row) => sum + (row.banyak * row.hargaJual), 0))
@@ -422,6 +454,13 @@ const cetakPDF = () => window.print()
                     <div v-if="row.isKustom">
                         <input type="text" v-model="row.namaKustom" placeholder="Ketik kue kustom..." class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg outline-none font-bold text-slate-800 focus:ring-2 focus:ring-amber-500 transition-shadow print:border-none print:p-0 print:bg-transparent" />
                         
+                        <div class="mt-2 print:hidden">
+                            <select @change="applyTemplate(idx, $event)" class="w-full outline-none text-[11px] font-bold text-sky-700 bg-sky-50 rounded-lg border border-sky-200 px-2 py-1.5 cursor-pointer focus:ring-2 focus:ring-sky-500">
+                                <option value="" selected disabled>-- Isi Otomatis dari Template Produk Reguler --</option>
+                                <option v-for="b in barangsMaster" :key="b.ID" :value="b.ID">{{ b.NamaBarang }}</option>
+                            </select>
+                        </div>
+
                         <div class="flex flex-wrap items-center gap-2 mt-2 print:hidden">
                             <select v-model="row.idResep" class="flex-1 min-w-[140px] outline-none text-xs font-bold text-slate-600 bg-slate-100 rounded-lg border border-slate-200 px-2 py-1.5 cursor-pointer focus:ring-2 focus:ring-amber-500">
                                 <option value="">- Potong Resep Apa? -</option>
