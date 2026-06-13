@@ -229,8 +229,6 @@ const applyTemplate = (idx, event) => {
   if (!brg) return
   
   const row = details.value[idx]
-  row.namaKustom = brg.NamaBarang
-  row.hargaJual = brg.HargaDefault
   row.idResep = brg.resep_id || brg.ResepID || ''
   row.gramasi = brg.kebutuhan_adonan || brg.KebutuhanAdonan || 0
   
