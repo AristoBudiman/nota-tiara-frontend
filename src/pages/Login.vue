@@ -11,9 +11,20 @@ const errorMsg = ref('')
 const isLoading = ref(false)
 const showPassword = ref(false)
 
+const googleBtnContainer = ref(null)
+const googleBtnWidth = ref(368)
+const isReady = ref(false)
+
 // Ping server di awal agar Render mulai bangun lebih cepat
 onMounted(() => {
   fetch(`${import.meta.env.VITE_API_URL}/`).catch(() => {})
+  
+  setTimeout(() => {
+    if (googleBtnContainer.value) {
+      googleBtnWidth.value = Math.max(200, Math.min(googleBtnContainer.value.clientWidth, 400))
+    }
+    isReady.value = true
+  }, 10)
 })
 
 const handleGoogleLogin = async (response) => {
@@ -176,8 +187,8 @@ const handleLogin = async () => {
           </div>
         </div>
 
-        <div class="flex justify-center">
-          <GoogleLogin :callback="handleGoogleLogin" :buttonConfig="{ width: 368, shape: 'rectangular' }" />
+        <div class="flex justify-center w-full" ref="googleBtnContainer">
+          <GoogleLogin v-if="isReady" :callback="handleGoogleLogin" :buttonConfig="{ width: googleBtnWidth, shape: 'rectangular' }" />
         </div>
         
       </div>
