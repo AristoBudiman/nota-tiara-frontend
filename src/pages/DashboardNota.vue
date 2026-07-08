@@ -10,8 +10,9 @@ const recentNota = ref([])
 const topProduk = ref([])
 const isFetching = ref(false)
 
-const getLocalDateString = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0]
-const todayStr = getLocalDateString(new Date())
+import { getWIBDateString } from '../utils/date'
+
+const todayStr = getWIBDateString()
 const monthStr = todayStr.substring(0, 7) // 'YYYY-MM'
 
 const fetchDashboardData = async () => {
@@ -23,9 +24,9 @@ const fetchDashboardData = async () => {
     // Get last day of month
     const now = new Date()
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-    const firstDayStr = getLocalDateString(firstDay)
+    const firstDayStr = getWIBDateString(firstDay)
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    const lastDayStr = getLocalDateString(lastDay)
+    const lastDayStr = getWIBDateString(lastDay)
 
     const [resNotaHariIni, resPesanan, resRangkumanBulan, resRangkumanHari] = await Promise.all([
       fetch(`${import.meta.env.VITE_API_URL}/api/notas?start_date=${todayStr}&end_date=${todayStr}`, { headers }),
