@@ -31,6 +31,7 @@ const form = ref({
   assigned_to: 0,
   status: 'BELUM DIAMBIL',
   is_lunas: false,
+  tanggal_lunas: getTanggalWIB(),
   ongkir: 0,
   uang_muka: 0,
   total_voucher: 0
@@ -142,6 +143,7 @@ const resetForm = () => {
     assigned_to: 0,
     status: 'BELUM DIAMBIL',
     is_lunas: false,
+    tanggal_lunas: getTanggalWIB(),
     ongkir: 0,
     uang_muka: 0,
     total_voucher: 0, 
@@ -183,6 +185,7 @@ onMounted(async () => {
         assigned_to: poLama.assigned_to,
         status: poLama.Status,
         is_lunas: poLama.is_lunas || false,
+        tanggal_lunas: poLama.tanggal_lunas ? poLama.tanggal_lunas.split('T')[0] : (poLama.is_lunas ? poLama.TanggalKirim.split('T')[0] : getTanggalWIB()),
         ongkir: poLama.ongkir || poLama.Ongkir || 0,
         uang_muka: poLama.uang_muka || 0,
         total_voucher: poLama.total_voucher || 0
@@ -300,6 +303,7 @@ const simpanPesanan = async () => {
     assigned_to: Number(form.value.assigned_to || 0),
     status: form.value.status, 
     is_lunas: form.value.is_lunas,
+    tanggal_lunas: form.value.tanggal_lunas,
     ongkir: Number(form.value.ongkir || 0),
     uang_muka: Number(form.value.uang_muka || 0),
     total_voucher: Number(form.value.total_voucher || 0),
@@ -412,10 +416,13 @@ const cetakPDF = () => window.print()
                 </select>
 
                 <span class="font-bold text-emerald-600 print:hidden whitespace-nowrap">Pembayaran:</span>
-                <label class="flex items-center justify-start gap-2 font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded border border-emerald-200 w-full print:hidden cursor-pointer hover:bg-emerald-100 transition shadow-sm">
-                  <input type="checkbox" v-model="form.is_lunas" class="w-4 h-4 accent-emerald-600 cursor-pointer rounded" />
-                  Tandai Lunas
-                </label>
+                <div class="flex items-center gap-2 print:hidden w-full">
+                  <label class="flex items-center justify-start gap-2 font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded border border-emerald-200 cursor-pointer hover:bg-emerald-100 transition shadow-sm w-full" :class="{'w-[110px]!': form.is_lunas}">
+                    <input type="checkbox" v-model="form.is_lunas" class="w-4 h-4 accent-emerald-600 cursor-pointer rounded" />
+                    Lunas
+                  </label>
+                  <input v-if="form.is_lunas" type="date" v-model="form.tanggal_lunas" class="w-full bg-emerald-50 border border-emerald-200 rounded px-2 py-1.5 font-bold text-emerald-700 focus:ring-1 focus:ring-emerald-500 outline-none transition-all text-xs" />
+                </div>
               </template>
             </div>
           </div>

@@ -40,6 +40,7 @@ const form = ref({
   assigned_to: 0,
   status: 'KIRIM',
   is_lunas: false,
+  tanggal_lunas: getTanggalWIB(),
   total_diskon: 0,
   total_voucher: 0
 })
@@ -105,6 +106,7 @@ const resetForm = () => {
     assigned_to: 0,
     status: 'KIRIM',
     is_lunas: false,
+    tanggal_lunas: getTanggalWIB(),
     total_diskon: 0,
     total_voucher: 0
   }
@@ -175,34 +177,11 @@ onMounted(async () => {
         assigned_to: notaLama.assigned_to,
         status: notaLama.Status || 'KIRIM',
         is_lunas: notaLama.is_lunas || false,
+        tanggal_lunas: notaLama.tanggal_lunas ? notaLama.tanggal_lunas.split('T')[0] : (notaLama.is_lunas ? notaLama.TanggalKirim.split('T')[0] : getTanggalWIB()),
         total_diskon: notaLama.total_diskon || 0,
         total_voucher: notaLama.total_voucher || 0
       }
 
-      // 2. LOGIKA KRUSIAL: Filter & Kunci Data
-      // Hanya ingin menampilkan barang yang ada di nota lama ini.
-      // PAKSA harganya pakai harga snapshot.
-      // const detailIds = notaLama.Details.map(d => d.BarangID)
-      // const tampilSemuaBarang = (notaLama.SiklusSnapshot === 'HARIAN' || notaLama.SiklusSnapshot === 'SiklusDua')
-      
-      // items.value = items.value
-      //   // Toko harian akan mem-bypass filter ini sehingga SEMUA barang tampil
-      //   .filter(item => tampilSemuaBarang || detailIds.includes(item.barang_id))
-      //   .map(item => {
-      //     const d = notaLama.Details.find(det => det.BarangID === item.barang_id || det.barang_id === item.barang_id)
-      //     return {
-      //       ...item,
-      //       detail_id: d ? (d.ID || d.id) : null,
-      //       banyak_kirim: d ? d.BanyakKirim : 0,
-      //       banyak_retur: d ? d.BanyakRetur : 0,
-      //       harga_barang: d ? d.HargaJual : item.harga_barang,
-      //       nama_barang: d ? d.NamaBarangSnapshot : item.nama_barang
-      //     }
-      //   })
-      // items.value.sort((a, b) => a.barang_id - b.barang_id)
-
-      // 2. LOGIKA KRUSIAL: Sinkronisasi Data (Filter Dihapus)
-      // Sekarang SEMUA barang akan selalu tampil agar bisa ditambah jika ada human error
       items.value = items.value.map(item => {
         const d = notaLama.Details.find(det => det.BarangID === item.barang_id || det.barang_id === item.barang_id)
         return {
@@ -243,6 +222,7 @@ const simpanData = async () => {
     assigned_to: Number(form.value.assigned_to || 0),
     status: form.value.status,
     is_lunas: form.value.is_lunas,
+    tanggal_lunas: form.value.tanggal_lunas,
     total_diskon: Number(form.value.total_diskon || 0),
     total_voucher: Number(form.value.total_voucher || 0),
     details: items.value
@@ -376,10 +356,13 @@ const cetakPDF = () => { window.print() }
                 </select>
 
                 <span class="font-bold text-emerald-600 print:hidden whitespace-nowrap">Pembayaran:</span>
-                <label class="flex items-center justify-start gap-2 font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded border border-emerald-200 w-full print:hidden cursor-pointer hover:bg-emerald-100 transition shadow-sm">
-                  <input type="checkbox" v-model="form.is_lunas" class="w-4 h-4 accent-emerald-600 cursor-pointer rounded" />
-                  Tandai Lunas
-                </label>
+                <div class="flex items-center gap-2 print:hidden w-full">
+                  <label class="flex items-center justify-start gap-2 font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded border border-emerald-200 cursor-pointer hover:bg-emerald-100 transition shadow-sm w-full" :class="{'w-[110px]!': form.is_lunas}">
+                    <input type="checkbox" v-model="form.is_lunas" class="w-4 h-4 accent-emerald-600 cursor-pointer rounded" />
+                    Lunas
+                  </label>
+                  <input v-if="form.is_lunas" type="date" v-model="form.tanggal_lunas" class="w-full bg-emerald-50 border border-emerald-200 rounded px-2 py-1.5 font-bold text-emerald-700 focus:ring-1 focus:ring-emerald-500 outline-none transition-all text-xs" />
+                </div>
               </template>
             </div>
           </div>
