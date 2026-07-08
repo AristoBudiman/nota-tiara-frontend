@@ -3,7 +3,6 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { XCircle, PenTool, Package, Layers, PackageOpen, X, Save, Printer } from 'lucide-vue-next'
 import { hasPermission } from '../utils/permission'
-import { getTanggalWIB } from '../utils/date'
 import logoTiara from '../assets/logo_tiara.png'
 
 const route = useRoute()
@@ -22,6 +21,15 @@ const showModalKemasan = ref(false)
 const showModalKomposit = ref(false) // <--- State untuk modal komposit
 const activeIdx = ref(null)
 const isEdit = ref(false)
+
+const getTanggalWIB = () => {
+  return new Intl.DateTimeFormat('en-CA', { 
+    timeZone: 'Asia/Jakarta', 
+    year: 'numeric', 
+    month: '2-digit', 
+    day: '2-digit' 
+  }).format(new Date());
+}
 
 const form = ref({
   no_nota: '',
