@@ -328,7 +328,7 @@ const cetakPDF = () => { window.print() }
               </div>
             </div>
             
-            <div class="grid grid-cols-[90px_1fr] md:grid-cols-[90px_1fr_90px_1fr] lg:grid-cols-[90px_1fr_90px_1fr_90px_1fr] print:grid-cols-[75px_1fr] gap-x-4 print:gap-x-2 gap-y-3 print:gap-y-1.5 text-xs print:text-xs items-center">
+            <div class="grid grid-cols-[90px_1fr] md:grid-cols-[90px_1fr_90px_1fr] lg:grid-cols-[70px_1fr_60px_1.5fr_70px_1.2fr] print:grid-cols-[75px_1fr] gap-x-4 print:gap-x-2 gap-y-3 print:gap-y-1.5 text-xs print:text-xs items-center">
               <span class="font-bold text-slate-600">Tanggal:</span>
               <input type="date" v-model="form.tanggal_kirim" @change="generateNoNota" class="bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 font-bold text-slate-800 w-full focus:ring-1 focus:ring-blue-500 outline-none transition-all print:hidden" />
               <span class="hidden print:block font-bold text-slate-800">{{ form.tanggal_kirim.split('-').reverse().join('/') }}</span>
@@ -344,11 +344,13 @@ const cetakPDF = () => { window.print() }
                 {{ daftarToko.find(t => t.ID === form.toko_id)?.NamaToko || '' }}
               </span>
               
-              <span class="font-bold text-slate-600">No. Nota:</span>
+              <span class="font-bold text-slate-600 whitespace-nowrap">No. Nota:</span>
               <input v-model="form.no_nota" class="bg-slate-100 border border-slate-200 rounded px-2.5 py-1.5 font-mono text-xs text-slate-600 print:bg-transparent w-full print:border-none print:p-0 font-bold" placeholder="Otomatis..." readonly />
-              
-              <template v-if="role === 'Superadmin'">
-                <span class="font-bold text-orange-600 print:hidden whitespace-nowrap">Tugaskan:</span>
+            </div>
+
+            <template v-if="role === 'Superadmin'">
+              <div class="grid grid-cols-[90px_1fr] md:grid-cols-[90px_1fr_90px_1.5fr] gap-x-4 gap-y-3 text-xs items-center mt-3 print:hidden">
+                <span class="font-bold text-orange-600 whitespace-nowrap">Tugaskan:</span>
                 <select v-model="penugasanDanStatus" class="bg-orange-50 border border-orange-200 rounded px-2.5 py-1.5 font-bold text-orange-800 w-full outline-none focus:ring-1 focus:ring-orange-500 print:hidden">
                   <option :value="0">-- Belum Ditugaskan--</option>
                   <option v-for="s in daftarSales" :key="s.id || s.ID" :value="s.id || s.ID">Ke: {{ s.username || s.Username }}</option>
@@ -363,8 +365,8 @@ const cetakPDF = () => { window.print() }
                   </label>
                   <input v-if="form.is_lunas" type="date" v-model="form.tanggal_lunas" class="w-full bg-emerald-50 border border-emerald-200 rounded px-2 py-1.5 font-bold text-emerald-700 focus:ring-1 focus:ring-emerald-500 outline-none transition-all text-xs" />
                 </div>
-              </template>
-            </div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
