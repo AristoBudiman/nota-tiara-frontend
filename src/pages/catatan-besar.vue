@@ -30,6 +30,10 @@ const getLocalDateString = (d) => {
 
 const selectedTanggal = ref(getLocalDateString(new Date()))
 
+const showSkripsiModal = ref(false)
+const skripsiStartDate = ref(getLocalDateString(new Date()))
+const skripsiEndDate = ref(getLocalDateString(new Date()))
+
 const dayOfWeek = computed(() => {
   if (!selectedTanggal.value) return -1
   return new Date(selectedTanggal.value).getDay()
@@ -196,50 +200,79 @@ const rekapPesanan = computed(() => {
   }
 })
 
-const exportToExcel = () => {
-  const targetId = activeTab.value === 'REGULER' ? 'table-catatan-besar' : 'table-pesanan'
-  const originalTable = document.getElementById(targetId)
-  if (!originalTable) return window.$dialog?.alert('Tabel belum siap!')
+const exportToExcel = async () => {
+  try {
+    const token = localStorage.getItem('admin_token')
+    const siklusAktif = getSiklusQuery()
+    let url = ''
+    let filename = ''
 
-  const table = originalTable.cloneNode(true)
-  table.setAttribute('border', '1')
-  table.style.borderCollapse = 'collapse'
-  table.style.fontFamily = 'Calibri, sans-serif'
+    if (activeTab.value === 'REGULER') {
+      url = `${import.meta.env.VITE_API_URL}/api/export/catatan-besar?siklus=${siklusAktif}&tanggal=${selectedTanggal.value}`
+      filename = `Catatan_Besar_${selectedTanggal.value}.xlsx`
+    } else {
+      url = `${import.meta.env.VITE_API_URL}/api/export/catatan-pesanan?tanggal=${selectedTanggal.value}`
+      filename = `Catatan_Pesanan_${selectedTanggal.value}.xlsx`
+    }
 
-  const ths = table.querySelectorAll('th')
-  ths.forEach(th => {
-    th.style.backgroundColor = '#e2e8f0'
-    th.style.fontWeight = 'bold'
-    th.style.textAlign = 'center'
-    th.style.padding = '4px 8px' 
-    th.style.whiteSpace = 'nowrap' 
-  })
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { 
+        'Authorization': `Bearer ${token}`
+      }
+    })
 
-  const tds = table.querySelectorAll('td')
-  tds.forEach(td => {
-    td.style.padding = '4px 8px'
-  })
+    if (checkAuthError(res)) return 
+    
+    if (!res.ok) throw new Error("Gagal mengunduh file Excel")
 
-  const html = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-    <head>
-      <meta charset="utf-8">
-    </head>
-    <body>
-      <h2>Catatan Besar Tiara Nota</h2>
-      <p><b>Tanggal Acuan:</b> ${selectedTanggal.value}</p>
-      ${table.outerHTML}
-    </body>
-    </html>
-  `
+    const blob = await res.blob()
+    const downloadUrl = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(downloadUrl)
+  } catch (err) {
+    console.error("Error ekspor Excel:", err)
+    window.$dialog?.alert("Gagal mengekspor data ke Excel!")
+  }
+}
 
-  const blob = new Blob([html], { type: 'application/vnd.ms-excel' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `Catatan_Besar_${selectedTanggal.value}.xls`
-  link.click()
-  URL.revokeObjectURL(url)
+const exportSkripsi = async () => {
+  if (!skripsiStartDate.value || !skripsiEndDate.value) {
+    window.$dialog?.alert("Pilih tanggal mulai dan tanggal selesai!")
+    return
+  }
+  
+  try {
+    const token = localStorage.getItem('admin_token')
+    const url = `${import.meta.env.VITE_API_URL}/api/export/skripsi?start_date=${skripsiStartDate.value}&end_date=${skripsiEndDate.value}`
+    
+    const parts = skripsiStartDate.value.split('-')
+    const filename = `Export_Skripsi_${parts[0]}_${parts[1]}.xlsx`
+    
+    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } })
+    if (checkAuthError(res)) return 
+    
+    if (!res.ok) throw new Error("Gagal mengunduh file Excel")
+
+    const blob = await res.blob()
+    const downloadUrl = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(downloadUrl)
+    showSkripsiModal.value = false
+  } catch (err) {
+    console.error("Error ekspor Excel:", err)
+    window.$dialog?.alert("Gagal mengekspor data skripsi!")
+  }
 }
 
 const geserHari = (offset) => {
@@ -315,6 +348,12 @@ onMounted(fetchAll)
             class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm"
           >
             <RefreshCw :size="16" /> Refresh
+          </button>
+          <button 
+            @click="showSkripsiModal = true" 
+            class="bg-purple-600 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm"
+          >
+            <FileSpreadsheet :size="16" /> Export Skripsi
           </button>
           <button 
             @click="exportToExcel" 
@@ -471,6 +510,31 @@ onMounted(fetchAll)
         </div>
       </div>
 
+    </div>
+
+    <!-- MODAL EXPORT SKRIPSI -->
+    <div v-if="showSkripsiModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+      <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md animate-slide-up">
+        <h2 class="text-xl font-black text-slate-800 mb-4 flex items-center gap-2">
+          <FileSpreadsheet class="text-purple-600" :size="24" /> Export Data Skripsi
+        </h2>
+        <div class="flex flex-col gap-4 mb-6">
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Tanggal Mulai</label>
+            <input type="date" v-model="skripsiStartDate" class="w-full border border-slate-300 rounded-lg px-3 py-2 font-bold text-slate-700 focus:ring-2 focus:ring-purple-500 outline-none transition" />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Tanggal Selesai</label>
+            <input type="date" v-model="skripsiEndDate" class="w-full border border-slate-300 rounded-lg px-3 py-2 font-bold text-slate-700 focus:ring-2 focus:ring-purple-500 outline-none transition" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-3">
+          <button @click="showSkripsiModal = false" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition">Batal</button>
+          <button @click="exportSkripsi" class="px-4 py-2 bg-purple-600 text-white font-bold rounded-lg shadow-md hover:bg-purple-700 hover:shadow-lg transition flex items-center gap-2">
+            Unduh Excel
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
