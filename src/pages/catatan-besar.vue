@@ -34,6 +34,27 @@ const showSkripsiModal = ref(false)
 const skripsiStartDate = ref(getLocalDateString(new Date()))
 const skripsiEndDate = ref(getLocalDateString(new Date()))
 
+const showCatatanModal = ref(false)
+const catatanStartDate = ref(getLocalDateString(new Date()))
+const catatanEndDate = ref(getLocalDateString(new Date()))
+const catatanAccDate = ref(getLocalDateString(new Date()))
+
+const closeSkripsiModal = () => {
+  showSkripsiModal.value = false
+}
+
+const closeCatatanModal = () => {
+  showCatatanModal.value = false
+}
+
+const handleExportBtn = () => {
+  if (activeTab.value === 'REGULER') {
+    showCatatanModal.value = true
+  } else {
+    exportToExcel()
+  }
+}
+
 const dayOfWeek = computed(() => {
   if (!selectedTanggal.value) return -1
   return new Date(selectedTanggal.value).getDay()
@@ -203,16 +224,14 @@ const rekapPesanan = computed(() => {
 const exportToExcel = async () => {
   try {
     const token = localStorage.getItem('admin_token')
-    const siklusAktif = getSiklusQuery()
     let url = ''
     let filename = ''
 
-    if (activeTab.value === 'REGULER') {
-      url = `${import.meta.env.VITE_API_URL}/api/export/catatan-besar?siklus=${siklusAktif}&tanggal=${selectedTanggal.value}`
-      filename = `Catatan_Besar_${selectedTanggal.value}.xlsx`
-    } else {
+    if (activeTab.value === 'PESANAN') {
       url = `${import.meta.env.VITE_API_URL}/api/export/catatan-pesanan?tanggal=${selectedTanggal.value}`
       filename = `Catatan_Pesanan_${selectedTanggal.value}.xlsx`
+    } else {
+      return // REGULER is handled by exportCatatanBesar via modal
     }
 
     const res = await fetch(url, {
@@ -235,6 +254,43 @@ const exportToExcel = async () => {
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(downloadUrl)
+  } catch (err) {
+    console.error("Error ekspor Excel:", err)
+    window.$dialog?.alert("Gagal mengekspor data ke Excel!")
+  }
+}
+
+const exportCatatanBesar = async () => {
+  if (!catatanStartDate.value || !catatanEndDate.value || !catatanAccDate.value) {
+    window.$dialog?.alert("Pilih semua rentang tanggal!")
+    return
+  }
+  
+  try {
+    const token = localStorage.getItem('admin_token')
+    let url = `${import.meta.env.VITE_API_URL}/api/export/catatan-besar?start_date=${catatanStartDate.value}&end_date=${catatanEndDate.value}&acc_start_date=${catatanAccDate.value}`
+    let filename = `Catatan_Besar_${catatanStartDate.value}_to_${catatanEndDate.value}.xlsx`
+    
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { 
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (checkAuthError(res)) return 
+    if (!res.ok) throw new Error("Gagal mengunduh file Excel")
+
+    const blob = await res.blob()
+    const downloadUrl = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(downloadUrl)
+    showCatatanModal.value = false
   } catch (err) {
     console.error("Error ekspor Excel:", err)
     window.$dialog?.alert("Gagal mengekspor data ke Excel!")
@@ -356,7 +412,7 @@ onMounted(fetchAll)
             <FileSpreadsheet :size="16" /> Export Skripsi
           </button>
           <button 
-            @click="exportToExcel" 
+            @click="handleExportBtn" 
             class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-emerald-700 transition-colors flex items-center gap-2 text-sm"
           >
             <FileSpreadsheet :size="16" /> Export
@@ -529,8 +585,36 @@ onMounted(fetchAll)
           </div>
         </div>
         <div class="flex justify-end gap-3">
-          <button @click="showSkripsiModal = false" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition">Batal</button>
+          <button @click="closeSkripsiModal" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition">Batal</button>
           <button @click="exportSkripsi" class="px-4 py-2 bg-purple-600 text-white font-bold rounded-lg shadow-md hover:bg-purple-700 hover:shadow-lg transition flex items-center gap-2">
+            Unduh Excel
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- MODAL EXPORT CATATAN BESAR -->
+    <div v-if="showCatatanModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+      <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md animate-slide-up">
+        <h2 class="text-xl font-black text-slate-800 mb-4 flex items-center gap-2">
+          <FileSpreadsheet class="text-emerald-600" :size="24" /> Export Catatan Besar
+        </h2>
+        <div class="flex flex-col gap-4 mb-6">
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Tanggal Mulai Export</label>
+            <input type="date" v-model="catatanStartDate" class="w-full border border-slate-300 rounded-lg px-3 py-2 font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none transition" />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Tanggal Selesai Export</label>
+            <input type="date" v-model="catatanEndDate" class="w-full border border-slate-300 rounded-lg px-3 py-2 font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none transition" />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Hari Pertama Akumulasi <span class="text-xs font-normal text-slate-500">(Total Lalu)</span></label>
+            <input type="date" v-model="catatanAccDate" class="w-full border border-slate-300 rounded-lg px-3 py-2 font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none transition" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-3">
+          <button @click="closeCatatanModal" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition">Batal</button>
+          <button @click="exportCatatanBesar" class="px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg shadow-md hover:bg-emerald-700 hover:shadow-lg transition flex items-center gap-2">
             Unduh Excel
           </button>
         </div>
